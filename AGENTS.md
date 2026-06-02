@@ -55,3 +55,12 @@ flutter test
 - **Iconos de productos**: mapeo string → IconData en `services/product_icons.dart`. Usar `getIcon()`.
 - **`ListenableBuilder`** en main.dart — **no usar** `Consumer`/`Provider`/`context.watch` para el theme.
 - **Sin `build_runner`**, sin generación de código, sin inyección de dependencias.
+
+## Recordatorio post-sesión
+
+Al finalizar cada sesión de trabajo, recordar al usuario hacer:
+```bash
+git add .
+git commit -m "tipo: descripción del cambio"
+git push
+```

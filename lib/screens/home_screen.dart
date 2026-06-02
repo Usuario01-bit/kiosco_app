@@ -6,7 +6,6 @@ import 'students_screen.dart';
 import 'products_screen.dart';
 import 'reports_screen.dart';
 import 'pending_screen.dart';
-import '../services/database_helper.dart';
 import '../services/theme_provider.dart';
 
 
@@ -22,9 +21,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState
     extends State<HomeScreen> {
 
-  List<Map<String, dynamic>> students = [];
-  List<Map<String, dynamic>> products = [];
-
   int selectedIndex = 0;
 
   // =========================
@@ -35,8 +31,6 @@ class _HomeScreenState
   void initState() {
 
     super.initState();
-
-    loadData();
 
     ThemeProvider.instance.addListener(_refresh);
   }
@@ -53,30 +47,6 @@ class _HomeScreenState
 
     setState(() {});
   }
-
-  Future<void> loadData() async {
-
-    final studentsData =
-    await DatabaseHelper.instance
-        .getStudents();
-
-    final productsData =
-    await DatabaseHelper.instance
-        .getProducts();
-
-    setState(() {
-
-      students = studentsData;
-
-      products = productsData;
-    });
-  }
-
-  // =========================
-  // PRODUCTOS
-  // =========================
-
-
 
   @override
   Widget build(BuildContext context) {

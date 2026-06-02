@@ -308,115 +308,90 @@ class _ReportsScreenState
             // TOP CARDS
             // =================================================
 
-            Row(
-
-              children: [
-
-                Expanded(
-
-                  child: reportCard(
-
-                    title:
-                    'Ventas Totales',
-
-                    value:
-                    '\$${totalSales.toStringAsFixed(2)}',
-
-                    color:
-                    Colors.blue,
-
-                    icon:
-                    Icons.attach_money,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 500;
+                final cards = [
+                  reportCard(
+                    title: 'Ventas Totales',
+                    value: '\$${totalSales.toStringAsFixed(2)}',
+                    color: Colors.blue,
+                    icon: Icons.attach_money,
                   ),
-                ),
-
-                const SizedBox(width: 30),
-
-                Expanded(
-
-                  child: reportCard(
-
-                    title:
-                    'Transacciones',
-
-                    value:
-                    '$totalTransactions',
-
-                    color:
-                    Colors.orange,
-
-                    icon:
-                    Icons.receipt_long,
+                  reportCard(
+                    title: 'Transacciones',
+                    value: '$totalTransactions',
+                    color: Colors.orange,
+                    icon: Icons.receipt_long,
                   ),
-                ),
-
-                const SizedBox(width: 20),
-
-                Expanded(
-
-                  child: reportCard(
-
-                    title:
-                    'Pendientes',
-
-                    value:
-                    '\$${pendienteTotal.toStringAsFixed(2)}',
-
-                    color:
-                    Colors.red,
-
-                    icon:
-                    Icons.warning_rounded,
+                  reportCard(
+                    title: 'Pendientes',
+                    value: '\$${pendienteTotal.toStringAsFixed(2)}',
+                    color: Colors.red,
+                    icon: Icons.warning_rounded,
                   ),
-                ),
-              ],
+                ];
+
+                if (isWide) {
+                  return Row(
+                    children: [
+                      Expanded(child: cards[0]),
+                      const SizedBox(width: 30),
+                      Expanded(child: cards[1]),
+                      const SizedBox(width: 20),
+                      Expanded(child: cards[2]),
+                    ],
+                  );
+                }
+                return Column(
+                  children: [
+                    cards[0],
+                    const SizedBox(height: 20),
+                    cards[1],
+                    const SizedBox(height: 20),
+                    cards[2],
+                  ],
+                );
+              },
             ),
 
             const SizedBox(height: 30),
-            const SizedBox(height: 30),
 
-            Row(
-
-              children: [
-
-                Expanded(
-
-                  child: reportCard(
-
-                    title:
-                    'Recreo 1',
-
-                    value:
-                    '\$${recreo1Total.toStringAsFixed(2)}',
-
-                    color:
-                    Colors.purple,
-
-                    icon:
-                    Icons.schedule,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 500;
+                final cards = [
+                  reportCard(
+                    title: 'Recreo 1',
+                    value: '\$${recreo1Total.toStringAsFixed(2)}',
+                    color: Colors.purple,
+                    icon: Icons.schedule,
                   ),
-                ),
-
-                const SizedBox(width: 20),
-
-                Expanded(
-
-                  child: reportCard(
-
-                    title:
-                    'Recreo 2',
-
-                    value:
-                    '\$${recreo2Total.toStringAsFixed(2)}',
-
-                    color:
-                    Colors.teal,
-
-                    icon:
-                    Icons.access_time_filled,
+                  reportCard(
+                    title: 'Recreo 2',
+                    value: '\$${recreo2Total.toStringAsFixed(2)}',
+                    color: Colors.teal,
+                    icon: Icons.access_time_filled,
                   ),
-                ),
-              ],
+                ];
+
+                if (isWide) {
+                  return Row(
+                    children: [
+                      Expanded(child: cards[0]),
+                      const SizedBox(width: 20),
+                      Expanded(child: cards[1]),
+                    ],
+                  );
+                }
+                return Column(
+                  children: [
+                    cards[0],
+                    const SizedBox(height: 20),
+                    cards[1],
+                  ],
+                );
+              },
             ),
 
             // =================================================

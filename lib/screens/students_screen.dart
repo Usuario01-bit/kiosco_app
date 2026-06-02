@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/database_helper.dart';
+import '../services/responsive.dart';
 
 class StudentsScreen extends StatefulWidget {
 
@@ -121,7 +122,7 @@ class _StudentsScreenState
             width: double.infinity,
 
             padding:
-            const EdgeInsets.all(30),
+            EdgeInsets.all(R.sp(context, 30)),
 
             decoration:
             const BoxDecoration(
@@ -533,7 +534,7 @@ class _StudentsScreenState
 
                                 content: SizedBox(
 
-                                  width: 400,
+                                  width: MediaQuery.of(context).size.width * 0.9,
 
                                   child: sales.isEmpty
 

@@ -755,6 +755,34 @@ getRecentSales(
   );
 }
 
+Future<double> getTotalSales() async {
+  final db = await database;
+  final result = await db.rawQuery(
+    'SELECT COALESCE(SUM(total), 0) as total FROM sales',
+  );
+  return (result.first['total'] as num?)?.toDouble() ?? 0.0;
+}
+
+Future<int> getTotalSalesCount() async {
+  final db = await database;
+  final result = await db.rawQuery('SELECT COUNT(*) as count FROM sales');
+  return (result.first['count'] as int?) ?? 0;
+}
+
+Future<double> getTotalPending() async {
+  final db = await database;
+  final result = await db.rawQuery(
+    'SELECT COALESCE(SUM(amount), 0) as total FROM pending',
+  );
+  return (result.first['total'] as num?)?.toDouble() ?? 0.0;
+}
+
+Future<int> getProductsCount() async {
+  final db = await database;
+  final result = await db.rawQuery('SELECT COUNT(*) as count FROM products');
+  return (result.first['count'] as int?) ?? 0;
+}
+
 Future<double> getTodaySales() async {
 
   final db = await database;

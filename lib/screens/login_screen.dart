@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/database_helper.dart';
+import '../services/responsive.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -258,8 +259,8 @@ class _LoginScreenState
             child: SingleChildScrollView(
 
               padding:
-              const EdgeInsets.symmetric(
-                horizontal: 32,
+              EdgeInsets.symmetric(
+                horizontal: R.sp(context, 32),
               ),
 
               child: Column(
@@ -342,7 +343,7 @@ class _LoginScreenState
                     width: double.infinity,
 
                     padding:
-                    const EdgeInsets.all(32),
+                    EdgeInsets.all(R.sp(context, 32)),
 
                     decoration: BoxDecoration(
 

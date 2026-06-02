@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/database_helper.dart';
 import '../services/product_icons.dart';
+import '../services/responsive.dart';
 
 
 class ProductsScreen extends StatefulWidget {
@@ -659,11 +660,11 @@ class _ProductsScreenState
           Container(
 
             padding:
-            const EdgeInsets.fromLTRB(
-              25,
-              60,
-              25,
-              30,
+            EdgeInsets.fromLTRB(
+              R.sp(context, 25),
+              R.sp(context, 60),
+              R.sp(context, 25),
+              R.sp(context, 30),
             ),
 
             decoration: const BoxDecoration(

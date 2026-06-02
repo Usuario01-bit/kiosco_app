@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/database_helper.dart';
+import '../services/responsive.dart';
 
 class DashboardScreen extends StatefulWidget {
 
@@ -35,73 +36,37 @@ class _DashboardScreenState
   Future<void> loadDashboard()
   async {
 
-    final sales =
-    await DatabaseHelper.instance
-        .getSales();
-
-    final pending =
-    await DatabaseHelper.instance
-        .getPendings();
-
-    final products =
-    await DatabaseHelper.instance
-        .getProducts();
-
-    double salesSum = 0;
-
-    for (var sale in sales) {
-
-      salesSum +=
-      (sale['total'] as num).toDouble();
-    }
-
-    double pendingSum = 0;
-
-    for (var item in pending) {
-
-      pendingSum +=
-      (item['amount'] as num).toDouble();
-    }
-
-    final today =
-    await DatabaseHelper.instance
-        .getTodaySales();
-
-    final top =
-    await DatabaseHelper.instance
-        .getTopProduct();
-
-    final recent =
-    await DatabaseHelper.instance
-        .getRecentSales(5);
-
-    final weekly =
-    await DatabaseHelper.instance
-        .getWeeklySales();
-
-    final topProdList =
-    await DatabaseHelper.instance
-        .getTopProducts(5);
+    final results = await Future.wait([
+      DatabaseHelper.instance.getTotalSales(),
+      DatabaseHelper.instance.getTotalPending(),
+      DatabaseHelper.instance.getTotalSalesCount(),
+      DatabaseHelper.instance.getProductsCount(),
+      DatabaseHelper.instance.getTodaySales(),
+      DatabaseHelper.instance.getTopProduct(),
+      DatabaseHelper.instance.getRecentSales(5),
+      DatabaseHelper.instance.getWeeklySales(),
+      DatabaseHelper.instance.getTopProducts(5),
+    ]);
 
     setState(() {
 
-      totalSales = salesSum;
+      totalSales = results[0] as double;
 
-      totalPending = pendingSum;
+      totalPending = results[1] as double;
 
-      totalSalesCount = sales.length;
+      totalSalesCount = results[2] as int;
 
-      totalProducts = products.length;
+      totalProducts = results[3] as int;
 
-      todaySales = today;
+      todaySales = results[4] as double;
 
-      topProduct = top;
+      topProduct = results[5] as String?;
 
-      recentSales = recent;
+      recentSales = results[6] as List<Map<String, dynamic>>;
 
-      weeklySales = weekly;
+      weeklySales = results[7] as List<Map<String, dynamic>>;
 
-      topProducts = topProdList;
+      topProducts = results[8] as List<Map<String, dynamic>>;
 
       isLoading = false;
     });
@@ -203,7 +168,7 @@ class _DashboardScreenState
       body: RefreshIndicator(
         onRefresh: loadDashboard,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(R.sp(context, 20)),
           child: Column(
             crossAxisAlignment:
             CrossAxisAlignment.start,

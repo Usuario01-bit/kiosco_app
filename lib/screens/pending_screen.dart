@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/database_helper.dart';
+import '../services/responsive.dart';
 
 class PendingScreen extends StatefulWidget {
 
@@ -192,8 +193,8 @@ class _PendingScreenState
               width: double.infinity,
 
               padding:
-              const EdgeInsets.all(
-                30,
+              EdgeInsets.all(
+                R.sp(context, 30),
               ),
 
               decoration:
@@ -242,9 +243,9 @@ class _PendingScreenState
                     '\$${totalPending.toStringAsFixed(2)}',
 
                     style:
-                    const TextStyle(
+                    TextStyle(
 
-                      fontSize: 50,
+                      fontSize: R.fs(context, 50),
 
                       fontWeight:
                       FontWeight.bold,

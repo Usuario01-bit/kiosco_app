@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/database_helper.dart';
 import '../services/product_icons.dart';
+import '../services/responsive.dart';
 
 class SalesScreen extends StatefulWidget {
 
@@ -280,17 +281,12 @@ class _SalesScreenState
         Colors.white,
       ),
 
-      body: Row(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 600;
 
-        children: [
-
-          // =====================================================
-          // PRODUCTS
-          // =====================================================
-
-          Expanded(
-
-            flex: 3,
+          final productsWidget = Expanded(
+            flex: isWide ? 3 : 1,
 
             child: RefreshIndicator(
 
@@ -299,12 +295,12 @@ class _SalesScreenState
               child: GridView.builder(
 
               padding:
-              const EdgeInsets.all(
-                20,
+              EdgeInsets.all(
+                R.sp(context, 20),
               ),
 
               gridDelegate:
-              const SliverGridDelegateWithFixedCrossAxisCount(
+              SliverGridDelegateWithFixedCrossAxisCount(
 
                 crossAxisCount: 2,
 
@@ -312,7 +308,7 @@ class _SalesScreenState
 
                 mainAxisSpacing: 20,
 
-                childAspectRatio: 0.92,
+                childAspectRatio: isWide ? 0.92 : 0.7,
               ),
 
               itemCount:
@@ -548,21 +544,16 @@ class _SalesScreenState
               },
             ),
           ),
-          ),
+          );
 
-          // =====================================================
-          // RIGHT PANEL
-          // =====================================================
-
-          Expanded(
-
-            flex: 2,
+          final panelWidget = Expanded(
+            flex: isWide ? 1 : 1,
 
             child: Container(
 
               padding:
-              const EdgeInsets.all(
-                30,
+              EdgeInsets.all(
+                R.sp(context, 30),
               ),
 
               color:
@@ -1008,8 +999,17 @@ class _SalesScreenState
                 ],
               ),
             ),
-          ),
-        ],
+          );
+
+          if (isWide) {
+            return Row(
+              children: [productsWidget, panelWidget],
+            );
+          }
+          return Column(
+            children: [productsWidget, panelWidget],
+          );
+        },
       ),
     );
   }

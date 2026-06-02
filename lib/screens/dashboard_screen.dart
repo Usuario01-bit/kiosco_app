@@ -1,0 +1,865 @@
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../services/database_helper.dart';
+
+class DashboardScreen extends StatefulWidget {
+
+  const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() =>
+  _DashboardScreenState();
+}
+
+class _DashboardScreenState
+    extends State<DashboardScreen> {
+
+  double totalSales = 0;
+  double totalPending = 0;
+  int totalProducts = 0;
+  int totalSalesCount = 0;
+  double todaySales = 0;
+  String? topProduct;
+  List<Map<String, dynamic>> recentSales = [];
+  List<Map<String, dynamic>> weeklySales = [];
+  List<Map<String, dynamic>> topProducts = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+
+    super.initState();
+    loadDashboard();
+  }
+
+  Future<void> loadDashboard()
+  async {
+
+    final sales =
+    await DatabaseHelper.instance
+        .getSales();
+
+    final pending =
+    await DatabaseHelper.instance
+        .getPendings();
+
+    final products =
+    await DatabaseHelper.instance
+        .getProducts();
+
+    double salesSum = 0;
+
+    for (var sale in sales) {
+
+      salesSum +=
+      (sale['total'] as num).toDouble();
+    }
+
+    double pendingSum = 0;
+
+    for (var item in pending) {
+
+      pendingSum +=
+      (item['amount'] as num).toDouble();
+    }
+
+    final today =
+    await DatabaseHelper.instance
+        .getTodaySales();
+
+    final top =
+    await DatabaseHelper.instance
+        .getTopProduct();
+
+    final recent =
+    await DatabaseHelper.instance
+        .getRecentSales(5);
+
+    final weekly =
+    await DatabaseHelper.instance
+        .getWeeklySales();
+
+    final topProdList =
+    await DatabaseHelper.instance
+        .getTopProducts(5);
+
+    setState(() {
+
+      totalSales = salesSum;
+
+      totalPending = pendingSum;
+
+      totalSalesCount = sales.length;
+
+      totalProducts = products.length;
+
+      todaySales = today;
+
+      topProduct = top;
+
+      recentSales = recent;
+
+      weeklySales = weekly;
+
+      topProducts = topProdList;
+
+      isLoading = false;
+    });
+  }
+
+  Widget buildCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+  }) {
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color:
+        Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 
+              0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment:
+        MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 
+                  0.12),
+              borderRadius:
+              BorderRadius.circular(18),
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 30,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    if (isLoading) {
+
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final now = DateTime.now();
+    final dateStr =
+        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+
+    return Scaffold(
+      backgroundColor:
+      Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('Kiosco Escolar'),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        backgroundColor: const Color(
+            0xFF4A90E2),
+        actions: const [],
+      ),
+      body: RefreshIndicator(
+        onRefresh: loadDashboard,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment:
+                MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Dashboard',
+                    style: TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Container(
+                    padding:
+                    const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration:
+                    BoxDecoration(
+                      color:
+                      Theme.of(
+                        context,
+                      ).cardColor,
+                      borderRadius:
+                      BorderRadius
+                          .circular(16),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).dividerColor,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Theme.of(
+                            context,
+                          ).primaryColor,
+                        ),
+                        const SizedBox(
+                            width: 6),
+                        Text(
+                          dateStr,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(
+                              context,
+                            ).textTheme
+                                .bodyMedium
+                                ?.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Resumen general del kiosco',
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium
+                      ?.color
+                      ?.withValues(alpha: 0.7),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 25),
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 15,
+                mainAxisSpacing: 15,
+                shrinkWrap: true,
+                physics:
+                const NeverScrollableScrollPhysics(),
+                childAspectRatio: 1.25,
+                children: [
+                  buildCard(
+                    title: 'Ventas totales',
+                    value:
+                    '\$${totalSales.toStringAsFixed(2)}',
+                    icon: Icons.point_of_sale,
+                    iconColor: Colors.blue,
+                  ),
+                  buildCard(
+                    title: 'Ventas hoy',
+                    value:
+                    '\$${todaySales.toStringAsFixed(2)}',
+                    icon: Icons.today,
+                    iconColor: Colors.green,
+                  ),
+                  buildCard(
+                    title: 'Pendientes',
+                    value:
+                    '\$${totalPending.toStringAsFixed(2)}',
+                    icon: Icons
+                        .pending_actions,
+                    iconColor: Colors.orange,
+                  ),
+                  buildCard(
+                    title: 'Productos',
+                    value: totalProducts
+                        .toString(),
+                    icon: Icons.inventory,
+                    iconColor: Colors.purple,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              buildWeeklyChart(),
+              const SizedBox(height: 20),
+              buildTopProductsChart(),
+              const SizedBox(height: 20),
+              if (topProduct != null)
+                buildTopProductCard(),
+              const SizedBox(height: 20),
+              buildRecentSalesCard(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildWeeklyChart() {
+
+    if (weeklySales.isEmpty) return const SizedBox.shrink();
+
+    final maxY = weeklySales.fold<double>(
+      0,
+      (max, s) {
+        final val =
+            (s['total'] as num?)?.toDouble() ?? 0;
+        return val > max ? val : max;
+      },
+    );
+
+    return Column(
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ventas semanales',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.color,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          height: 200,
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(
+              12, 20, 12, 0),
+          decoration: BoxDecoration(
+            color:
+            Theme.of(context).cardColor,
+            borderRadius:
+            BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black
+                    .withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: BarChart(
+            BarChartData(
+              alignment:
+              BarChartAlignment
+                  .spaceAround,
+              maxY: maxY * 1.3,
+              barGroups: List.generate(
+                weeklySales.length,
+                (i) {
+                  final total =
+                      (weeklySales[i]['total']
+                          as num?)
+                              ?.toDouble() ??
+                          0;
+                  return BarChartGroupData(
+                    x: i,
+                    barRods: [
+                      BarChartRodData(
+                        toY: total,
+                        color: const Color(
+                            0xFF4A90E2),
+                        width: 18,
+                        borderRadius:
+                        const BorderRadius
+                            .vertical(
+                          top: Radius
+                              .circular(
+                              6),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+              titlesData: FlTitlesData(
+                show: true,
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget:
+                        (value, meta) {
+                      final idx =
+                          value.toInt();
+                      if (idx < 0 ||
+                          idx >=
+                              weeklySales
+                                  .length) {
+                        return const SizedBox
+                            .shrink();
+                      }
+                      final date =
+                          weeklySales[idx]
+                                  ['date']
+                              as String? ??
+                          '';
+                      final day =
+                          date.length >= 10
+                              ? date.substring(
+                                  8, 10)
+                              : date;
+                      return Padding(
+                        padding: const EdgeInsets
+                            .only(
+                            top: 8),
+                        child: Text(
+                          day,
+                          style: const TextStyle(
+                              fontSize: 12),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 40,
+                    getTitlesWidget:
+                        (value, meta) {
+                      return Text(
+                        '\$${value.toInt()}',
+                        style: const TextStyle(
+                            fontSize: 10),
+                      );
+                    },
+                  ),
+                ),
+                topTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                      showTitles: false),
+                ),
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                      showTitles: false),
+                ),
+              ),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval:
+                maxY > 0
+                    ? maxY / 4
+                    : 1,
+              ),
+              borderData:
+              FlBorderData(show: false),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildTopProductsChart() {
+
+    if (topProducts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final total = topProducts.fold<double>(
+      0,
+      (sum, p) =>
+          sum +
+              ((p['total'] as num?)
+                      ?.toDouble() ??
+                  0),
+    );
+
+    final colors = [
+      const Color(0xFF4A90E2),
+      const Color(0xFF50C878),
+      const Color(0xFFFFA500),
+      const Color(0xFF9B59B6),
+      const Color(0xFFE74C3C),
+    ];
+
+    return Column(
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Productos más vendidos',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.color,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color:
+            Theme.of(context).cardColor,
+            borderRadius:
+            BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black
+                    .withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding:
+            const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 160,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 40,
+                      sections:
+                          List.generate(
+                        topProducts
+                            .length,
+                        (i) {
+                          final value =
+                              (topProducts[i]
+                                      ['total']
+                                  as num?)
+                                      ?.toDouble() ??
+                                  0;
+                          return PieChartSectionData(
+                            color: colors[
+                                i %
+                                    colors
+                                        .length],
+                            value: total > 0
+                                ? value /
+                                    total *
+                                    100
+                                : 0,
+                            title: total > 0
+                                ? '${(value / total * 100).toStringAsFixed(0)}%'
+                                : '0%',
+                            radius: 28,
+                            titleStyle: const TextStyle(
+                              fontSize: 12,
+                              fontWeight:
+                              FontWeight
+                                  .bold,
+                              color: Colors
+                                  .white,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
+                  children:
+                      List.generate(
+                    topProducts
+                        .length,
+                    (i) {
+                      final name =
+                          topProducts[i]
+                                  ['product']
+                              as String? ??
+                          '';
+                      return Row(
+                        mainAxisSize:
+                        MainAxisSize
+                            .min,
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration:
+                            BoxDecoration(
+                              color: colors[
+                                  i %
+                                      colors
+                                          .length],
+                              borderRadius:
+                              BorderRadius
+                                  .circular(
+                                  3),
+                            ),
+                          ),
+                          const SizedBox(
+                              width: 6),
+                          Text(
+                            name,
+                            style: const TextStyle(
+                                fontSize:
+                                    13),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildTopProductCard() {
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(
+            24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 
+                0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color:
+              Colors.purple.withValues(alpha: 
+                  0.12),
+              borderRadius:
+              BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.emoji_events,
+              color: Colors.purple,
+              size: 30,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Producto top',
+                  style: TextStyle(
+                    color:
+                    Theme.of(
+                      context,
+                    ).textTheme
+                        .bodyMedium
+                        ?.color
+                        ?.withValues(alpha: 0.7),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  topProduct!,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight:
+                    FontWeight.bold,
+                    color:
+                    Theme.of(
+                      context,
+                    ).textTheme
+                        .bodyLarge
+                        ?.color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildRecentSalesCard() {
+
+    return Column(
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Últimas ventas',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.color,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(
+                24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black
+                    .withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: recentSales.isEmpty
+              ? Padding(
+            padding: const EdgeInsets
+                .all(20),
+            child: Text(
+              'Sin ventas registradas',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 15,
+              ),
+            ),
+          )
+              : ListView.separated(
+            shrinkWrap: true,
+            physics:
+            const NeverScrollableScrollPhysics(),
+            itemCount: recentSales.length,
+            separatorBuilder:
+                (_, __) =>
+                const Divider(
+              height: 1,
+            ),
+            itemBuilder:
+                (context, index) {
+
+              final sale =
+              recentSales[index];
+
+              final isPending =
+              (sale['paymentMethod'] ??
+                  '')
+                  .toString()
+                  .toLowerCase()
+                  .contains('pendiente');
+
+              return ListTile(
+                dense: true,
+                contentPadding:
+                const EdgeInsets
+                    .symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
+                leading: CircleAvatar(
+                  radius: 20,
+                  backgroundColor:
+                  (isPending ? Colors.orange
+                      : Colors
+                      .green)
+                      .withValues(alpha: 0.15),
+                  child: Icon(
+                    isPending
+                        ? Icons
+                        .access_time
+                        : Icons
+                        .check,
+                    color:
+                    isPending
+                        ? Colors.orange
+                        : Colors
+                        .green,
+                    size: 18,
+                  ),
+                ),
+                title: Text(
+                  sale['product'] ??
+                      'Producto',
+                  style:
+                  const TextStyle(
+                    fontSize: 15,
+                  ),
+                ),
+                subtitle: Text(
+                  '${sale['date'] ?? ''} · ${sale['time'] ?? ''}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                  ),
+                ),
+                trailing: Text(
+                  '\$${(sale['total'] as num).toDouble().toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontWeight:
+                    FontWeight.bold,
+                    color:
+                    isPending
+                        ? Colors.orange
+                        : Colors
+                        .green,
+                    fontSize: 15,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}

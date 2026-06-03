@@ -153,56 +153,66 @@ class _LoginScreenState
       errorMsg = null;
     });
 
-    final user =
-    await FirestoreService.instance
-        .login(username, password);
+    try {
 
-    if (!mounted) return;
+      final user =
+      await FirestoreService.instance
+          .login(username, password);
 
-    if (user != null) {
+      if (!mounted) return;
 
-      await _resetLockout();
+      if (user != null) {
 
-      Navigator.pushReplacement(
+        await _resetLockout();
 
-        context,
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        ),
-      );
-    } else {
+        Navigator.pushReplacement(
 
-      attempts++;
-
-      if (attempts >= maxAttempts) {
-
-        lockoutUntil = DateTime.now().add(
-          attempts >= 5
-              ? lockoutDuration2
-              : lockoutDuration,
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
         );
-
-        await _saveLockoutState();
-
-        setState(() {
-
-          errorMsg =
-          'Demasiados intentos. Esperá ${attempts >= 5 ? "2 min" : "30 seg"}';
-
-          loading = false;
-        });
       } else {
 
-        await _saveLockoutState();
+        attempts++;
 
-        setState(() {
+        if (attempts >= maxAttempts) {
 
-          errorMsg =
-          'Usuario o contraseña incorrectos ($attempts/$maxAttempts)';
+          lockoutUntil = DateTime.now().add(
+            attempts >= 5
+                ? lockoutDuration2
+                : lockoutDuration,
+          );
 
-          loading = false;
-        });
+          await _saveLockoutState();
+
+          setState(() {
+
+            errorMsg =
+            'Demasiados intentos. Esperá ${attempts >= 5 ? "2 min" : "30 seg"}';
+
+            loading = false;
+          });
+        } else {
+
+          await _saveLockoutState();
+
+          setState(() {
+
+            errorMsg =
+            'Usuario o contraseña incorrectos ($attempts/$maxAttempts)';
+
+            loading = false;
+          });
+        }
       }
+    } catch (e) {
+
+      setState(() {
+
+        errorMsg = 'Error de conexión: revisá Firebase';
+        loading = false;
+      });
     }
   }
 

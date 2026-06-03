@@ -25,6 +25,7 @@ class _DashboardScreenState
   List<Map<String, dynamic>> weeklySales = [];
   List<Map<String, dynamic>> topProducts = [];
   bool isLoading = true;
+  String? loadError;
 
   @override
   void initState() {
@@ -36,40 +37,54 @@ class _DashboardScreenState
   Future<void> loadDashboard()
   async {
 
-    final results = await Future.wait([
-      FirestoreService.instance.getTotalSales(),
-      FirestoreService.instance.getTotalPending(),
-      FirestoreService.instance.getTotalSalesCount(),
-      FirestoreService.instance.getProductsCount(),
-      FirestoreService.instance.getTodaySales(),
-      FirestoreService.instance.getTopProduct(),
-      FirestoreService.instance.getRecentSales(5),
-      FirestoreService.instance.getWeeklySales(),
-      FirestoreService.instance.getTopProducts(5),
-    ]);
-
     setState(() {
-
-      totalSales = results[0] as double;
-
-      totalPending = results[1] as double;
-
-      totalSalesCount = results[2] as int;
-
-      totalProducts = results[3] as int;
-
-      todaySales = results[4] as double;
-
-      topProduct = results[5] as String?;
-
-      recentSales = results[6] as List<Map<String, dynamic>>;
-
-      weeklySales = results[7] as List<Map<String, dynamic>>;
-
-      topProducts = results[8] as List<Map<String, dynamic>>;
-
-      isLoading = false;
+      loadError = null;
+      isLoading = true;
     });
+
+    try {
+
+      final results = await Future.wait([
+        FirestoreService.instance.getTotalSales(),
+        FirestoreService.instance.getTotalPending(),
+        FirestoreService.instance.getTotalSalesCount(),
+        FirestoreService.instance.getProductsCount(),
+        FirestoreService.instance.getTodaySales(),
+        FirestoreService.instance.getTopProduct(),
+        FirestoreService.instance.getRecentSales(5),
+        FirestoreService.instance.getWeeklySales(),
+        FirestoreService.instance.getTopProducts(5),
+      ]);
+
+      setState(() {
+
+        totalSales = results[0] as double;
+
+        totalPending = results[1] as double;
+
+        totalSalesCount = results[2] as int;
+
+        totalProducts = results[3] as int;
+
+        todaySales = results[4] as double;
+
+        topProduct = results[5] as String?;
+
+        recentSales = results[6] as List<Map<String, dynamic>>;
+
+        weeklySales = results[7] as List<Map<String, dynamic>>;
+
+        topProducts = results[8] as List<Map<String, dynamic>>;
+
+        isLoading = false;
+      });
+    } catch (e) {
+
+      setState(() {
+        loadError = e.toString();
+        isLoading = false;
+      });
+    }
   }
 
   Widget buildCard({
@@ -146,6 +161,55 @@ class _DashboardScreenState
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (loadError != null) {
+
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Kiosco Escolar'),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          backgroundColor: const Color(0xFF4A90E2),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.cloud_off,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Error al cargar datos',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Verificá tu conexión a internet',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: loadDashboard,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }

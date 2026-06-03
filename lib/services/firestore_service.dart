@@ -8,7 +8,7 @@ class FirestoreService {
 
   FirestoreService._();
 
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
 
   // Auth — se mantiene en SQLite local
   Future<Map<String, dynamic>?> login(

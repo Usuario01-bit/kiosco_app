@@ -33,6 +33,17 @@ class _SalesScreenState
 
   double total = 0;
 
+  final studentSearchController = TextEditingController();
+
+  List<Map<String, dynamic>> get _filteredStudents {
+    final query = studentSearchController.text.toLowerCase().trim();
+    if (query.isEmpty) return [];
+    return students.where((s) {
+      final name = (s['name'] as String? ?? '').toLowerCase();
+      return name.contains(query);
+    }).toList();
+  }
+
   // =====================================================
   // INIT
   // =====================================================
@@ -43,6 +54,12 @@ class _SalesScreenState
     super.initState();
 
     loadData();
+  }
+
+  @override
+  void dispose() {
+    studentSearchController.dispose();
+    super.dispose();
   }
 
   // =====================================================
@@ -182,7 +199,7 @@ class _SalesScreenState
         paymentMethod,
 
         'date':
-        '${now.day}/${now.month}/${now.year}',
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
 
         'time':
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
@@ -220,7 +237,7 @@ class _SalesScreenState
         'amount': total,
 
         'date':
-        '${now.day}/${now.month}/${now.year}',
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
 
         'time':
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
@@ -285,720 +302,490 @@ class _SalesScreenState
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 600;
 
-          final productsWidget = Expanded(
-            flex: isWide ? 3 : 2,
-
-            child: RefreshIndicator(
-
-              onRefresh: loadData,
-
-              child: GridView.builder(
-
-              padding:
-              EdgeInsets.all(
-                R.sp(context, 20),
-              ),
-
-              gridDelegate:
-              SliverGridDelegateWithFixedCrossAxisCount(
-
-                crossAxisCount: 2,
-
-                crossAxisSpacing: 20,
-
-                mainAxisSpacing: 20,
-
-                childAspectRatio: isWide ? 0.92 : 0.7,
-              ),
-
-              itemCount:
-              products.length,
-
-              itemBuilder:
-                  (context, index) {
-
-                final product =
-                products[index];
-
-                return GestureDetector(
-
-                  onTap: () {
-
-                    addToCart(
-                      product,
-                    );
+          final headerWidget = Padding(
+            padding: EdgeInsets.fromLTRB(R.sp(context, 20), R.sp(context, 20), R.sp(context, 20), 0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: studentSearchController,
+                  decoration: InputDecoration(
+                    labelText: 'Estudiante',
+                    hintText: 'Escribí el nombre...',
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: selectedStudent != null
+                        ? IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              setState(() {
+                                selectedStudent = null;
+                                studentSearchController.clear();
+                              });
+                            },
+                          )
+                        : null,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      if (selectedStudent != null) selectedStudent = null;
+                    });
                   },
-
-                  child:
-                  AnimatedContainer(
-
-                    duration:
-                    const Duration(
-                      milliseconds:
-                      200,
+                ),
+                if (selectedStudent != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: R.sp(context, 6)),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle, size: R.fs(context, 18), color: Colors.green),
+                        SizedBox(width: R.sp(context, 6)),
+                        Text(
+                          selectedStudent!,
+                          style: TextStyle(
+                            fontSize: R.fs(context, 18),
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        if (students.any((s) => s['name'] == selectedStudent && s['grado'] != null))
+                          Text(
+                            ' (${students.firstWhere((s) => s['name'] == selectedStudent)['grado']})',
+                            style: TextStyle(
+                              fontSize: R.fs(context, 16),
+                              color: Colors.grey,
+                            ),
+                          ),
+                      ],
                     ),
-
-                    decoration:
-                    BoxDecoration(
-
-                      gradient:
-                      LinearGradient(
-
-                        colors: [
-
-                          Colors.white,
-
-                          const Color(
-                            0xFFF8FBFF,
-                          ),
-                        ],
-
-                        begin:
-                        Alignment
-                            .topLeft,
-
-                        end:
-                        Alignment
-                            .bottomRight,
-                      ),
-
-                      borderRadius:
-                      BorderRadius.circular(
-                        R.sp(context, 32),
-                      ),
-
+                  ),
+                if (selectedStudent == null && _filteredStudents.isNotEmpty)
+                  Container(
+                    constraints: BoxConstraints(maxHeight: R.sp(context, 220)),
+                    margin: EdgeInsets.only(top: R.sp(context, 6)),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-
                         BoxShadow(
-
-                          color:
-                          Colors
-                              .black12,
-
-                          blurRadius:
-                          18,
-
-                          offset:
-                          const Offset(
-                            0,
-                            8,
-                          ),
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
-
-                      border:
-                      Border.all(
-
-                        color:
-                        Colors
-                            .white,
-
-                        width: 2,
-                      ),
                     ),
-
-                    child: Padding(
-
-                      padding: EdgeInsets.all(
-                        R.sp(context, 14),
-                      ),
-
-                      child: Column(
-
-                        mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-
-                        children: [
-
-                          Container(
-
-                            padding: EdgeInsets.all(
-                              R.sp(context, 14),
-                            ),
-
-                            decoration:
-                            BoxDecoration(
-
-                              color:
-                              Colors.blue.shade100,
-
-                              shape:
-                              BoxShape.circle,
-                            ),
-
-                            child: Icon(
-
-                              productIcons[
-                                  product['icon']
-                                      as String?] ??
-                                  Icons.fastfood_rounded,
-
-                              size: R.sp(context, 42),
-
-                              color:
-                              Colors.blue,
+                    child: ListView.builder(
+                      padding: EdgeInsets.symmetric(vertical: R.sp(context, 6)),
+                      itemCount: _filteredStudents.length,
+                      itemBuilder: (context, index) {
+                        final s = _filteredStudents[index];
+                        return ListTile(
+                          dense: true,
+                          title: Text(
+                            s['name'],
+                            style: TextStyle(
+                              fontSize: R.fs(context, 18),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-
-                          // NAME
-
-                          Text(
-
-                            product['name'],
-
-                            textAlign:
-                            TextAlign.center,
-
-                            style:
-                            TextStyle(
-
-                              fontSize: R.fs(context, 22),
-
-                              fontWeight:
-                              FontWeight.bold,
-
-                              color:
-                              Color(
-                                0xFF1E1E2D,
-                              ),
-                            ),
-                          ),
-
-                          // PRICE
-
-                          Text(
-
-                            '\$${(product['price'] as num).toDouble().toStringAsFixed(2)}',
-
-                            style:
-                            TextStyle(
-
-                              fontSize: R.fs(context, 24),
-
-                              fontWeight:
-                              FontWeight.bold,
-
-                              color:
-                              Colors.green.shade600,
-                            ),
-                          ),
-
-                          // STOCK
-
-                          Container(
-
-                            padding: EdgeInsets.symmetric(
-                              horizontal: R.sp(context, 18),
-                              vertical: R.sp(context, 10),
-                            ),
-
-                            decoration:
-                            BoxDecoration(
-
-                              color:
-                              const Color(
-                                0xFFF5F5F5,
-                              ),
-
-                              borderRadius:
-                              BorderRadius.circular(
-                                R.sp(context, 18),
-                              ),
-                            ),
-
-                            child: Text(
-
-                              product['stock'] <= 0
-                                  ? 'AGOTADO'
-                                  : 'Stock: ${product['stock']}',
-
-                              style: TextStyle(
-
-                                fontSize: R.fs(context, 16),
-
-                                color:
-                                product['stock'] <= 0
-                                    ? Colors.red
-                                    : Colors.black54,
-
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            ),
-                                                  ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          );
-
-          final panelWidget = Expanded(
-            flex: isWide ? 1 : 1,
-
-            child: Container(
-
-              padding:
-              EdgeInsets.all(
-                R.sp(context, 30),
-              ),
-
-              color:
-              Theme.of(context).cardColor,
-
-              child: SingleChildScrollView(
-
-                child: Column(
-
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-
-                children: [
-
-                  Text(
-
-                    'Nueva Venta',
-
-                    style: TextStyle(
-
-                      fontSize: R.fs(context, 36),
-
-                      fontWeight:
-                      FontWeight.bold,
-                    ),
-                  ),
-
-                  SizedBox(
-                    height: R.sp(context, 30),
-                  ),
-
-                  // STUDENT
-
-                  DropdownButtonFormField<
-                      String>(
-
-                    value:
-                    selectedStudent,
-
-                    decoration:
-                    const InputDecoration(
-
-                      labelText:
-                      'Estudiante',
-
-                      border:
-                      OutlineInputBorder(),
-                    ),
-
-                    items: students.map((student) {
-
-                      return DropdownMenuItem<String>(
-
-                        value:
-                        student['name'],
-
-                        child: Text(
-                          student['name'],
-                        ),
-                      );
-                    }).toList(),
-
-                    onChanged: (value) {
-
-                      setState(() {
-
-                        selectedStudent =
-                            value;
-                      });
-                    },
-                  ),
-
-                  SizedBox(
-                    height: R.sp(context, 20),
-                  ),
-
-                  // PAYMENT METHOD
-
-                  DropdownButtonFormField<
-                      String>(
-
-                    value:
-                    paymentMethod,
-
-                    decoration:
-                    const InputDecoration(
-
-                      labelText:
-                      'Método de pago',
-
-                      border:
-                      OutlineInputBorder(),
-                    ),
-
-                    items: const [
-
-                      DropdownMenuItem(
-
-                        value:
-                        'Efectivo',
-
-                        child: Text(
-                          'Efectivo',
-                        ),
-                      ),
-
-                      DropdownMenuItem(
-
-                        value:
-                        'Yappy',
-
-                        child: Text(
-                          'Yappy',
-                        ),
-                      ),
-
-                      DropdownMenuItem(
-
-                        value:
-                        'Pendiente',
-
-                        child: Text(
-                          'Pendiente',
-                        ),
-                      ),
-                    ],
-
-                    onChanged: (value) {
-
-                      setState(() {
-
-                        paymentMethod =
-                        value!;
-                      });
-                    },
-                  ),
-
-                  SizedBox(
-                    height: R.sp(context, 40),
-                  ),
-
-                  Text(
-
-                    'Carrito',
-
-                    style: TextStyle(
-
-                      fontSize: R.fs(context, 28),
-
-                      fontWeight:
-                      FontWeight.bold,
-                    ),
-                  ),
-
-                  SizedBox(
-                    height: R.sp(context, 20),
-                  ),
-
-                  cart.isEmpty
-
-                      ? const Center(
-
-                    child: Text(
-                      'Sin productos',
-                    ),
-                  )
-
-                      : ListView.builder(
-
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-
-                    itemCount:
-                    cart.length,
-
-                      itemBuilder:
-                          (context,
-                          index) {
-
-                        final item =
-                        cart[index];
-
-                        return Card(
-
-                          child:
-                          ListTile(
-
-                            title:
-                            Text(
-                              item[
-                              'name'],
-                            ),
-
-                            subtitle: Row(
-
-                              children: [
-
-                                // MINUS
-
-                                GestureDetector(
-
-                                  onTap: () {
-
-                                    setState(() {
-
-                                      item['quantity']--;
-
-                                      if (item['quantity'] <= 0) {
-
-                                        cart.removeAt(index);
-                                      }
-
-                                      calculateTotal();
-                                    });
-                                  },
-
-                                  child: Container(
-
-                                    padding: EdgeInsets.all(
-                                      R.sp(context, 6),
-                                    ),
-
-                                    decoration:
-                                    BoxDecoration(
-
-                                      color:
-                                      Colors.red.shade100,
-
-                                      borderRadius:
-                                      BorderRadius.circular(
-                                        10,
-                                      ),
-                                    ),
-
-                                    child: Icon(
-
-                                      Icons.remove,
-
-                                      size: R.sp(context, 18),
-
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ),
-
-                                SizedBox(width: R.sp(context, 14)),
-
-                                // QUANTITY
-
-                                Text(
-
-                                  '${item['quantity']}',
-
+                          subtitle: s['grado'] != null
+                              ? Text(
+                                  s['grado'],
                                   style: TextStyle(
-
-                                    fontSize: R.fs(context, 18),
-
-                                    fontWeight:
-                                    FontWeight.bold,
+                                    fontSize: R.fs(context, 14),
+                                    color: Colors.grey,
                                   ),
-                                ),
-
-                                SizedBox(width: R.sp(context, 14)),
-
-                                // PLUS
-
-                                GestureDetector(
-
-                                  onTap: () {
-
-                                    setState(() {
-
-                                      item['quantity']++;
-
-                                      calculateTotal();
-                                    });
-                                  },
-
-                                  child: Container(
-
-                                    padding: EdgeInsets.all(
-                                      R.sp(context, 6),
-                                    ),
-
-                                    decoration:
-                                    BoxDecoration(
-
-                                      color:
-                                      Colors.green.shade100,
-
-                                      borderRadius:
-                                      BorderRadius.circular(
-                                        10,
-                                      ),
-                                    ),
-
-                                    child: Icon(
-
-                                      Icons.add,
-
-                                      size: R.sp(context, 18),
-
-                                      color: Colors.green,
-                                    ),
-                                  ),
-                                ),
-
-                                SizedBox(width: R.sp(context, 18)),
-
-                                Text(
-                                  'x \$${item['price']}',
-                                ),
-                              ],
-                            ),
-                            trailing:
-                            Text(
-                              '\$${((item['price'] as num).toDouble() * item['quantity']).toStringAsFixed(2)}',
-                            ),
-                          ),
+                                )
+                              : null,
+                          onTap: () {
+                            setState(() {
+                              selectedStudent = s['name'];
+                              studentSearchController.text = s['name'];
+                            });
+                          },
                         );
                       },
                     ),
-
-                  SizedBox(
-                    height: R.sp(context, 20),
                   ),
-
-                  Container(
-
-                    width:
-                    double.infinity,
-
-                    padding: EdgeInsets.all(
-                      R.sp(context, 30),
-                    ),
-
-                    decoration:
-                    BoxDecoration(
-
-                      color:
-                      Colors.blue.shade50,
-
-                      borderRadius:
-                      BorderRadius.circular(
-                        R.sp(context, 25),
-                      ),
-                    ),
-
-                    child: Column(
-
-                      children: [
-
-                        Text(
-
-                          'TOTAL',
-
-                          style:
-                          TextStyle(
-
-                            fontSize: R.fs(context, 18),
-                          ),
-                        ),
-
-                        SizedBox(
-                          height: R.sp(context, 10),
-                        ),
-
-                        Text(
-
-                          '\$${total.toStringAsFixed(2)}',
-
-                          style:
-                          TextStyle(
-
-                            fontSize: R.fs(context, 48),
-
-                            fontWeight:
-                            FontWeight.bold,
-
-                            color:
-                            Colors.blue,
-                          ),
-                        ),
-                      ],
-                    ),
+                SizedBox(height: R.sp(context, 12)),
+                DropdownButtonFormField<String>(
+                  initialValue: paymentMethod,
+                  decoration: const InputDecoration(
+                    labelText: 'Método de pago',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
-
-                  SizedBox(
-                    height: R.sp(context, 25),
-                  ),
-
-                  // BUTTON
-
-                  SizedBox(
-
-                    width:
-                    double.infinity,
-
-                    height: R.sp(context, 70),
-
-                    child:
-                    ElevatedButton(
-
-                      onPressed:
-                      completeSale,
-
-                      style:
-                      ElevatedButton.styleFrom(
-
-                        backgroundColor:
-                        Colors.blue,
-
-                        shape:
-                        RoundedRectangleBorder(
-
-                          borderRadius:
-                          BorderRadius.circular(
-                            R.sp(context, 22),
-                          ),
-                        ),
-                      ),
-
-                      child:
-                      Text(
-
-                        'Completar Venta',
-
-                        style:
-                        TextStyle(
-
-                          color:
-                          Colors.white,
-
-                          fontSize: R.fs(context, 26),
-
-                          fontWeight:
-                          FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Efectivo', child: Text('Efectivo')),
+                    DropdownMenuItem(value: 'Yappy', child: Text('Yappy')),
+                    DropdownMenuItem(value: 'Pendiente', child: Text('Pendiente')),
                   ],
+                  onChanged: (value) {
+                    setState(() {
+                      paymentMethod = value!;
+                    });
+                  },
                 ),
-              ),
+              ],
             ),
           );
 
-          if (isWide) {
-            return Row(
-              children: [productsWidget, panelWidget],
-            );
-          }
           return Column(
-            children: [productsWidget, panelWidget],
+            children: [
+              if (!isWide) headerWidget,
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: loadData,
+                  child: GridView.builder(
+                    padding: EdgeInsets.all(R.sp(context, isWide ? 20 : 16)),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isWide ? 3 : 2,
+                      crossAxisSpacing: isWide ? 16 : 12,
+                      mainAxisSpacing: isWide ? 16 : 12,
+                      childAspectRatio: isWide ? 0.85 : 0.72,
+                    ),
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final product = products[index];
+                      return GestureDetector(
+                        onTap: () => addToCart(product),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).cardColor,
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Theme.of(context).cardColor
+                                    : const Color(0xFFF8FBFF),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(R.sp(context, 28)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(R.sp(context, 12)),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(R.sp(context, 12)),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    productIcons[product['icon'] as String?] ?? Icons.fastfood_rounded,
+                                    size: R.sp(context, 36),
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                                Text(
+                                  product['name'],
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: R.fs(context, isWide ? 18 : 16),
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF1E1E2D),
+                                  ),
+                                ),
+                                Text(
+                                  '\$${(product['price'] as num).toDouble().toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontSize: R.fs(context, isWide ? 20 : 18),
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green.shade600,
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: R.sp(context, 14),
+                                    vertical: R.sp(context, 6),
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).dividerColor.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(R.sp(context, 14)),
+                                  ),
+                                  child: Text(
+                                    product['stock'] <= 0
+                                        ? 'AGOTADO'
+                                        : 'Stock: ${product['stock']}',
+                                    style: TextStyle(
+                                      fontSize: R.fs(context, 13),
+                                      color: product['stock'] <= 0 ? Colors.red : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              if (isWide) Padding(
+                padding: EdgeInsets.all(R.sp(context, 20)),
+                child: headerWidget,
+              ),
+            ],
           );
         },
+      ),
+      bottomNavigationBar: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: R.sp(context, 20)),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '🛒 Carrito (${cart.length})',
+                      style: TextStyle(
+                        fontSize: R.fs(context, 16),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: R.sp(context, 4)),
+                    Text(
+                      'Total: \$${total.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: R.fs(context, 22),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 130,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (selectedStudent == null || cart.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Seleccioná estudiante y productos')),
+                      );
+                      return;
+                    }
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      builder: (ctx) {
+                        return StatefulBuilder(
+                          builder: (ctx, setSheetState) {
+                            return Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                R.sp(context, 24),
+                                R.sp(context, 24),
+                                R.sp(context, 24),
+                                MediaQuery.of(ctx).viewInsets.bottom + R.sp(context, 24),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Center(
+                                    child: Container(
+                                      width: 40,
+                                      height: 4,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade300,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: R.sp(context, 20)),
+                                  Text(
+                                    'Carrito',
+                                    style: TextStyle(
+                                      fontSize: R.fs(context, 24),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: R.sp(context, 16)),
+                                  if (cart.isEmpty)
+                                    const Padding(
+                                      padding: EdgeInsets.all(20),
+                                      child: Center(child: Text('Sin productos')),
+                                    )
+                                  else
+                                    ...cart.asMap().entries.map((entry) {
+                                      final item = entry.value;
+                                      final idx = entry.key;
+                                      return Padding(
+                                        padding: EdgeInsets.only(bottom: R.sp(context, 8)),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                item['name'],
+                                                style: TextStyle(fontSize: R.fs(context, 16)),
+                                              ),
+                                            ),
+                                            SizedBox(width: R.sp(context, 12)),
+                                            GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  item['quantity']--;
+                                                  if (item['quantity'] <= 0) {
+                                                    cart.removeAt(idx);
+                                                  }
+                                                  calculateTotal();
+                                                });
+                                                setSheetState(() {});
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.all(4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red.shade100,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Icon(Icons.remove, size: 16, color: Colors.red),
+                                              ),
+                                            ),
+                                            SizedBox(width: R.sp(context, 10)),
+                                            Text(
+                                              '${item['quantity']}',
+                                              style: TextStyle(
+                                                fontSize: R.fs(context, 16),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(width: R.sp(context, 10)),
+                                            GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  item['quantity']++;
+                                                  calculateTotal();
+                                                });
+                                                setSheetState(() {});
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.all(4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green.shade100,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Icon(Icons.add, size: 16, color: Colors.green),
+                                              ),
+                                            ),
+                                            SizedBox(width: R.sp(context, 16)),
+                                            Text(
+                                              '\$${((item['price'] as num).toDouble() * item['quantity']).toStringAsFixed(2)}',
+                                              style: TextStyle(
+                                                fontSize: R.fs(context, 16),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                  const Divider(height: 32),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Total',
+                                        style: TextStyle(
+                                          fontSize: R.fs(context, 20),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        '\$${total.toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: R.fs(context, 24),
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: R.sp(context, 24)),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 54,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        completeSale();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Completar Venta',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Pagar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

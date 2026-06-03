@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/firestore_service.dart';
 import '../services/responsive.dart';
+import '../services/exporter.dart';
 
 class PendingScreen extends StatefulWidget {
 
@@ -44,9 +45,13 @@ class _PendingScreenState
 
     for (var item in data) {
 
-      total +=
+      final amount =
           (item['amount'] as num)
               .toDouble();
+      final paid =
+          (item['paid'] as num?)
+              ?.toDouble() ?? 0;
+      total += amount - paid;
     }
 
     setState(() {
@@ -60,11 +65,114 @@ class _PendingScreenState
   }
 
   // =========================
+  // ABONAR (PARCIAL)
+  // =========================
+
+  void showAbonarDialog(
+      dynamic id,
+      String student,
+      double currentAmount,
+      double currentPaid,
+      ) {
+    final remaining = currentAmount - currentPaid;
+    final controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Abonar a $student',
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Debe: \$${remaining.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: R.fs(context, 20),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: R.sp(context, 15)),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Monto a abonar',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final amount = double.tryParse(
+                controller.text.replaceAll(',', '.'),
+              );
+              if (amount == null || amount <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Ingrese un monto válido'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+              if (amount > remaining) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('El abono no puede superar la deuda (\$${remaining.toStringAsFixed(2)})'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              try {
+                await FirestoreService.instance
+                    .abonarPending(id, amount);
+                Navigator.pop(ctx);
+                await loadPending();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Abono de \$${amount.toStringAsFixed(2)} registrado',
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Error al abonar: $e',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text('Abonar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================
   // PAGAR DEUDA
   // =========================
 
   Future<void> payPending(
-      int id,
+      dynamic id,
       String student,
       ) async {
 
@@ -132,6 +240,14 @@ class _PendingScreenState
 
         foregroundColor:
         Colors.white,
+
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.file_download_outlined),
+            tooltip: 'Exportar a Excel',
+            onPressed: () => exportPendingToExcel(context),
+          ),
+        ],
       ),
 
       body: Padding(
@@ -177,7 +293,7 @@ class _PendingScreenState
                 fontSize: R.fs(context, 20),
 
                 color:
-                Colors.black54,
+                Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
               ),
             ),
 
@@ -195,64 +311,68 @@ class _PendingScreenState
 
               padding:
               EdgeInsets.all(
-                R.sp(context, 30),
+                R.sp(context, 20),
               ),
 
               decoration:
               BoxDecoration(
 
                 color:
-                const Color(
-                  0xFFFFF4E5,
-                ),
+                Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2A2020)
+                    : const Color(0xFFFFF4E5),
 
                 borderRadius:
                 BorderRadius.circular(
-                  30,
+                  24,
                 ),
 
                 border: Border.all(
 
                   color:
-                  Colors.orange.shade300,
+                  Colors.orange,
                 ),
               ),
 
-              child: Column(
+              child: Row(
 
                 children: [
 
-                  Text(
-
-                    'Total Fiado',
-
-                    style: TextStyle(
-
-                      fontSize: R.fs(context, 24),
-
-                      color:
-                      Colors.orange,
+                  Container(
+                    padding: EdgeInsets.all(R.sp(context, 8)),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
                     ),
+                    child: const Icon(Icons.warning_rounded, color: Colors.orange),
                   ),
 
-                  SizedBox(
-                    height: R.sp(context, 15),
-                  ),
+                  SizedBox(width: R.sp(context, 16)),
 
-                  Text(
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
 
-                    '\$${totalPending.toStringAsFixed(2)}',
+                        Text(
+                          'Total Fiado',
+                          style: TextStyle(
+                            fontSize: R.fs(context, 18),
+                            color: Colors.orange,
+                          ),
+                        ),
 
-                    style:
-                    TextStyle(
+                        SizedBox(height: R.sp(context, 4)),
 
-                      fontSize: R.fs(context, 50),
-
-                      fontWeight:
-                      FontWeight.bold,
-
-                      color:
-                      Colors.orange,
+                        Text(
+                          '\$${totalPending.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: R.fs(context, 34),
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -322,10 +442,11 @@ class _PendingScreenState
                         fontSize: R.fs(context, 20),
 
                         color:
-                        Colors.black54,
-                      ),
-                    ),
-                  ],
+                        Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+
                 ),
               )
 
@@ -343,6 +464,11 @@ class _PendingScreenState
 
                   final pending =
                   pendingList[index];
+                  final amount =
+                      (pending['amount'] as num).toDouble();
+                  final paid =
+                      (pending['paid'] as num?)?.toDouble() ?? 0;
+                  final remaining = amount - paid;
 
                   return Container(
 
@@ -386,108 +512,118 @@ class _PendingScreenState
                       ],
                     ),
 
-                    child: Row(
-
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
 
-                        Expanded(
-                          child: Column(
+                        // Student name + amount row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
 
-                            crossAxisAlignment:
-                            CrossAxisAlignment
-                                .start,
+                                  Text(
+                                    pending['student'],
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: R.fs(context, 28),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
 
-                            children: [
+                                  SizedBox(height: R.sp(context, 6)),
 
-                              Text(
+                                  Text(
+                                    '\$${remaining.toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      fontSize: R.fs(context, 32),
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
 
-                                pending[
-                                'student'],
-                                overflow: TextOverflow.ellipsis,
+                                  if (paid > 0)
+                                    Padding(
+                                      padding: EdgeInsets.only(top: R.sp(context, 4)),
+                                      child: Text(
+                                        'Abonado: \$${paid.toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: R.fs(context, 18),
+                                          color: Colors.green.shade600,
+                                        ),
+                                      ),
+                                    ),
 
-                                style:
-                                TextStyle(
+                                ],
+                              ),
+                            ),
 
-                                  fontSize: R.fs(context, 28),
+                            SizedBox(width: R.sp(context, 12)),
 
-                                  fontWeight:
-                                  FontWeight.bold,
+                            // Abonar button
+                            SizedBox(
+                              width: 80,
+                              height: 42,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  showAbonarDialog(
+                                    pending['id'],
+                                    pending['student'],
+                                    amount,
+                                    paid,
+                                  );
+                                },
+                                child: Text(
+                                  'Abonar',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: R.fs(context, 16),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
+                            ),
 
-                              SizedBox(
-                                height: R.sp(context, 10),
-                              ),
+                            SizedBox(width: R.sp(context, 8)),
 
-                              Text(
-
-                                '\$${(pending['amount'] as num).toDouble().toStringAsFixed(2)}',
-
-                                style:
-                                TextStyle(
-
-                                  fontSize: R.fs(context, 32),
-
-                                  color:
-                                  Colors.orange,
-
-                                  fontWeight:
-                                  FontWeight.bold,
+                            // Pagar button
+                            SizedBox(
+                              width: 80,
+                              height: 42,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  payPending(
+                                    pending['id'],
+                                    pending['student'],
+                                  );
+                                },
+                                child: Text(
+                                  'Pagar',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: R.fs(context, 16),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(width: R.sp(context, 16)),
-
-                        ElevatedButton(
-
-                          style:
-                          ElevatedButton
-                              .styleFrom(
-
-                            backgroundColor:
-                            Colors.green,
-
-                            padding: EdgeInsets.symmetric(
-                              horizontal: R.sp(context, 30),
-                              vertical: R.sp(context, 20),
                             ),
-
-                            shape:
-                            RoundedRectangleBorder(
-
-                              borderRadius:
-                              BorderRadius.circular(
-                                18,
-                              ),
-                            ),
-                          ),
-
-                          onPressed: () {
-
-                            payPending(
-                              pending['id'],
-                              pending['student'],
-                            );
-                          },
-
-                          child: Text(
-
-                            'Pagar',
-
-                            style: TextStyle(
-
-                              color:
-                              Colors.white,
-
-                              fontSize: R.fs(context, 20),
-
-                              fontWeight:
-                              FontWeight.bold,
-                            ),
-                          ),
+                          ],
                         ),
                       ],
                     ),

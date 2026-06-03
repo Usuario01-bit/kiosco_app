@@ -25,8 +25,26 @@ class FirestoreService {
   // =====================================================
 
   Future<int> insertStudent(Map<String, dynamic> row) async {
-    await _db.collection('students').add({'name': row['name']});
+    await _db.collection('students').add({
+      'name': row['name'],
+      if (row.containsKey('grado') && row['grado'] != null && (row['grado'] as String).trim().isNotEmpty)
+        'grado': row['grado'].toString().trim(),
+    });
     return 0;
+  }
+
+  Future<int> insertManyStudents(List<Map<String, dynamic>> students) async {
+    final batch = _db.batch();
+    for (final row in students) {
+      final doc = _db.collection('students').doc();
+      batch.set(doc, {
+        'name': row['name'],
+        if (row.containsKey('grado') && row['grado'] != null && (row['grado'] as String).trim().isNotEmpty)
+          'grado': row['grado'].toString().trim(),
+      });
+    }
+    await batch.commit();
+    return students.length;
   }
 
   Future<List<Map<String, dynamic>>> getStudents() async {
@@ -40,6 +58,16 @@ class FirestoreService {
   Future<int> deleteStudent(dynamic id) async {
     await _db.collection('students').doc(id.toString()).delete();
     return 1;
+  }
+
+  Future<int> deleteAllStudents() async {
+    final snap = await _db.collection('students').get();
+    final batch = _db.batch();
+    for (final doc in snap.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+    return snap.docs.length;
   }
 
   // =====================================================
@@ -185,7 +213,6 @@ class FirestoreService {
     final snap = await _db
         .collection('sales')
         .where('student', isEqualTo: student)
-        .orderBy('date', descending: true)
         .get();
     return _sortSalesByDateTime(snap.docs.map(_docToMap).toList());
   }
@@ -313,8 +340,15 @@ class FirestoreService {
       'time': pending['time'],
       'recreo': pending['recreo'] ?? '',
       'paidAt': null,
+      'paid': 0.0,
     });
     return 0;
+  }
+
+  Future<void> abonarPending(dynamic pendingId, double amount) async {
+    await _db.collection('pending').doc(pendingId.toString()).update({
+      'paid': FieldValue.increment(amount),
+    });
   }
 
   Future<List<Map<String, dynamic>>> getPendings() async {
@@ -323,6 +357,24 @@ class FirestoreService {
         .orderBy('student')
         .get();
     return snap.docs.map(_docToMap).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getAllPendingSales() async {
+    final snap = await _db
+        .collection('sales')
+        .where('paymentMethod', isEqualTo: 'Pendiente')
+        .get();
+    final rows = snap.docs.map(_docToMap).toList();
+    rows.sort((a, b) {
+      final sa = (a['student'] as String? ?? '').toLowerCase();
+      final sb = (b['student'] as String? ?? '').toLowerCase();
+      final cmp = sa.compareTo(sb);
+      if (cmp != 0) return cmp;
+      final da = (a['date'] as String? ?? '');
+      final db2 = (b['date'] as String? ?? '');
+      return da.compareTo(db2);
+    });
+    return rows;
   }
 
   Future<int> deletePending(dynamic id) async {
@@ -352,7 +404,10 @@ class FirestoreService {
     final snap = await _db.collection('pending').get();
     double sum = 0;
     for (final doc in snap.docs) {
-      sum += (doc.data()['amount'] as num?)?.toDouble() ?? 0;
+      final data = doc.data();
+      final amount = (data['amount'] as num?)?.toDouble() ?? 0;
+      final paid = (data['paid'] as num?)?.toDouble() ?? 0;
+      sum += amount - paid;
     }
     return sum;
   }

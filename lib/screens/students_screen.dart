@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/excel_import.dart';
 import '../services/firestore_service.dart';
 import '../services/responsive.dart';
 
@@ -18,6 +19,9 @@ class _StudentsScreenState
   final TextEditingController nameController =
   TextEditingController();
 
+  final TextEditingController searchController =
+  TextEditingController();
+
   List<Map<String, dynamic>> students = [];
 
   // =====================================================
@@ -26,10 +30,15 @@ class _StudentsScreenState
 
   @override
   void initState() {
-
     super.initState();
-
     loadStudents();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    nameController.dispose();
+    super.dispose();
   }
 
   // =====================================================
@@ -43,9 +52,35 @@ class _StudentsScreenState
         .getStudents();
 
     setState(() {
-
       students = data;
     });
+  }
+
+  List<Map<String, dynamic>> get _filteredStudents {
+    final query = searchController.text.toLowerCase().trim();
+    if (query.isEmpty) return students;
+    return students.where((s) {
+      final name = (s['name'] as String? ?? '').toLowerCase();
+      return name.contains(query);
+    }).toList();
+  }
+
+  Map<String?, List<Map<String, dynamic>>> get _groupedByGrado {
+    final filtered = _filteredStudents;
+    final Map<String?, List<Map<String, dynamic>>> groups = {};
+    for (final s in filtered) {
+      final grado = s['grado'] as String?;
+      final key = (grado != null && grado.trim().isNotEmpty) ? grado.trim() : null;
+      groups.putIfAbsent(key, () => []);
+      groups[key]!.add(s);
+    }
+    final sortedKeys = groups.keys.toList()
+      ..sort((a, b) {
+        if (a == null) return 1;
+        if (b == null) return -1;
+        return a.compareTo(b);
+      });
+    return {for (final k in sortedKeys) k: groups[k]!};
   }
 
   // =====================================================
@@ -57,7 +92,6 @@ class _StudentsScreenState
     if (nameController.text
         .trim()
         .isEmpty) {
-
       return;
     }
 
@@ -103,6 +137,9 @@ class _StudentsScreenState
 
   @override
   Widget build(BuildContext context) {
+
+    final groups = _groupedByGrado;
+    final totalFiltered = _filteredStudents.length;
 
     return Scaffold(
 
@@ -207,9 +244,120 @@ class _StudentsScreenState
                           ),
                         ),
                       ),
-                    ],
+                  ],
+                ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: importFromExcel,
+                    icon: const Icon(
+                      Icons.file_upload_outlined,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    tooltip: 'Importar desde Excel',
+                  ),
+                  IconButton(
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          title: const Text('Eliminar todos'),
+                          content: const Text('¿Seguro que querés borrar TODOS los estudiantes?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancelar'),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text('Eliminar todo', style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        final count = await FirestoreService.instance.deleteAllStudents();
+                        if (!context.mounted) return;
+                        await loadStudents();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('$count estudiante${count == 1 ? '' : 's'} eliminado${count == 1 ? '' : 's'}')),
+                        );
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.delete_sweep,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    tooltip: 'Eliminar todos los estudiantes',
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // =================================================
+          // SEARCH
+          // =================================================
+
+          Padding(
+
+            padding: EdgeInsets.fromLTRB(
+              R.sp(context, 24),
+              R.sp(context, 16),
+              R.sp(context, 24),
+              0,
+            ),
+
+            child: TextField(
+
+              controller: searchController,
+
+              onChanged: (_) => setState(() {}),
+
+              decoration:
+              InputDecoration(
+
+                hintText:
+                'Buscar estudiante...',
+
+                prefixIcon:
+                const Icon(
+                  Icons.search,
+                ),
+
+                suffixIcon:
+                searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          searchController.clear();
+                          setState(() {});
+                        },
+                      )
+                    : null,
+
+                filled: true,
+
+                fillColor:
+                Colors.white,
+
+                border:
+                OutlineInputBorder(
+
+                  borderRadius:
+                  BorderRadius
+                      .circular(
+                      24),
+
+                  borderSide:
+                  BorderSide
+                      .none,
+                ),
               ),
             ),
           ),
@@ -220,8 +368,8 @@ class _StudentsScreenState
 
           Padding(
 
-            padding: EdgeInsets.all(
-              R.sp(context, 24),
+            padding: EdgeInsets.symmetric(
+              horizontal: R.sp(context, 24),
             ),
 
             child: Container(
@@ -359,6 +507,8 @@ class _StudentsScreenState
             ),
           ),
 
+          SizedBox(height: R.sp(context, 12)),
+
           // =================================================
           // LIST
           // =================================================
@@ -378,7 +528,7 @@ class _StudentsScreenState
                   fontSize: R.fs(context, 28),
 
                   color:
-                  Colors.grey,
+                  Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                 ),
               ),
             )
@@ -387,344 +537,455 @@ class _StudentsScreenState
 
                 onRefresh: loadStudents,
 
-                child: ListView.builder(
+                child: ListView(
 
               padding: EdgeInsets.symmetric(
                 horizontal: R.sp(context, 24),
               ),
 
-              itemCount:
-              students.length,
+              children: [
 
-              itemBuilder:
-                  (context, index) {
+                // =========================
+                // RESULT COUNT
+                // =========================
 
-                final student =
-                students[index];
-
-                return Container(
-
-                  margin:
-                  const EdgeInsets
-                      .only(
-                    bottom: 20,
-                  ),
-
-                  padding:
-                  const EdgeInsets
-                      .all(22),
-
-                  decoration:
-                  BoxDecoration(
-
-                    color:
-                    Theme.of(context)
-                        .cardColor,
-
-                    borderRadius:
-                    BorderRadius
-                        .circular(
-                        26),
-
-                    boxShadow: [
-
-                      BoxShadow(
-
-                        color: Colors
-                            .black
-                            .withValues(alpha: 
-                            0.04),
-
-                        blurRadius:
-                        14,
-
-                        offset:
-                        const Offset(
-                            0, 6),
+                if (searchController.text.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: R.sp(context, 12),
+                    ),
+                    child: Text(
+                      '$totalFiltered resultado${totalFiltered == 1 ? '' : 's'}',
+                      style: TextStyle(
+                        fontSize: R.fs(context, 18),
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                       ),
-                    ],
+                    ),
                   ),
 
-                  child: Row(
+                // =========================
+                // GROUPED LIST
+                // =========================
 
+                for (final entry in groups.entries)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
 
-                      Container(
-
-                        padding: EdgeInsets.all(R.sp(context, 12)),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDBEAFE).withValues(alpha: 0.9),
-                          shape: BoxShape.circle,
+                      // Grade header
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: R.sp(context, 8),
                         ),
-                        child: const Icon(
-                          Icons.person,
-                          color: Color(0xFF2563EB),
-                          size: 24,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.school,
+                              size: R.fs(context, 22),
+                              color: const Color(0xFF4A90E2),
+                            ),
+                            SizedBox(width: R.sp(context, 8)),
+                            Text(
+                              entry.key ?? 'Sin grado',
+                              style: TextStyle(
+                                fontSize: R.fs(context, 22),
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF4A90E2),
+                              ),
+                            ),
+                            Spacer(),
+                            Text(
+                              '${entry.value.length}',
+                              style: TextStyle(
+                                fontSize: R.fs(context, 18),
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
 
-                      SizedBox(
-                          width: R.sp(context, 20)),
+                      // Students in this grade
+                      for (final student in entry.value)
+                        Container(
 
-                      Expanded(
+                          margin:
+                          const EdgeInsets
+                              .only(
+                            bottom: 14,
+                          ),
 
-                        child: Text(
+                          padding:
+                          const EdgeInsets
+                              .all(18),
 
-                          student['name'],
-                          overflow: TextOverflow.ellipsis,
+                          decoration:
+                          BoxDecoration(
 
-                          style:
-                          TextStyle(
+                            color:
+                            Theme.of(context)
+                                .cardColor,
 
-                            fontSize: R.fs(context, 24),
+                            borderRadius:
+                            BorderRadius
+                                .circular(
+                                26),
 
-                            fontWeight:
-                            FontWeight
-                                .bold,
+                            boxShadow: [
+
+                              BoxShadow(
+
+                                color: Colors
+                                    .black
+                                    .withValues(alpha: 
+                                    0.04),
+
+                                blurRadius:
+                                14,
+
+                                offset:
+                                const Offset(
+                                    0, 6),
+                              ),
+                            ],
+                          ),
+
+                          child: Row(
+
+                            children: [
+
+                              Container(
+
+                                padding: EdgeInsets.all(R.sp(context, 10)),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.person,
+                                  color: Color(0xFF2563EB),
+                                  size: 22,
+                                ),
+                              ),
+
+                              SizedBox(
+                                  width: R.sp(context, 16)),
+
+                              Expanded(
+
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      student['name'],
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: R.fs(context, 22),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (student['grado'] != null && (student['grado'] as String).trim().isNotEmpty)
+                                      Text(
+                                        student['grado'],
+                                        style: TextStyle(
+                                          fontSize: R.fs(context, 16),
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+
+                                onPressed: () async {
+                                  try {
+                                  final sales =
+                                  await FirestoreService.instance
+                                      .getSalesByStudent(
+
+                                    student['name'],
+                                  );
+
+                                  if (!context.mounted) return;
+
+                                  showDialog(
+
+                                    context: context,
+
+                                    builder: (ctx) {
+
+                                      return AlertDialog(
+
+                                        title: Text(
+                                          student['name'],
+                                        ),
+
+                                        content: ConstrainedBox(
+
+                                          constraints: BoxConstraints(
+                                            maxHeight: MediaQuery.of(context).size.height * 0.6,
+                                          ),
+
+                                          child: SizedBox(
+
+                                            width: MediaQuery.of(context).size.width * 0.9,
+
+                                            child: sales.isEmpty
+
+                                                ? const Text(
+                                              'Sin compras',
+                                            )
+
+                                                : ListView.builder(
+
+                                              shrinkWrap: true,
+
+                                              itemCount:
+                                              sales.length,
+
+                                              itemBuilder:
+                                                  (context,
+                                                  index) {
+
+                                                final sale =
+                                                sales[index];
+
+                                                return ListTile(
+
+                                                  onTap: () async {
+
+                                                    final method = (sale['paymentMethod'] ?? '').toString().toLowerCase();
+
+                                                    if (method.contains('pendiente')) {
+
+                                                      await FirestoreService.instance
+                                                          .paySale(sale['id']);
+
+                                                      await loadStudents();
+
+                                                      if (ctx.mounted) Navigator.pop(ctx);
+                                                    }
+                                                  },
+                                                  leading:
+                                                  const Icon(
+                                                    Icons.receipt,
+                                                  ),
+                                                  title: Text(
+                                                    sale['product'] ?? 'Producto',
+                                                  ),
+
+                                                  subtitle: Column(
+                                                    crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        sale['paid_at'] != null && (sale['paid_at'] as String).length >= 10
+                                                            ? 'Pagado el ${sale['paid_at'].toString().substring(0, 10)}'
+                                                            : (sale['paymentMethod'] ?? '')
+                                                            .toString()
+                                                            .toLowerCase()
+                                                            .contains('pendiente')
+                                                            ? 'Pendiente'
+                                                            : 'Pagado',
+
+                                                        style: TextStyle(
+                                                          color: (sale['paymentMethod'] ?? '')
+                                                              .toString()
+                                                              .toLowerCase()
+                                                              .contains('pendiente')
+                                                              ? Colors.orange
+                                                              : Colors.green,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+
+                                                      const SizedBox(height: 4),
+
+                                                      Text(
+                                                        '${sale['date'] ?? ''} - ${sale['time'] ?? ''}',
+
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+
+                                                      Text(
+                                                        sale['recreo'] ??
+                                                            'Sin recreo',
+
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  trailing: Text(
+
+                                                    '\$${(sale['total'] as num).toDouble().toStringAsFixed(2)}',
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                        actions: [
+
+                                          TextButton(
+
+                                            onPressed: () {
+
+                                              Navigator.pop(
+                                                  ctx);
+                                            },
+
+                                            child: const Text(
+                                              'Cerrar',
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error al cargar historial: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+
+                              icon: Icon(
+                                Icons.history,
+
+                                  color: Colors.blue,
+
+                                  size: R.sp(context, 26),
+                                ),
+                              ),
+                              IconButton(
+
+                                onPressed: () {
+
+                                  showDialog(
+
+                                    context: context,
+
+                                    builder: (ctx) => AlertDialog(
+
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+
+                                      title: const Text('Eliminar estudiante'),
+
+                                      content: Text('¿Seguro que querés eliminar a "${student['name']}"?'),
+
+                                      actions: [
+
+                                        TextButton(
+
+                                          onPressed: () => Navigator.pop(ctx),
+                                          child: const Text('Cancelar'),
+                                        ),
+
+                                        ElevatedButton(
+
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                          ),
+
+                                          onPressed: () {
+
+                                            Navigator.pop(ctx);
+
+                                            deleteStudent(
+                                              student['id'],
+                                            );
+                                          },
+
+                                          child: const Text(
+                                            'Eliminar',
+                                            style: TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+
+                                icon: Icon(
+
+                                  Icons.delete,
+
+                                  color:
+                                  Colors.red,
+
+                                  size: R.sp(context, 26),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      IconButton(
-
-                        onPressed: () async {
-                          try {
-                          final sales =
-                          await FirestoreService.instance
-                              .getSalesByStudent(
-
-                            student['name'],
-                          );
-
-                          if (!context.mounted) return;
-
-                          showDialog(
-
-                            context: context,
-
-                            builder: (ctx) {
-
-                              return AlertDialog(
-
-                                title: Text(
-                                  student['name'],
-                                ),
-
-                                content: ConstrainedBox(
-
-                                  constraints: BoxConstraints(
-                                    maxHeight: MediaQuery.of(context).size.height * 0.6,
-                                  ),
-
-                                  child: SizedBox(
-
-                                    width: MediaQuery.of(context).size.width * 0.9,
-
-                                    child: sales.isEmpty
-
-                                        ? const Text(
-                                      'Sin compras',
-                                    )
-
-                                        : ListView.builder(
-
-                                      shrinkWrap: true,
-
-                                      itemCount:
-                                      sales.length,
-
-                                      itemBuilder:
-                                          (context,
-                                          index) {
-
-                                        final sale =
-                                        sales[index];
-
-                                        return ListTile(
-
-                                          onTap: () async {
-
-                                            final method = (sale['paymentMethod'] ?? '').toString().toLowerCase();
-
-                                            if (method.contains('pendiente')) {
-
-                                              await FirestoreService.instance
-                                                  .paySale(sale['id']);
-
-                                              await loadStudents();
-
-                                              if (ctx.mounted) Navigator.pop(ctx);
-                                            }
-                                          },
-                                          leading:
-                                          const Icon(
-                                            Icons.receipt,
-                                          ),
-                                          title: Text(
-                                            sale['product'] ?? 'Producto',
-                                          ),
-
-                                          subtitle: Column(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                sale['paid_at'] != null && (sale['paid_at'] as String).length >= 10
-                                                    ? 'Pagado el ${sale['paid_at'].toString().substring(0, 10)}'
-                                                    : (sale['paymentMethod'] ?? '')
-                                                    .toString()
-                                                    .toLowerCase()
-                                                    .contains('pendiente')
-                                                    ? 'Pendiente'
-                                                    : 'Pagado',
-
-                                                style: TextStyle(
-                                                  color: (sale['paymentMethod'] ?? '')
-                                                      .toString()
-                                                      .toLowerCase()
-                                                      .contains('pendiente')
-                                                      ? Colors.orange
-                                                      : Colors.green,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-
-                                              const SizedBox(height: 4),
-
-                                              Text(
-                                                '${sale['date'] ?? ''} - ${sale['time'] ?? ''}',
-
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-
-                                              Text(
-                                                sale['recreo'] ??
-                                                    'Sin recreo',
-
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          trailing: Text(
-
-                                            '\$${(sale['total'] as num).toDouble().toStringAsFixed(2)}',
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                actions: [
-
-                                  TextButton(
-
-                                    onPressed: () {
-
-                                      Navigator.pop(
-                                          ctx);
-                                    },
-
-                                    child: const Text(
-                                      'Cerrar',
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                          } catch (e) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error al cargar historial: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-
-                      icon: Icon(
-                        Icons.history,
-
-                          color: Colors.blue,
-
-                          size: R.sp(context, 30),
-                        ),
-                      ),
-                      IconButton(
-
-                        onPressed: () {
-
-                          showDialog(
-
-                            context: context,
-
-                            builder: (ctx) => AlertDialog(
-
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-
-                              title: const Text('Eliminar estudiante'),
-
-                              content: Text('¿Seguro que querés eliminar a "${student['name']}"?'),
-
-                              actions: [
-
-                                TextButton(
-
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: const Text('Cancelar'),
-                                ),
-
-                                ElevatedButton(
-
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-
-                                  onPressed: () {
-
-                                    Navigator.pop(ctx);
-
-                                    deleteStudent(
-                                      student['id'],
-                                    );
-                                  },
-
-                                  child: const Text(
-                                    'Eliminar',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-
-                        icon: Icon(
-
-                          Icons.delete,
-
-                          color:
-                          Colors.red,
-
-                          size: R.sp(context, 30),
-                        ),
-                      ),
                     ],
                   ),
-                );
-              },
+              ],
             ),
-          ),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  // =====================================================
+  // IMPORT FROM EXCEL
+  // =====================================================
+
+  Future<void> importFromExcel() async {
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final count = await pickAndImportStudents(context);
+
+      if (!context.mounted) return;
+
+      Navigator.pop(context);
+
+      if (count == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se importaron estudiantes')),
+        );
+      } else if (count == -1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('El archivo está vacío')),
+        );
+      } else if (count == -2) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('El Excel debe tener columnas: PrimerNombre, SegundoNombre, ApellidoMaterno, Grado')),
+        );
+      } else {
+        await loadStudents();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Se importaron $count estudiantes')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al importar: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 }

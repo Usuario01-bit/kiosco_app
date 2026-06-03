@@ -5,7 +5,7 @@ class R {
 
   static double _scale(BuildContext context) {
     final w = MediaQuery.sizeOf(context).width;
-    return (w / 430).clamp(0.85, 1.15);
+    return w / 430;
   }
 
   static double fs(BuildContext context, double size) {

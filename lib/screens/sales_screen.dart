@@ -559,7 +559,9 @@ class _SalesScreenState
               color:
               Theme.of(context).cardColor,
 
-              child: Column(
+              child: SingleChildScrollView(
+
+                child: Column(
 
                 crossAxisAlignment:
                 CrossAxisAlignment.start,
@@ -710,21 +712,22 @@ class _SalesScreenState
                     height: 20,
                   ),
 
-                  Expanded(
+                  cart.isEmpty
 
-                    child: cart.isEmpty
+                      ? const Center(
 
-                        ? const Center(
+                    child: Text(
+                      'Sin productos',
+                    ),
+                  )
 
-                      child: Text(
-                        'Sin productos',
-                      ),
-                    )
+                      : ListView.builder(
 
-                        : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
 
-                      itemCount:
-                      cart.length,
+                    itemCount:
+                    cart.length,
 
                       itemBuilder:
                           (context,
@@ -871,7 +874,6 @@ class _SalesScreenState
                         );
                       },
                     ),
-                  ),
 
                   const SizedBox(
                     height: 20,
@@ -996,7 +998,8 @@ class _SalesScreenState
                       ),
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           );

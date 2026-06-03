@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../services/firestore_service.dart';
+import '../services/database_helper.dart';
 import '../services/responsive.dart';
 import 'home_screen.dart';
 
@@ -156,7 +156,7 @@ class _LoginScreenState
     try {
 
       final user =
-      await FirestoreService.instance
+      await DatabaseHelper.instance
           .login(username, password);
 
       if (!mounted) return;

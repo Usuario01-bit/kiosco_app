@@ -10,24 +10,6 @@ class FirestoreService {
 
   FirebaseFirestore get _db => FirebaseFirestore.instance;
 
-  // Auth — se mantiene en SQLite local
-  Future<Map<String, dynamic>?> login(
-    String username,
-    String password,
-  ) =>
-      DatabaseHelper.instance.login(username, password);
-
-  Future<bool> changePassword(
-    String username,
-    String oldPassword,
-    String newPassword,
-  ) =>
-      DatabaseHelper.instance.changePassword(
-        username,
-        oldPassword,
-        newPassword,
-      );
-
   // =====================================================
   // HELPERS
   // =====================================================

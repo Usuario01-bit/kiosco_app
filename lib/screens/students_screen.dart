@@ -147,9 +147,9 @@ class _StudentsScreenState
 
                   Container(
 
-                    padding:
-                    const EdgeInsets.all(
-                        18),
+                    padding: EdgeInsets.all(
+                      R.sp(context, 18),
+                    ),
 
                     decoration:
                     BoxDecoration(
@@ -158,24 +158,24 @@ class _StudentsScreenState
                           .withValues(alpha: 0.2),
 
                       borderRadius:
-                      BorderRadius
-                          .circular(
-                          24),
+                      BorderRadius.circular(
+                        R.sp(context, 24),
+                      ),
                     ),
 
-                    child: const Icon(
+                    child: Icon(
 
                       Icons.people,
 
                       color: Colors.white,
 
-                      size: 40,
+                      size: R.sp(context, 40),
                     ),
                   ),
 
-                  const SizedBox(width: 20),
+                  SizedBox(width: R.sp(context, 20)),
 
-                  const Column(
+                  Column(
 
                     crossAxisAlignment:
                     CrossAxisAlignment
@@ -192,15 +192,14 @@ class _StudentsScreenState
                           color:
                           Colors.white,
 
-                          fontSize: 34,
+                          fontSize: R.fs(context, 34),
 
                           fontWeight:
-                          FontWeight
-                              .bold,
+                          FontWeight.bold,
                         ),
                       ),
 
-                      SizedBox(height: 8),
+                      SizedBox(height: R.sp(context, 8)),
 
                       Text(
 
@@ -211,7 +210,7 @@ class _StudentsScreenState
                           color:
                           Colors.white70,
 
-                          fontSize: 18,
+                          fontSize: R.fs(context, 18),
                         ),
                       ),
                     ],
@@ -227,14 +226,15 @@ class _StudentsScreenState
 
           Padding(
 
-            padding:
-            const EdgeInsets.all(24),
+            padding: EdgeInsets.all(
+              R.sp(context, 24),
+            ),
 
             child: Container(
 
-              padding:
-              const EdgeInsets.all(
-                  20),
+              padding: EdgeInsets.all(
+                R.sp(context, 20),
+              ),
 
               decoration: BoxDecoration(
 
@@ -307,7 +307,7 @@ class _StudentsScreenState
 
                   SizedBox(
 
-                    height: 72,
+                    height: R.sp(context, 72),
 
                     child:
                     ElevatedButton.icon(
@@ -319,17 +319,16 @@ class _StudentsScreenState
                         Icons.add,
                       ),
 
-                      label: const Text(
+                      label: Text(
 
                         'Agregar',
 
                         style: TextStyle(
 
-                          fontSize: 18,
+                          fontSize: R.fs(context, 18),
 
                           fontWeight:
-                          FontWeight
-                              .bold,
+                          FontWeight.bold,
                         ),
                       ),
 
@@ -374,7 +373,7 @@ class _StudentsScreenState
 
             child: students.isEmpty
 
-                ? const Center(
+                ? Center(
 
               child: Text(
 
@@ -382,7 +381,7 @@ class _StudentsScreenState
 
                 style: TextStyle(
 
-                  fontSize: 28,
+                  fontSize: R.fs(context, 28),
 
                   color:
                   Colors.grey,
@@ -396,10 +395,8 @@ class _StudentsScreenState
 
                 child: ListView.builder(
 
-              padding:
-              const EdgeInsets
-                  .symmetric(
-                horizontal: 24,
+              padding: EdgeInsets.symmetric(
+                horizontal: R.sp(context, 24),
               ),
 
               itemCount:
@@ -460,10 +457,9 @@ class _StudentsScreenState
 
                       Container(
 
-                        padding:
-                        const EdgeInsets
-                            .all(
-                            16),
+                        padding: EdgeInsets.all(
+                          R.sp(context, 16),
+                        ),
 
                         decoration:
                         BoxDecoration(
@@ -489,19 +485,20 @@ class _StudentsScreenState
                         ),
                       ),
 
-                      const SizedBox(
-                          width: 20),
+                      SizedBox(
+                          width: R.sp(context, 20)),
 
                       Expanded(
 
                         child: Text(
 
                           student['name'],
+                          overflow: TextOverflow.ellipsis,
 
                           style:
-                          const TextStyle(
+                          TextStyle(
 
-                            fontSize: 24,
+                            fontSize: R.fs(context, 24),
 
                             fontWeight:
                             FontWeight
@@ -520,11 +517,13 @@ class _StudentsScreenState
                             student['name'],
                           );
 
+                          if (!context.mounted) return;
+
                           showDialog(
 
                             context: context,
 
-                            builder: (context) {
+                            builder: (ctx) {
 
                               return AlertDialog(
 
@@ -532,106 +531,113 @@ class _StudentsScreenState
                                   student['name'],
                                 ),
 
-                                content: SizedBox(
+                                content: ConstrainedBox(
 
-                                  width: MediaQuery.of(context).size.width * 0.9,
+                                  constraints: BoxConstraints(
+                                    maxHeight: MediaQuery.of(context).size.height * 0.6,
+                                  ),
 
-                                  child: sales.isEmpty
+                                  child: SizedBox(
 
-                                      ? const Text(
-                                    'Sin compras',
-                                  )
+                                    width: MediaQuery.of(context).size.width * 0.9,
 
-                                      : ListView.builder(
+                                    child: sales.isEmpty
 
-                                    shrinkWrap: true,
+                                        ? const Text(
+                                      'Sin compras',
+                                    )
 
-                                    itemCount:
-                                    sales.length,
+                                        : ListView.builder(
 
-                                    itemBuilder:
-                                        (context,
-                                        index) {
+                                      shrinkWrap: true,
 
-                                      final sale =
-                                      sales[index];
+                                      itemCount:
+                                      sales.length,
 
-                                      return ListTile(
+                                      itemBuilder:
+                                          (context,
+                                          index) {
 
-                                        onTap: () async {
+                                        final sale =
+                                        sales[index];
 
-                                          final method = (sale['paymentMethod'] ?? '').toString().toLowerCase();
+                                        return ListTile(
 
-                                          if (method.contains('pendiente')) {
+                                          onTap: () async {
 
-                                            await FirestoreService.instance
-                                                .paySale(sale['id']);
+                                            final method = (sale['paymentMethod'] ?? '').toString().toLowerCase();
 
-                                            await loadStudents();
+                                            if (method.contains('pendiente')) {
 
-                                            Navigator.pop(context);
-                                          }
-                                        },
-                                        leading:
-                                        const Icon(
-                                          Icons.receipt,
-                                        ),
-                                        title: Text(
-                                          sale['product'] ?? 'Producto',
-                                        ),
+                                              await FirestoreService.instance
+                                                  .paySale(sale['id']);
 
-                                        subtitle: Column(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              sale['paid_at'] != null
-                                                  ? 'Pagado el ${sale['paid_at'].toString().substring(0, 10)}'
-                                                  : (sale['paymentMethod'] ?? '')
-                                                  .toString()
-                                                  .toLowerCase()
-                                                  .contains('pendiente')
-                                                  ? 'Pendiente'
-                                                  : 'Pagado',
+                                              await loadStudents();
 
-                                              style: TextStyle(
-                                                color: (sale['paymentMethod'] ?? '')
+                                              if (ctx.mounted) Navigator.pop(ctx);
+                                            }
+                                          },
+                                          leading:
+                                          const Icon(
+                                            Icons.receipt,
+                                          ),
+                                          title: Text(
+                                            sale['product'] ?? 'Producto',
+                                          ),
+
+                                          subtitle: Column(
+                                            crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                sale['paid_at'] != null && (sale['paid_at'] as String).length >= 10
+                                                    ? 'Pagado el ${sale['paid_at'].toString().substring(0, 10)}'
+                                                    : (sale['paymentMethod'] ?? '')
                                                     .toString()
                                                     .toLowerCase()
                                                     .contains('pendiente')
-                                                    ? Colors.orange
-                                                    : Colors.green,
-                                                fontWeight: FontWeight.bold,
+                                                    ? 'Pendiente'
+                                                    : 'Pagado',
+
+                                                style: TextStyle(
+                                                  color: (sale['paymentMethod'] ?? '')
+                                                      .toString()
+                                                      .toLowerCase()
+                                                      .contains('pendiente')
+                                                      ? Colors.orange
+                                                      : Colors.green,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                            ),
 
-                                            const SizedBox(height: 4),
+                                              const SizedBox(height: 4),
 
-                                            Text(
-                                              '${sale['date'] ?? ''} - ${sale['time'] ?? ''}',
+                                              Text(
+                                                '${sale['date'] ?? ''} - ${sale['time'] ?? ''}',
 
-                                              style: const TextStyle(
-                                                fontSize: 12,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
                                               ),
-                                            ),
 
-                                            Text(
-                                              sale['recreo'] ??
-                                                  'Sin recreo',
+                                              Text(
+                                                sale['recreo'] ??
+                                                    'Sin recreo',
 
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey,
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        trailing: Text(
+                                            ],
+                                          ),
+                                          trailing: Text(
 
-                                          '\$${(sale['total'] as num).toDouble().toStringAsFixed(2)}',
-                                        ),
-                                      );
-                                    },
+                                            '\$${(sale['total'] as num).toDouble().toStringAsFixed(2)}',
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                                 actions: [
@@ -641,7 +647,7 @@ class _StudentsScreenState
                                     onPressed: () {
 
                                       Navigator.pop(
-                                          context);
+                                          ctx);
                                     },
 
                                     child: const Text(
@@ -654,13 +660,13 @@ class _StudentsScreenState
                           );
                         },
 
-                        icon: const Icon(
+                        icon: Icon(
 
                           Icons.history,
 
                           color: Colors.blue,
 
-                          size: 30,
+                          size: R.sp(context, 30),
                         ),
                       ),
                       IconButton(
@@ -714,14 +720,14 @@ class _StudentsScreenState
                           );
                         },
 
-                        icon: const Icon(
+                        icon: Icon(
 
                           Icons.delete,
 
                           color:
                           Colors.red,
 
-                          size: 30,
+                          size: R.sp(context, 30),
                         ),
                       ),
                     ],

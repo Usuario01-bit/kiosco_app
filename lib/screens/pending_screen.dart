@@ -136,8 +136,9 @@ class _PendingScreenState
 
       body: Padding(
 
-        padding:
-        const EdgeInsets.all(20),
+        padding: EdgeInsets.all(
+          R.sp(context, 20),
+        ),
 
         child: Column(
 
@@ -150,38 +151,38 @@ class _PendingScreenState
             // TITULO
             // =========================
 
-            const Text(
+            Text(
 
               'Pendientes (Fiado)',
 
               style: TextStyle(
 
-                fontSize: 38,
+                fontSize: R.fs(context, 38),
 
                 fontWeight:
                 FontWeight.bold,
               ),
             ),
 
-            const SizedBox(
-              height: 10,
+            SizedBox(
+              height: R.sp(context, 10),
             ),
 
             Text(
 
               '${pendingList.length} estudiantes con deuda',
 
-              style: const TextStyle(
+              style: TextStyle(
 
-                fontSize: 20,
+                fontSize: R.fs(context, 20),
 
                 color:
                 Colors.black54,
               ),
             ),
 
-            const SizedBox(
-              height: 25,
+            SizedBox(
+              height: R.sp(context, 25),
             ),
 
             // =========================
@@ -221,21 +222,21 @@ class _PendingScreenState
 
                 children: [
 
-                  const Text(
+                  Text(
 
                     'Total Fiado',
 
                     style: TextStyle(
 
-                      fontSize: 24,
+                      fontSize: R.fs(context, 24),
 
                       color:
                       Colors.orange,
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 15,
+                  SizedBox(
+                    height: R.sp(context, 15),
                   ),
 
                   Text(
@@ -258,8 +259,8 @@ class _PendingScreenState
               ),
             ),
 
-            const SizedBox(
-              height: 30,
+            SizedBox(
+              height: R.sp(context, 30),
             ),
 
             // =========================
@@ -284,41 +285,41 @@ class _PendingScreenState
 
                       Icons.check_circle,
 
-                      size: 90,
+                      size: R.sp(context, 90),
 
                       color:
                       Colors.green
                           .shade400,
                     ),
 
-                    const SizedBox(
-                      height: 20,
+                    SizedBox(
+                      height: R.sp(context, 20),
                     ),
 
-                    const Text(
+                    Text(
 
                       'No hay pendientes',
 
                       style: TextStyle(
 
-                        fontSize: 30,
+                        fontSize: R.fs(context, 30),
 
                         fontWeight:
                         FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 10,
+                    SizedBox(
+                      height: R.sp(context, 10),
                     ),
 
-                    const Text(
+                    Text(
 
                       'Todas las cuentas están al día',
 
                       style: TextStyle(
 
-                        fontSize: 20,
+                        fontSize: R.fs(context, 20),
 
                         color:
                         Colors.black54,
@@ -345,15 +346,13 @@ class _PendingScreenState
 
                   return Container(
 
-                    margin:
-                    const EdgeInsets
-                        .only(
-                      bottom: 20,
+                    margin: EdgeInsets.only(
+                      bottom: R.sp(context, 20),
                     ),
 
-                    padding:
-                    const EdgeInsets
-                        .all(20),
+                    padding: EdgeInsets.all(
+                      R.sp(context, 20),
+                    ),
 
                     decoration:
                     BoxDecoration(
@@ -389,61 +388,58 @@ class _PendingScreenState
 
                     child: Row(
 
-                      mainAxisAlignment:
-                      MainAxisAlignment
-                          .spaceBetween,
-
                       children: [
 
-                        Column(
+                        Expanded(
+                          child: Column(
 
-                          crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
+                            crossAxisAlignment:
+                            CrossAxisAlignment
+                                .start,
 
-                          children: [
+                            children: [
 
-                            Text(
+                              Text(
 
-                              pending[
-                              'student'],
+                                pending[
+                                'student'],
+                                overflow: TextOverflow.ellipsis,
 
-                              style:
-                              const TextStyle(
+                                style:
+                                TextStyle(
 
-                                fontSize:
-                                28,
+                                  fontSize: R.fs(context, 28),
 
-                                fontWeight:
-                                FontWeight
-                                    .bold,
+                                  fontWeight:
+                                  FontWeight.bold,
+                                ),
                               ),
-                            ),
 
-                            const SizedBox(
-                              height: 10,
-                            ),
-
-                            Text(
-
-                              '\$${(pending['amount'] as num).toDouble().toStringAsFixed(2)}',
-
-                              style:
-                              const TextStyle(
-
-                                fontSize:
-                                32,
-
-                                color:
-                                Colors.orange,
-
-                                fontWeight:
-                                FontWeight
-                                    .bold,
+                              SizedBox(
+                                height: R.sp(context, 10),
                               ),
-                            ),
-                          ],
+
+                              Text(
+
+                                '\$${(pending['amount'] as num).toDouble().toStringAsFixed(2)}',
+
+                                style:
+                                TextStyle(
+
+                                  fontSize: R.fs(context, 32),
+
+                                  color:
+                                  Colors.orange,
+
+                                  fontWeight:
+                                  FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+
+                        SizedBox(width: R.sp(context, 16)),
 
                         ElevatedButton(
 
@@ -454,15 +450,9 @@ class _PendingScreenState
                             backgroundColor:
                             Colors.green,
 
-                            padding:
-                            const EdgeInsets
-                                .symmetric(
-
-                              horizontal:
-                              30,
-
-                              vertical:
-                              20,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: R.sp(context, 30),
+                              vertical: R.sp(context, 20),
                             ),
 
                             shape:
@@ -483,7 +473,7 @@ class _PendingScreenState
                             );
                           },
 
-                          child: const Text(
+                          child: Text(
 
                             'Pagar',
 
@@ -492,8 +482,7 @@ class _PendingScreenState
                               color:
                               Colors.white,
 
-                              fontSize:
-                              20,
+                              fontSize: R.fs(context, 20),
 
                               fontWeight:
                               FontWeight.bold,

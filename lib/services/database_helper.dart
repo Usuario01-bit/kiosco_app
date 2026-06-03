@@ -787,31 +787,32 @@ Future<int> getProductsCount() async {
   return (result.first['count'] as int?) ?? 0;
 }
 
-Future<double> getTodaySales() async {
+  Future<double> getTodaySales() async {
 
-  final db = await database;
+    final db = await database;
 
-  final today =
-  DateTime.now().toIso8601String().substring(0, 10);
+    final now = DateTime.now();
+    final today =
+    '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-  final result =
-  await db.rawQuery(
-    '''
+    final result =
+    await db.rawQuery(
+      '''
     SELECT SUM(total) as total
     FROM sales
     WHERE date = ?
     AND paymentMethod != 'Pendiente'
     ''',
 
-    [today],
-  );
+      [today],
+    );
 
-  return
-  (result.first['total']
-  as num?)
-      ?.toDouble() ??
-  0.0;
-}
+    return
+    (result.first['total']
+    as num?)
+        ?.toDouble() ??
+    0.0;
+  }
 
 Future<String?> getTopProduct() async {
 

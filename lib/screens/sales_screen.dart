@@ -286,7 +286,7 @@ class _SalesScreenState
           final isWide = constraints.maxWidth >= 600;
 
           final productsWidget = Expanded(
-            flex: isWide ? 3 : 1,
+            flex: isWide ? 3 : 2,
 
             child: RefreshIndicator(
 
@@ -364,7 +364,7 @@ class _SalesScreenState
 
                       borderRadius:
                       BorderRadius.circular(
-                        32,
+                        R.sp(context, 32),
                       ),
 
                       boxShadow: [
@@ -399,9 +399,8 @@ class _SalesScreenState
 
                     child: Padding(
 
-                      padding:
-                      const EdgeInsets.all(
-                        14,
+                      padding: EdgeInsets.all(
+                        R.sp(context, 14),
                       ),
 
                       child: Column(
@@ -411,13 +410,10 @@ class _SalesScreenState
 
                         children: [
 
-                          // ICON
-
                           Container(
 
-                            padding:
-                            const EdgeInsets.all(
-                              14,
+                            padding: EdgeInsets.all(
+                              R.sp(context, 14),
                             ),
 
                             decoration:
@@ -437,7 +433,7 @@ class _SalesScreenState
                                       as String?] ??
                                   Icons.fastfood_rounded,
 
-                              size: 42,
+                              size: R.sp(context, 42),
 
                               color:
                               Colors.blue,
@@ -454,10 +450,9 @@ class _SalesScreenState
                             TextAlign.center,
 
                             style:
-                            const TextStyle(
+                            TextStyle(
 
-                              fontSize:
-                              22,
+                              fontSize: R.fs(context, 22),
 
                               fontWeight:
                               FontWeight.bold,
@@ -478,8 +473,7 @@ class _SalesScreenState
                             style:
                             TextStyle(
 
-                              fontSize:
-                              24,
+                              fontSize: R.fs(context, 24),
 
                               fontWeight:
                               FontWeight.bold,
@@ -493,14 +487,9 @@ class _SalesScreenState
 
                           Container(
 
-                            padding:
-                            const EdgeInsets.symmetric(
-
-                              horizontal:
-                              18,
-
-                              vertical:
-                              10,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: R.sp(context, 18),
+                              vertical: R.sp(context, 10),
                             ),
 
                             decoration:
@@ -513,7 +502,7 @@ class _SalesScreenState
 
                               borderRadius:
                               BorderRadius.circular(
-                                18,
+                                R.sp(context, 18),
                               ),
                             ),
 
@@ -525,7 +514,7 @@ class _SalesScreenState
 
                               style: TextStyle(
 
-                                fontSize: 16,
+                                fontSize: R.fs(context, 16),
 
                                 color:
                                 product['stock'] <= 0
@@ -568,21 +557,21 @@ class _SalesScreenState
 
                 children: [
 
-                  const Text(
+                  Text(
 
                     'Nueva Venta',
 
                     style: TextStyle(
 
-                      fontSize: 36,
+                      fontSize: R.fs(context, 36),
 
                       fontWeight:
                       FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 30,
+                  SizedBox(
+                    height: R.sp(context, 30),
                   ),
 
                   // STUDENT
@@ -626,8 +615,8 @@ class _SalesScreenState
                     },
                   ),
 
-                  const SizedBox(
-                    height: 20,
+                  SizedBox(
+                    height: R.sp(context, 20),
                   ),
 
                   // PAYMENT METHOD
@@ -691,25 +680,25 @@ class _SalesScreenState
                     },
                   ),
 
-                  const SizedBox(
-                    height: 40,
+                  SizedBox(
+                    height: R.sp(context, 40),
                   ),
 
-                  const Text(
+                  Text(
 
                     'Carrito',
 
                     style: TextStyle(
 
-                      fontSize: 28,
+                      fontSize: R.fs(context, 28),
 
                       fontWeight:
                       FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 20,
+                  SizedBox(
+                    height: R.sp(context, 20),
                   ),
 
                   cart.isEmpty
@@ -772,8 +761,9 @@ class _SalesScreenState
 
                                   child: Container(
 
-                                    padding:
-                                    const EdgeInsets.all(6),
+                                    padding: EdgeInsets.all(
+                                      R.sp(context, 6),
+                                    ),
 
                                     decoration:
                                     BoxDecoration(
@@ -787,18 +777,18 @@ class _SalesScreenState
                                       ),
                                     ),
 
-                                    child: const Icon(
+                                    child: Icon(
 
                                       Icons.remove,
 
-                                      size: 18,
+                                      size: R.sp(context, 18),
 
                                       color: Colors.red,
                                     ),
                                   ),
                                 ),
 
-                                const SizedBox(width: 14),
+                                SizedBox(width: R.sp(context, 14)),
 
                                 // QUANTITY
 
@@ -806,16 +796,16 @@ class _SalesScreenState
 
                                   '${item['quantity']}',
 
-                                  style: const TextStyle(
+                                  style: TextStyle(
 
-                                    fontSize: 18,
+                                    fontSize: R.fs(context, 18),
 
                                     fontWeight:
                                     FontWeight.bold,
                                   ),
                                 ),
 
-                                const SizedBox(width: 14),
+                                SizedBox(width: R.sp(context, 14)),
 
                                 // PLUS
 
@@ -833,8 +823,9 @@ class _SalesScreenState
 
                                   child: Container(
 
-                                    padding:
-                                    const EdgeInsets.all(6),
+                                    padding: EdgeInsets.all(
+                                      R.sp(context, 6),
+                                    ),
 
                                     decoration:
                                     BoxDecoration(
@@ -848,18 +839,18 @@ class _SalesScreenState
                                       ),
                                     ),
 
-                                    child: const Icon(
+                                    child: Icon(
 
                                       Icons.add,
 
-                                      size: 18,
+                                      size: R.sp(context, 18),
 
                                       color: Colors.green,
                                     ),
                                   ),
                                 ),
 
-                                const SizedBox(width: 18),
+                                SizedBox(width: R.sp(context, 18)),
 
                                 Text(
                                   'x \$${item['price']}',
@@ -875,20 +866,17 @@ class _SalesScreenState
                       },
                     ),
 
-                  const SizedBox(
-                    height: 20,
+                  SizedBox(
+                    height: R.sp(context, 20),
                   ),
-
-                  // TOTAL
 
                   Container(
 
                     width:
                     double.infinity,
 
-                    padding:
-                    const EdgeInsets.all(
-                      30,
+                    padding: EdgeInsets.all(
+                      R.sp(context, 30),
                     ),
 
                     decoration:
@@ -899,7 +887,7 @@ class _SalesScreenState
 
                       borderRadius:
                       BorderRadius.circular(
-                        25,
+                        R.sp(context, 25),
                       ),
                     ),
 
@@ -907,20 +895,19 @@ class _SalesScreenState
 
                       children: [
 
-                        const Text(
+                        Text(
 
                           'TOTAL',
 
                           style:
                           TextStyle(
 
-                            fontSize:
-                            18,
+                            fontSize: R.fs(context, 18),
                           ),
                         ),
 
-                        const SizedBox(
-                          height: 10,
+                        SizedBox(
+                          height: R.sp(context, 10),
                         ),
 
                         Text(
@@ -928,10 +915,9 @@ class _SalesScreenState
                           '\$${total.toStringAsFixed(2)}',
 
                           style:
-                          const TextStyle(
+                          TextStyle(
 
-                            fontSize:
-                            48,
+                            fontSize: R.fs(context, 48),
 
                             fontWeight:
                             FontWeight.bold,
@@ -944,8 +930,8 @@ class _SalesScreenState
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 25,
+                  SizedBox(
+                    height: R.sp(context, 25),
                   ),
 
                   // BUTTON
@@ -955,7 +941,7 @@ class _SalesScreenState
                     width:
                     double.infinity,
 
-                    height: 70,
+                    height: R.sp(context, 70),
 
                     child:
                     ElevatedButton(
@@ -974,13 +960,13 @@ class _SalesScreenState
 
                           borderRadius:
                           BorderRadius.circular(
-                            22,
+                            R.sp(context, 22),
                           ),
                         ),
                       ),
 
                       child:
-                      const Text(
+                      Text(
 
                         'Completar Venta',
 
@@ -990,7 +976,7 @@ class _SalesScreenState
                           color:
                           Colors.white,
 
-                          fontSize: 26,
+                          fontSize: R.fs(context, 26),
 
                           fontWeight:
                           FontWeight.bold,

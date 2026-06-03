@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../services/firestore_service.dart';
+import '../services/responsive.dart';
 
 class ReportsScreen extends StatefulWidget {
 
@@ -119,8 +120,6 @@ class _ReportsScreenState
           productCounter[product]!;
 
           bestProduct = product;
-
-          print(bestProduct);
         }
       }
 
@@ -209,8 +208,9 @@ class _ReportsScreenState
         child: SingleChildScrollView(
 
 
-        padding:
-        const EdgeInsets.all(24),
+        padding: EdgeInsets.all(
+          R.sp(context, 24),
+        ),
 
         child: Column(
 
@@ -219,7 +219,7 @@ class _ReportsScreenState
 
           children: [
             SizedBox(
-              height: 50,
+              height: R.sp(context, 50),
 
               child: ListView(
                 scrollDirection: Axis.horizontal,
@@ -265,44 +265,44 @@ class _ReportsScreenState
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: R.sp(context, 20)),
 
             // =================================================
             // TITLE
             // =================================================
 
-            const Text(
+            Text(
 
               'Reportes',
 
               style: TextStyle(
 
-                fontSize: 38,
+                fontSize: R.fs(context, 38),
 
                 fontWeight:
                 FontWeight.bold,
 
                 color:
-                Color(0xFF1E1E2D),
+                const Color(0xFF1E1E2D),
               ),
             ),
 
-            const SizedBox(height: 10),
+            SizedBox(height: R.sp(context, 10)),
 
-            const Text(
+            Text(
 
               'Resumen general del kiosco',
 
               style: TextStyle(
 
-                fontSize: 18,
+                fontSize: R.fs(context, 18),
 
                 color:
                 Colors.black54,
               ),
             ),
 
-            const SizedBox(height: 30),
+            SizedBox(height: R.sp(context, 30)),
 
             // =================================================
             // TOP CARDS
@@ -343,19 +343,19 @@ class _ReportsScreenState
                     ],
                   );
                 }
-                return Column(
-                  children: [
-                    cards[0],
-                    const SizedBox(height: 20),
-                    cards[1],
-                    const SizedBox(height: 20),
-                    cards[2],
-                  ],
-                );
-              },
-            ),
+                  return Column(
+                    children: [
+                      cards[0],
+                      SizedBox(height: R.sp(context, 20)),
+                      cards[1],
+                      SizedBox(height: R.sp(context, 20)),
+                      cards[2],
+                    ],
+                  );
+                },
+              ),
 
-            const SizedBox(height: 30),
+              SizedBox(height: R.sp(context, 30)),
 
             LayoutBuilder(
               builder: (context, constraints) {
@@ -387,7 +387,7 @@ class _ReportsScreenState
                 return Column(
                   children: [
                     cards[0],
-                    const SizedBox(height: 20),
+                    SizedBox(height: R.sp(context, 20)),
                     cards[1],
                   ],
                 );
@@ -400,9 +400,8 @@ class _ReportsScreenState
 
             Container(
 
-              padding:
-              const EdgeInsets.all(
-                24,
+              padding: EdgeInsets.all(
+                R.sp(context, 24),
               ),
 
               decoration:
@@ -443,26 +442,26 @@ class _ReportsScreenState
 
                 children: [
 
-                  const Text(
+                  Text(
 
                     'Métodos de Pago',
 
                     style: TextStyle(
 
-                      fontSize: 26,
+                      fontSize: R.fs(context, 26),
 
                       fontWeight:
                       FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 30,
+                  SizedBox(
+                    height: R.sp(context, 30),
                   ),
 
                   SizedBox(
 
-                    height: 350,
+                    height: R.sp(context, 350),
 
                     child: BarChart(
 
@@ -638,7 +637,7 @@ class _ReportsScreenState
               ),
             ),
 
-            const SizedBox(height: 30),
+            SizedBox(height: R.sp(context, 30)),
 
             // =================================================
             // SALES LIST
@@ -646,9 +645,8 @@ class _ReportsScreenState
 
             Container(
 
-              padding:
-              const EdgeInsets.all(
-                24,
+              padding: EdgeInsets.all(
+                R.sp(context, 24),
               ),
 
               decoration:
@@ -689,32 +687,31 @@ class _ReportsScreenState
 
                 children: [
 
-                  const Text(
+                  Text(
 
                     'Últimas Ventas',
 
                     style: TextStyle(
 
-                      fontSize: 26,
+                      fontSize: R.fs(context, 26),
 
                       fontWeight:
                       FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 20,
+                  SizedBox(
+                    height: R.sp(context, 20),
                   ),
 
                   sales.isEmpty
 
-                      ? const Center(
+                      ? Center(
 
                     child: Padding(
 
-                      padding:
-                      EdgeInsets.all(
-                        30,
+                      padding: EdgeInsets.all(
+                        R.sp(context, 30),
                       ),
 
                       child: Text(
@@ -722,7 +719,7 @@ class _ReportsScreenState
                         'No hay ventas',
 
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: R.fs(context, 18),
                         ),
                       ),
                     ),
@@ -747,14 +744,12 @@ class _ReportsScreenState
 
                       return Container(
 
-                        margin:
-                        const EdgeInsets.only(
-                          bottom: 16,
+                        margin: EdgeInsets.only(
+                          bottom: R.sp(context, 16),
                         ),
 
-                        padding:
-                        const EdgeInsets.all(
-                          20,
+                        padding: EdgeInsets.all(
+                          R.sp(context, 20),
                         ),
 
                         decoration:
@@ -777,9 +772,8 @@ class _ReportsScreenState
 
                             Container(
 
-                              padding:
-                              const EdgeInsets.all(
-                                14,
+                              padding: EdgeInsets.all(
+                                R.sp(context, 14),
                               ),
 
                               decoration:
@@ -803,8 +797,8 @@ class _ReportsScreenState
                               ),
                             ),
 
-                            const SizedBox(
-                              width: 18,
+                            SizedBox(
+                              width: R.sp(context, 18),
                             ),
 
                             Expanded(
@@ -821,20 +815,18 @@ class _ReportsScreenState
 
                                     sale['student'],
 
-                                    style:
-                                    const TextStyle(
+                                  style:
+                                  TextStyle(
 
-                                      fontSize:
-                                      20,
+                                    fontSize: R.fs(context, 20),
 
-                                      fontWeight:
-                                      FontWeight.bold,
+                                    fontWeight:
+                                    FontWeight.bold,
                                     ),
                                   ),
 
-                                  const SizedBox(
-                                    height:
-                                    4,
+                                  SizedBox(
+                                    height: R.sp(context, 4),
                                   ),
 
                                   Text(
@@ -857,10 +849,9 @@ class _ReportsScreenState
                               '\$${(sale['total'] as num).toDouble().toStringAsFixed(2)}',
 
                               style:
-                              const TextStyle(
+                              TextStyle(
 
-                                fontSize:
-                                22,
+                                fontSize: R.fs(context, 22),
 
                                 fontWeight:
                                 FontWeight.bold,
@@ -892,11 +883,11 @@ class _ReportsScreenState
       onTap: onTap,
 
       child: Container(
-        margin: const EdgeInsets.only(right: 12),
+        margin: EdgeInsets.only(right: R.sp(context, 12)),
 
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 14,
+        padding: EdgeInsets.symmetric(
+          horizontal: R.sp(context, 24),
+          vertical: R.sp(context, 14),
         ),
 
         decoration: BoxDecoration(
@@ -942,8 +933,7 @@ class _ReportsScreenState
 
     return Container(
 
-      padding:
-      const EdgeInsets.all(24),
+      padding: EdgeInsets.all(R.sp(context, 24)),
 
       decoration: BoxDecoration(
 
@@ -980,8 +970,7 @@ class _ReportsScreenState
 
           Container(
 
-            padding:
-            const EdgeInsets.all(14),
+            padding: EdgeInsets.all(R.sp(context, 14)),
 
             decoration:
             BoxDecoration(
@@ -993,7 +982,7 @@ class _ReportsScreenState
 
               borderRadius:
               BorderRadius.circular(
-                18,
+                R.sp(context, 18),
               ),
             ),
 
@@ -1003,11 +992,11 @@ class _ReportsScreenState
 
               color: color,
 
-              size: 30,
+              size: R.sp(context, 30),
             ),
           ),
 
-          const SizedBox(height: 24),
+          SizedBox(height: R.sp(context, 24)),
 
           Text(
 
@@ -1015,7 +1004,7 @@ class _ReportsScreenState
 
             style: TextStyle(
 
-              fontSize: 34,
+              fontSize: R.fs(context, 34),
 
               fontWeight:
               FontWeight.bold,
@@ -1024,15 +1013,15 @@ class _ReportsScreenState
             ),
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: R.sp(context, 8)),
 
           Text(
 
             title,
 
-            style: const TextStyle(
+            style: TextStyle(
 
-              fontSize: 18,
+              fontSize: R.fs(context, 18),
 
               color:
               Colors.black54,

@@ -140,13 +140,14 @@ class FirestoreService {
   }
 
   Future<void> payPendingSales(String student) async {
-    final batch = _db.batch();
     final salesSnap = await _db
         .collection('sales')
         .where('student', isEqualTo: student)
-        .where('paymentMethod', isEqualTo: 'Pendiente')
         .get();
+    final batch = _db.batch();
     for (final doc in salesSnap.docs) {
+      final pm = doc.data()['paymentMethod'] as String? ?? '';
+      if (!pm.toLowerCase().contains('pendiente')) continue;
       batch.update(doc.reference, {
         'paymentMethod': 'Efectivo',
         'paidAt': DateTime.now().toIso8601String(),
@@ -178,22 +179,23 @@ class FirestoreService {
     final snap = await _db
         .collection('sales')
         .orderBy('date', descending: true)
-        .orderBy('time', descending: true)
         .limit(limit)
         .get();
     return snap.docs.map(_docToMap).toList();
   }
 
   Future<double> getTodaySales() async {
+    final now = DateTime.now();
     final today =
-        DateTime.now().toIso8601String().substring(0, 10);
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final snap = await _db
         .collection('sales')
         .where('date', isEqualTo: today)
-        .where('paymentMethod', isNotEqualTo: 'Pendiente')
         .get();
     double sum = 0;
     for (final doc in snap.docs) {
+      final m = doc.data()['paymentMethod'] as String? ?? '';
+      if (m.toLowerCase().contains('pendiente')) continue;
       sum += (doc.data()['total'] as num?)?.toDouble() ?? 0;
     }
     return sum;
@@ -221,11 +223,12 @@ class FirestoreService {
     final snap = await _db
         .collection('sales')
         .where('date', isGreaterThanOrEqualTo: weekAgo)
-        .where('paymentMethod', isNotEqualTo: 'Pendiente')
         .get();
     final Map<String, double> grouped = {};
     for (final doc in snap.docs) {
       final d = doc.data();
+      final pm = d['paymentMethod'] as String? ?? '';
+      if (pm.toLowerCase().contains('pendiente')) continue;
       final date = d['date'] as String? ?? '';
       final total = (d['total'] as num?)?.toDouble() ?? 0;
       grouped[date] = (grouped[date] ?? 0) + total;
@@ -370,6 +373,14 @@ class FirestoreService {
       }
     }
 
+    String normalizeDate(String? date) {
+      if (date == null) return DateTime.now().toIso8601String().substring(0, 10);
+      if (date.contains('-')) return date;
+      final parts = date.split('/');
+      if (parts.length != 3) return date;
+      return '${parts[2].padLeft(4, '0')}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+    }
+
     existing = await _db.collection('sales').count().get();
     if (existing.count == 0) {
       final sales = await local.getSales();
@@ -381,7 +392,7 @@ class FirestoreService {
           'quantity': (s['quantity'] as num).toInt(),
           'total': (s['total'] as num).toDouble(),
           'paymentMethod': s['paymentMethod'],
-          'date': s['date'],
+          'date': normalizeDate(s['date'] as String?),
           'time': s['time'],
           'recreo': s['recreo'] ?? '',
           'paidAt': s['paid_at'],
@@ -396,7 +407,7 @@ class FirestoreService {
         await _db.collection('pending').add({
           'student': p['student'],
           'amount': (p['amount'] as num).toDouble(),
-          'date': p['date'],
+          'date': normalizeDate(p['date'] as String?),
           'time': p['time'],
           'recreo': p['recreo'] ?? '',
           'paidAt': p['paid_at'],

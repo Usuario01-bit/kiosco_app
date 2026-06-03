@@ -82,7 +82,7 @@ class _ProductsScreenState
 
           content: Column(
 
-            mainAxisSize: MainAxisSize.min, children: [ TextField( controller: nameController, decoration: InputDecoration( labelText: 'Nombre', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: priceController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Precio', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: stockController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Stock', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 20), Align( alignment: Alignment.centerLeft, child: Text( 'Icono', style: TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context) .textTheme .bodyMedium?.color, ), ), ), const SizedBox(height: 10), SizedBox( height: 100, child: SingleChildScrollView( child: Wrap( spacing: 8, runSpacing: 8, children: productIcons.entries .map((entry) { final isSelected = selectedIcon == entry.key; return GestureDetector( onTap: () { setDialogState(() { selectedIcon = entry.key; }); }, child: Container( width: 48, height: 48, decoration: BoxDecoration( color: isSelected ? const Color(0xFF2563EB) .withValues(alpha:  0.15) : Colors.grey .withValues(alpha: 0.08), borderRadius: BorderRadius.circular( 12), border: isSelected ? Border.all( color: const Color( 0xFF2563EB), width: 2) : null, ), child: Icon( entry.value, color: isSelected ? const Color( 0xFF2563EB) : Colors.grey[600], size: 24, ), ), ); }).toList(), ), ), ), ], ),
+            mainAxisSize: MainAxisSize.min, children: [ TextField( controller: nameController, decoration: InputDecoration( labelText: 'Nombre', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: priceController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Precio', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: stockController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Stock', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 20), Align( alignment: Alignment.centerLeft, child: Text( 'Icono', style: TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context) .textTheme .bodyMedium?.color, ), ), ),             const SizedBox(height: 10), SizedBox( height: 120, child: SingleChildScrollView( child: Wrap( spacing: 8, runSpacing: 8, children: productIcons.entries .map((entry) { final isSelected = selectedIcon == entry.key; return GestureDetector( onTap: () { setDialogState(() { selectedIcon = entry.key; }); }, child: Container( width: 48, height: 48, decoration: BoxDecoration( color: isSelected ? const Color(0xFF2563EB) .withValues(alpha:  0.15) : Colors.grey .withValues(alpha: 0.08), borderRadius: BorderRadius.circular( 12), border: isSelected ? Border.all( color: const Color( 0xFF2563EB), width: 2) : null, ), child: Icon( entry.value, color: isSelected ? const Color( 0xFF2563EB) : Colors.grey[600], size: 24, ), ), ); }).toList(), ), ), ), ], ),
 
           actions: [
 
@@ -458,6 +458,14 @@ class _ProductsScreenState
                 Navigator.pop(dialogContext);
 
                 loadProducts();
+
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Producto agregado correctamente'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
               },
 
               child: const Text(
@@ -686,8 +694,9 @@ class _ProductsScreenState
 
                 Container(
 
-                  padding:
-                  const EdgeInsets.all(22),
+                  padding: EdgeInsets.all(
+                    R.sp(context, 22),
+                  ),
 
                   decoration: BoxDecoration(
 
@@ -695,23 +704,23 @@ class _ProductsScreenState
 
                     borderRadius:
                     BorderRadius.circular(
-                      18,
+                      R.sp(context, 18),
                     ),
                   ),
 
-                  child: const Icon(
+                  child: Icon(
 
                     Icons.inventory_2,
 
                     color: Colors.white,
 
-                    size: 38,
+                    size: R.sp(context, 38),
                   ),
                 ),
 
-                const SizedBox(width: 18),
+                SizedBox(width: R.sp(context, 18)),
 
-                const Expanded(
+                Expanded(
 
                   child: Column(
 
@@ -728,14 +737,14 @@ class _ProductsScreenState
 
                           color: Colors.white,
 
-                          fontSize: 34,
+                          fontSize: R.fs(context, 34),
 
                           fontWeight:
                           FontWeight.bold,
                         ),
                       ),
 
-                      SizedBox(height: 5),
+                      SizedBox(height: R.sp(context, 5)),
 
                       Text(
 
@@ -745,7 +754,7 @@ class _ProductsScreenState
 
                           color: Colors.white70,
 
-                          fontSize: 18,
+                          fontSize: R.fs(context, 18),
                         ),
                       ),
                     ],
@@ -765,8 +774,7 @@ class _ProductsScreenState
 
               child: Padding(
 
-              padding:
-              const EdgeInsets.all(20),
+              padding: EdgeInsets.all(R.sp(context, 20)),
 
               child: GridView.builder(
 
@@ -828,14 +836,13 @@ class _ProductsScreenState
 
                     child: Padding(
 
-                      padding:
-                      const EdgeInsets.all(
-                        18,
-                      ),
+                padding: EdgeInsets.all(
+                  R.sp(context, 18),
+                ),
 
-                      child: Column(
+                child: Column(
 
-                        children: [
+                  children: [
 
                           Align(
 
@@ -853,9 +860,9 @@ class _ProductsScreenState
 
                           Container(
 
-                            width: 90,
+                            width: R.sp(context, 90),
 
-                            height: 90,
+                            height: R.sp(context, 90),
 
                             decoration:
                             BoxDecoration(
@@ -872,7 +879,7 @@ class _ProductsScreenState
                                 product,
                               ),
 
-                              size: 50,
+                              size: R.sp(context, 50),
 
                               color:
                               const Color(
@@ -881,44 +888,46 @@ class _ProductsScreenState
                             ),
                           ),
 
-                          const SizedBox(
-                            height: 20,
+                          SizedBox(
+                            height: R.sp(context, 20),
                           ),
 
                           Text(
 
                             product['name'],
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
 
                             style:
-                            const TextStyle(
+                            TextStyle(
 
-                              fontSize: 30,
+                              fontSize: R.fs(context, 30),
 
                               fontWeight:
                               FontWeight.bold,
                             ),
                           ),
 
-                          const SizedBox(
-                            height: 10,
+                          SizedBox(
+                            height: R.sp(context, 10),
                           ),
 
                           Text(
 
                             '\$${product['price'].toStringAsFixed(2)}',
 
-                            style: const TextStyle(
+                            style: TextStyle(
 
-                              fontSize: 26,
+                              fontSize: R.fs(context, 26),
 
-                              color: Color(0xFF16A34A),
+                              color: const Color(0xFF16A34A),
 
                               fontWeight: FontWeight.bold,
                             ),
                           ),
 
-                          const SizedBox(
-                            height: 20,
+                          SizedBox(
+                            height: R.sp(context, 20),
                           ),
 
                           Container(
@@ -926,11 +935,8 @@ class _ProductsScreenState
                             width:
                             double.infinity,
 
-                            padding:
-                            const EdgeInsets
-                                .symmetric(
-
-                              vertical: 18,
+                            padding: EdgeInsets.symmetric(
+                              vertical: R.sp(context, 18),
                             ),
 
                             decoration:
@@ -939,9 +945,8 @@ class _ProductsScreenState
                               color: color,
 
                               borderRadius:
-                              BorderRadius
-                                  .circular(
-                                18,
+                              BorderRadius.circular(
+                                R.sp(context, 18),
                               ),
                             ),
 
@@ -949,22 +954,22 @@ class _ProductsScreenState
 
                               children: [
 
-                                const Text(
+                                Text(
 
                                   'Stock disponible',
 
                                   style:
                                   TextStyle(
 
-                                    fontSize: 16,
+                                    fontSize: R.fs(context, 16),
 
                                     color:
                                     Colors.black54,
                                   ),
                                 ),
 
-                                const SizedBox(
-                                  height: 8,
+                                SizedBox(
+                                  height: R.sp(context, 8),
                                 ),
 
                                 Text(
@@ -972,15 +977,15 @@ class _ProductsScreenState
                                   '${product['stock']}',
 
                                   style:
-                                  const TextStyle(
+                                  TextStyle(
 
-                                    fontSize: 32,
+                                    fontSize: R.fs(context, 32),
 
                                     fontWeight:
                                     FontWeight.bold,
 
                                     color:
-                                    Color(
+                                    const Color(
                                       0xFF2563EB,
                                     ),
                                   ),
@@ -1020,9 +1025,8 @@ class _ProductsScreenState
                                       ),
                                     ),
 
-                                    padding:
-                                    const EdgeInsets.symmetric(
-                                      vertical: 16,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: R.sp(context, 16),
                                     ),
                                   ),
 
@@ -1086,9 +1090,8 @@ class _ProductsScreenState
                                       ),
                                     ),
 
-                                    padding:
-                                    const EdgeInsets.symmetric(
-                                      vertical: 16,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: R.sp(context, 16),
                                     ),
                                   ),
 

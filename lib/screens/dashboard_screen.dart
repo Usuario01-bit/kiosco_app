@@ -95,7 +95,7 @@ class _DashboardScreenState
   }) {
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(R.sp(context, 20)),
       decoration: BoxDecoration(
         color:
         Theme.of(context).cardColor,
@@ -121,31 +121,31 @@ class _DashboardScreenState
                 title,
                 style: TextStyle(
                   color: Colors.grey,
-                  fontSize: 16,
+                  fontSize: R.fs(context, 16),
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: R.sp(context, 10)),
               Text(
                 value,
-                style: const TextStyle(
-                  fontSize: 26,
+                style: TextStyle(
+                  fontSize: R.fs(context, 26),
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(R.sp(context, 14)),
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 
                   0.12),
               borderRadius:
-              BorderRadius.circular(18),
+              BorderRadius.circular(R.sp(context, 18)),
             ),
             child: Icon(
               icon,
               color: iconColor,
-              size: 30,
+              size: R.sp(context, 30),
             ),
           ),
         ],
@@ -176,32 +176,32 @@ class _DashboardScreenState
         ),
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: EdgeInsets.all(R.sp(context, 32)),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.cloud_off,
-                  size: 64,
+                  size: R.sp(context, 64),
                   color: Colors.grey,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: R.sp(context, 16)),
                 Text(
                   'Error al cargar datos',
-                  style: const TextStyle(
-                    fontSize: 20,
+                  style: TextStyle(
+                    fontSize: R.fs(context, 20),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: R.sp(context, 8)),
                 Text(
                   'Verificá tu conexión a internet',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: R.fs(context, 14),
                     color: Colors.grey,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: R.sp(context, 24)),
                 ElevatedButton.icon(
                   onPressed: loadDashboard,
                   icon: const Icon(Icons.refresh),
@@ -241,10 +241,10 @@ class _DashboardScreenState
                 mainAxisAlignment:
                 MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Dashboard',
                     style: TextStyle(
-                      fontSize: 34,
+                      fontSize: R.fs(context, 34),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -296,7 +296,7 @@ class _DashboardScreenState
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: R.sp(context, 8)),
               Text(
                 'Resumen general del kiosco',
                 style: TextStyle(
@@ -305,10 +305,10 @@ class _DashboardScreenState
                   ).textTheme.bodyMedium
                       ?.color
                       ?.withValues(alpha: 0.7),
-                  fontSize: 16,
+                  fontSize: R.fs(context, 16),
                 ),
               ),
-              const SizedBox(height: 25),
+              SizedBox(height: R.sp(context, 25)),
               GridView.count(
                 crossAxisCount: 2,
                 crossAxisSpacing: 15,
@@ -392,17 +392,17 @@ class _DashboardScreenState
             ).textTheme.bodyLarge?.color,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: R.sp(context, 12)),
         Container(
-          height: 200,
+          height: R.sp(context, 200),
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(
-              12, 20, 12, 0),
-          decoration: BoxDecoration(
-            color:
-            Theme.of(context).cardColor,
-            borderRadius:
-            BorderRadius.circular(24),
+              padding: EdgeInsets.fromLTRB(
+                  R.sp(context, 12), R.sp(context, 20), R.sp(context, 12), 0),
+              decoration: BoxDecoration(
+                color:
+                Theme.of(context).cardColor,
+                borderRadius:
+                BorderRadius.circular(R.sp(context, 24)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black

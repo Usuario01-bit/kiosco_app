@@ -134,9 +134,9 @@ class _HomeScreenState
 
           NavigationDestination(
 
-            icon: Icon(Icons.groups),
+            icon: Icon(Icons.people),
 
-            label: 'Estudiantes',
+            label: 'Alumnos',
           ),
 
           NavigationDestination(

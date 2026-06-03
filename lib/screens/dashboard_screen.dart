@@ -120,7 +120,7 @@ class _DashboardScreenState
               Text(
                 title,
                 style: TextStyle(
-                  color: Colors.grey,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                   fontSize: R.fs(context, 16),
                 ),
               ),
@@ -183,7 +183,7 @@ class _DashboardScreenState
                 Icon(
                   Icons.cloud_off,
                   size: R.sp(context, 64),
-                  color: Colors.grey,
+                  color: Theme.of(context).disabledColor,
                 ),
                 SizedBox(height: R.sp(context, 16)),
                 Text(
@@ -198,7 +198,7 @@ class _DashboardScreenState
                   'Verificá tu conexión a internet',
                   style: TextStyle(
                     fontSize: R.fs(context, 14),
-                    color: Colors.grey,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                   ),
                 ),
                 SizedBox(height: R.sp(context, 24)),
@@ -488,13 +488,24 @@ class _DashboardScreenState
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 40,
+                    reservedSize: 60,
                     getTitlesWidget:
                         (value, meta) {
-                      return Text(
-                        '\$${value.toInt()}',
-                        style: const TextStyle(
-                            fontSize: 10),
+                      final num = value.toInt();
+                      String label;
+                      if (num >= 1000) {
+                        label = '\$${(num / 1000).toStringAsFixed(1)}K';
+                      } else {
+                        label = '\$$num';
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                              fontSize: 10),
+                          textAlign: TextAlign.right,
+                        ),
                       );
                     },
                   ),
@@ -800,7 +811,7 @@ class _DashboardScreenState
             child: Text(
               'Sin ventas registradas',
               style: TextStyle(
-                color: Colors.grey,
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                 fontSize: 15,
               ),
             ),

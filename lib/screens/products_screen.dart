@@ -777,19 +777,12 @@ class _ProductsScreenState
               padding: EdgeInsets.all(R.sp(context, 20)),
 
               child: GridView.builder(
-
                 itemCount: products.length,
-
-                gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-
-                  crossAxisCount: 2,
-
-                  crossAxisSpacing: 18,
-
-                  mainAxisSpacing: 18,
-
-                  childAspectRatio: 0.78,
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 420,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.8,
                 ),
 
                 itemBuilder:
@@ -798,235 +791,128 @@ class _ProductsScreenState
                   final product =
                   products[index];
 
-                  final color =
-                  getProductColor(
-                    index,
-                  );
-
                   return Container(
-
                     decoration: BoxDecoration(
-
-                      color:
-                      Theme.of(context)
-                          .cardColor,
-
-                      borderRadius:
-                      BorderRadius.circular(
-                        28,
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.grey.withValues(alpha: 0.15),
                       ),
-
-                      boxShadow: [
-
-                        BoxShadow(
-
-                          color:
-                          Colors.black12,
-
-                          blurRadius: 15,
-
-                          offset:
-                          const Offset(
-                            0,
-                            5,
-                          ),
-                        ),
-                      ],
                     ),
-
                     child: Padding(
-
-                padding: EdgeInsets.all(
-                  R.sp(context, 18),
-                ),
-
-                child: Column(
-
-                  children: [
-
-                          Align(
-
-                            alignment:
-                            Alignment.topRight,
-
-                            child: Icon(
-
-                              Icons.more_vert,
-
-                              color:
-                              Colors.grey[500],
-                            ),
-                          ),
-
-                          Container(
-                            width: R.sp(context, 60),
-                            height: R.sp(context, 60),
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              getProductIcon(product),
-                              size: R.sp(context, 32),
-                              color: const Color(0xFF2563EB),
-                            ),
-                          ),
-
-                          SizedBox(height: R.sp(context, 12)),
-
-                          Text(
-                            product['name'],
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: R.fs(context, 26),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          SizedBox(height: R.sp(context, 6)),
-
-                          Text(
-                            '\$${product['price'].toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontSize: R.fs(context, 22),
-                              color: const Color(0xFF16A34A),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          SizedBox(
-                            height: R.sp(context, 20),
-                          ),
-
-                          Container(
-
-                            width:
-                            double.infinity,
-
-                            padding: EdgeInsets.symmetric(
-                              vertical: R.sp(context, 18),
-                            ),
-
-                            decoration:
-                            BoxDecoration(
-
-                              color: color,
-
-                              borderRadius:
-                              BorderRadius.circular(
-                                R.sp(context, 18),
-                              ),
-                            ),
-
-                            child: Column(
-
-                              children: [
-
-                                Text(
-
-                                  'Stock disponible',
-
-                                  style:
-                                  TextStyle(
-
-                                    fontSize: R.fs(context, 16),
-
-                                    color:
-                                    Colors.black54,
-                                  ),
-                                ),
-
-                                SizedBox(
-                                  height: R.sp(context, 8),
-                                ),
-
-                                Text(
-
-                                  '${product['stock']}',
-
-                                  style:
-                                  TextStyle(
-
-                                    fontSize: R.fs(context, 32),
-
-                                    fontWeight:
-                                    FontWeight.bold,
-
-                                    color:
-                                    const Color(
-                                      0xFF2563EB,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const Spacer(),
-
+                      padding: EdgeInsets.all(R.sp(context, 12)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Row(
                             children: [
+                              Icon(
+                                getProductIcon(product),
+                                size: R.sp(context, 28),
+                                color: const Color(0xFF2563EB),
+                              ),
+                              SizedBox(width: R.sp(context, 10)),
                               Expanded(
-                                child: SizedBox(
-                                  height: R.sp(context, 42),
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Color(0xFF2563EB)),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      padding: EdgeInsets.zero,
-                                    ),
-                                    onPressed: () => editProductDialog(product),
-                                    icon: const Icon(Icons.edit, size: 16),
-                                    label: const Text('Editar', style: TextStyle(fontSize: 12)),
+                                child: Text(
+                                  product['name'],
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: R.fs(context, 15),
+                                    fontWeight: FontWeight.bold,
                                   ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          // price + stock + buttons
+                          Row(
+                            children: [
+                              Text(
+                                '\$${product['price'].toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: R.fs(context, 18),
+                                  color: const Color(0xFF16A34A),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (product['stock'] <= 5)
+                                Padding(
+                                  padding: EdgeInsets.only(left: R.sp(context, 8)),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: product['stock'] <= 0 ? Colors.red.shade50 : Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      product['stock'] <= 0 ? 'AGOTADO' : '${product['stock']}',
+                                      style: TextStyle(
+                                        fontSize: R.fs(context, 11),
+                                        color: product['stock'] <= 0 ? Colors.red : Colors.orange.shade700,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              const Spacer(),
+                              SizedBox(
+                                height: 30,
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Color(0xFF2563EB)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  ),
+                                  onPressed: () => editProductDialog(product),
+                                  icon: const Icon(Icons.edit, size: 12),
+                                  label: const Text('Editar', style: TextStyle(fontSize: 11)),
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              Expanded(
-                                child: SizedBox(
-                                  height: R.sp(context, 42),
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.red),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      padding: EdgeInsets.zero,
+                              SizedBox(
+                                height: 30,
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Colors.red),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(20),
-                                          ),
-                                          title: const Text('Eliminar producto'),
-                                          content: Text('¿Seguro que querés eliminar "${product['name']}"?'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(ctx),
-                                              child: const Text('Cancelar'),
-                                            ),
-                                            ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.red,
-                                              ),
-                                              onPressed: () {
-                                                Navigator.pop(ctx);
-                                                deleteProduct(product['id']);
-                                              },
-                                              child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                    icon: const Icon(Icons.delete, size: 16),
-                                    label: const Text('Eliminar', style: TextStyle(fontSize: 12)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 6),
                                   ),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        title: const Text('Eliminar producto'),
+                                        content: Text('¿Seguro que querés eliminar "${product['name']}"?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx),
+                                            child: const Text('Cancelar'),
+                                          ),
+                                          ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                            ),
+                                            onPressed: () {
+                                              Navigator.pop(ctx);
+                                              deleteProduct(product['id']);
+                                            },
+                                            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.delete, size: 12),
+                                  label: const Text('Eliminar', style: TextStyle(fontSize: 11)),
                                 ),
                               ),
                             ],

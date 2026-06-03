@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../services/database_helper.dart';
+import '../services/firestore_service.dart';
 import '../services/product_icons.dart';
 import '../services/responsive.dart';
 
@@ -34,7 +34,7 @@ class _ProductsScreenState
   Future<void> loadProducts() async {
 
     final dbProducts =
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .getProducts();
 
     setState(() {
@@ -138,7 +138,7 @@ class _ProductsScreenState
 
                 try {
 
-                  await DatabaseHelper.instance
+                  await FirestoreService.instance
                       .insertProduct({
                     'name': name,
                     'price': price,
@@ -428,7 +428,7 @@ class _ProductsScreenState
 
                 try {
 
-                  await DatabaseHelper.instance
+                  await FirestoreService.instance
                       .updateProduct(
                     product['id'],
                     {
@@ -476,7 +476,7 @@ class _ProductsScreenState
       int id,
       ) async {
 
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .deleteProduct(id);
 
     loadProducts();

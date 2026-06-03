@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../services/database_helper.dart';
+import '../services/firestore_service.dart';
 import '../services/responsive.dart';
 
 class StudentsScreen extends StatefulWidget {
@@ -39,7 +39,7 @@ class _StudentsScreenState
   Future<void> loadStudents() async {
 
     final data =
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .getStudents();
 
     setState(() {
@@ -61,7 +61,7 @@ class _StudentsScreenState
       return;
     }
 
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .insertStudent({
 
       'name': nameController.text.trim(),
@@ -91,7 +91,7 @@ class _StudentsScreenState
   Future<void> deleteStudent(
       int id) async {
 
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .deleteStudent(id);
 
     await loadStudents();
@@ -514,7 +514,7 @@ class _StudentsScreenState
                         onPressed: () async {
 
                           final sales =
-                          await DatabaseHelper.instance
+                          await FirestoreService.instance
                               .getSalesByStudent(
 
                             student['name'],
@@ -564,7 +564,7 @@ class _StudentsScreenState
 
                                           if (method.contains('pendiente')) {
 
-                                            await DatabaseHelper.instance
+                                            await FirestoreService.instance
                                                 .paySale(sale['id']);
 
                                             await loadStudents();

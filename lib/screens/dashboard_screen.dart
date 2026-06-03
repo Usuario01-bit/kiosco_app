@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../services/database_helper.dart';
+import '../services/firestore_service.dart';
 import '../services/responsive.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -37,15 +37,15 @@ class _DashboardScreenState
   async {
 
     final results = await Future.wait([
-      DatabaseHelper.instance.getTotalSales(),
-      DatabaseHelper.instance.getTotalPending(),
-      DatabaseHelper.instance.getTotalSalesCount(),
-      DatabaseHelper.instance.getProductsCount(),
-      DatabaseHelper.instance.getTodaySales(),
-      DatabaseHelper.instance.getTopProduct(),
-      DatabaseHelper.instance.getRecentSales(5),
-      DatabaseHelper.instance.getWeeklySales(),
-      DatabaseHelper.instance.getTopProducts(5),
+      FirestoreService.instance.getTotalSales(),
+      FirestoreService.instance.getTotalPending(),
+      FirestoreService.instance.getTotalSalesCount(),
+      FirestoreService.instance.getProductsCount(),
+      FirestoreService.instance.getTodaySales(),
+      FirestoreService.instance.getTopProduct(),
+      FirestoreService.instance.getRecentSales(5),
+      FirestoreService.instance.getWeeklySales(),
+      FirestoreService.instance.getTopProducts(5),
     ]);
 
     setState(() {

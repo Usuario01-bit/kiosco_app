@@ -1,6 +1,8 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'screens/login_screen.dart';
+import 'services/firestore_service.dart';
 import 'services/theme_provider.dart';
 
 final ThemeData lightTheme = ThemeData(
@@ -75,7 +77,15 @@ class MyApp extends StatelessWidget {
   }
 }
 
-void main() {
+void main() async {
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
+
+  FirestoreService.instance.seedFromLocal()
+      .then((_) => debugPrint('Firestore seeded'))
+      .catchError((e) => debugPrint('Seed error: $e'));
 
   runApp(
     const MyApp(),

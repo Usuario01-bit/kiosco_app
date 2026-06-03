@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../services/database_helper.dart';
+import '../services/firestore_service.dart';
 import '../services/responsive.dart';
 import 'home_screen.dart';
 
@@ -46,12 +46,6 @@ class _LoginScreenState
     super.initState();
 
     _loadLockoutState();
-    _warmDatabase();
-  }
-
-  Future<void> _warmDatabase() async {
-
-    await DatabaseHelper.instance.database;
   }
 
   Future<void> _loadLockoutState() async {
@@ -160,7 +154,7 @@ class _LoginScreenState
     });
 
     final user =
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .login(username, password);
 
     if (!mounted) return;

@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../services/database_helper.dart';
+import '../services/firestore_service.dart';
 
 class ReportsScreen extends StatefulWidget {
 
@@ -56,7 +56,7 @@ class _ReportsScreenState
   Future<void> loadReports() async {
 
     var salesData =
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .getSales();
 
     double total = 0;

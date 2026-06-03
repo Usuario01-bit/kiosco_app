@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/database_helper.dart';
+import '../services/firestore_service.dart';
 import '../services/product_icons.dart';
 import '../services/responsive.dart';
 
@@ -52,11 +52,11 @@ class _SalesScreenState
   Future<void> loadData() async {
 
     final studentsData =
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .getStudents();
 
     final productsData =
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .getProducts();
 
     setState(() {
@@ -164,7 +164,7 @@ class _SalesScreenState
       // SAVE SALE
       // =========================================
 
-      await DatabaseHelper.instance
+      await FirestoreService.instance
           .insertSale({
 
         'student': selectedStudent,
@@ -194,7 +194,7 @@ class _SalesScreenState
       // UPDATE STOCK
       // =========================================
 
-      await DatabaseHelper.instance
+      await FirestoreService.instance
           .updateProductStock(
 
         item['id'],
@@ -212,7 +212,7 @@ class _SalesScreenState
         .toLowerCase()
         .trim() == 'pendiente') {
 
-      await DatabaseHelper.instance
+      await FirestoreService.instance
           .insertPending({
 
         'student': selectedStudent,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../services/database_helper.dart';
+import '../services/firestore_service.dart';
 import '../services/responsive.dart';
 
 class PendingScreen extends StatefulWidget {
@@ -37,7 +37,7 @@ class _PendingScreenState
   Future<void> loadPending() async {
 
     final data =
-    await DatabaseHelper.instance
+    await FirestoreService.instance
         .getPendings();
 
     double total = 0;
@@ -70,7 +70,7 @@ class _PendingScreenState
 
     try {
 
-      await DatabaseHelper.instance
+      await FirestoreService.instance
           .payPendingSales(student);
 
       await loadPending();

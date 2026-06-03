@@ -83,9 +83,11 @@ void main() async {
 
   await Firebase.initializeApp();
 
-  FirestoreService.instance.seedFromLocal()
-      .then((_) => debugPrint('Firestore seeded'))
-      .catchError((e) => debugPrint('Seed error: $e'));
+  try {
+    await FirestoreService.instance.seedFromLocal();
+  } catch (e) {
+    debugPrint('Seed/migration error: $e');
+  }
 
   runApp(
     const MyApp(),

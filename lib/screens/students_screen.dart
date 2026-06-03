@@ -183,34 +183,28 @@ class _StudentsScreenState
 
                     children: [
 
-                      Text(
-
-                        'Estudiantes',
-
-                        style: TextStyle(
-
-                          color:
-                          Colors.white,
-
-                          fontSize: R.fs(context, 34),
-
-                          fontWeight:
-                          FontWeight.bold,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Estudiantes',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: R.fs(context, 34),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
 
-                      SizedBox(height: R.sp(context, 8)),
+                      SizedBox(height: R.sp(context, 6)),
 
-                      Text(
-
-                        'Gestiona los estudiantes',
-
-                        style: TextStyle(
-
-                          color:
-                          Colors.white70,
-
-                          fontSize: R.fs(context, 18),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Gestiona los estudiantes',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: R.fs(context, 18),
+                          ),
                         ),
                       ),
                     ],

@@ -75,29 +75,31 @@ class _ReportsScreenState
     int bestCount = 0;
     final now = DateTime.now();
 
-    salesData = salesData.where((sale) {
+      salesData = salesData.where((sale) {
 
       final dateText = sale['date'] ?? '';
 
       // HOY
       if (selectedFilter == 'Hoy') {
-
-        return dateText.contains(
-          '${now.day}/${now.month}/${now.year}',
-        );
+        final todayStr =
+            '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        return dateText == todayStr;
       }
 
       // SEMANA
       if (selectedFilter == 'Semana') {
-        return true;
+        final weekAgo = DateTime.now()
+            .subtract(const Duration(days: 6))
+            .toIso8601String()
+            .substring(0, 10);
+        return dateText.compareTo(weekAgo) >= 0;
       }
 
       // MES
       if (selectedFilter == 'Mes') {
-
-        return dateText.contains(
-          '/${now.month}/${now.year}',
-        );
+        final monthStr =
+            '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}';
+        return dateText.startsWith(monthStr);
       }
 
       return true;
@@ -305,93 +307,44 @@ class _ReportsScreenState
             SizedBox(height: R.sp(context, 30)),
 
             // =================================================
-            // TOP CARDS
+            // TOP CARDS (responsive wrap)
             // =================================================
 
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 500;
-                final cards = [
-                  reportCard(
-                    title: 'Ventas Totales',
-                    value: '\$${totalSales.toStringAsFixed(2)}',
-                    color: Colors.blue,
-                    icon: Icons.attach_money,
-                  ),
-                  reportCard(
-                    title: 'Transacciones',
-                    value: '$totalTransactions',
-                    color: Colors.orange,
-                    icon: Icons.receipt_long,
-                  ),
-                  reportCard(
-                    title: 'Pendientes',
-                    value: '\$${pendienteTotal.toStringAsFixed(2)}',
-                    color: Colors.red,
-                    icon: Icons.warning_rounded,
-                  ),
-                ];
-
-                if (isWide) {
-                  return Row(
-                    children: [
-                      Expanded(child: cards[0]),
-                      const SizedBox(width: 30),
-                      Expanded(child: cards[1]),
-                      const SizedBox(width: 20),
-                      Expanded(child: cards[2]),
-                    ],
-                  );
-                }
-                  return Column(
-                    children: [
-                      cards[0],
-                      SizedBox(height: R.sp(context, 20)),
-                      cards[1],
-                      SizedBox(height: R.sp(context, 20)),
-                      cards[2],
-                    ],
-                  );
-                },
-              ),
-
-              SizedBox(height: R.sp(context, 30)),
-
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 500;
-                final cards = [
-                  reportCard(
-                    title: 'Recreo 1',
-                    value: '\$${recreo1Total.toStringAsFixed(2)}',
-                    color: Colors.purple,
-                    icon: Icons.schedule,
-                  ),
-                  reportCard(
-                    title: 'Recreo 2',
-                    value: '\$${recreo2Total.toStringAsFixed(2)}',
-                    color: Colors.teal,
-                    icon: Icons.access_time_filled,
-                  ),
-                ];
-
-                if (isWide) {
-                  return Row(
-                    children: [
-                      Expanded(child: cards[0]),
-                      const SizedBox(width: 20),
-                      Expanded(child: cards[1]),
-                    ],
-                  );
-                }
-                return Column(
-                  children: [
-                    cards[0],
-                    SizedBox(height: R.sp(context, 20)),
-                    cards[1],
-                  ],
-                );
-              },
+            Wrap(
+              spacing: R.sp(context, 16),
+              runSpacing: R.sp(context, 16),
+              children: [
+                _miniCard(
+                  title: 'Ventas Totales',
+                  value: '\$${totalSales.toStringAsFixed(2)}',
+                  color: Colors.blue,
+                  icon: Icons.attach_money,
+                ),
+                _miniCard(
+                  title: 'Transacciones',
+                  value: '$totalTransactions',
+                  color: Colors.orange,
+                  icon: Icons.receipt_long,
+                ),
+                _miniCard(
+                  title: 'Pendientes',
+                  value: '\$${pendienteTotal.toStringAsFixed(2)}',
+                  color: Colors.red,
+                  icon: Icons.warning_rounded,
+                ),
+                _miniCard(
+                  title: 'Recreo 1',
+                  value: '\$${recreo1Total.toStringAsFixed(2)}',
+                  color: Colors.purple,
+                  icon: Icons.schedule,
+                ),
+                _miniCard(
+                  title: 'Recreo 2',
+                  value: '\$${recreo2Total.toStringAsFixed(2)}',
+                  color: Colors.teal,
+                  icon: Icons.access_time_filled,
+                ),
+              ],
             ),
 
             // =================================================
@@ -461,7 +414,7 @@ class _ReportsScreenState
 
                   SizedBox(
 
-                    height: R.sp(context, 350),
+                    height: R.sp(context, 220),
 
                     child: BarChart(
 
@@ -916,120 +869,65 @@ class _ReportsScreenState
     );
   }
   // =====================================================
-  // CARD
+  // MINI CARD (compact, wrap-friendly)
   // =====================================================
 
-  Widget reportCard({
-
+  Widget _miniCard({
     required String title,
-
     required String value,
-
     required Color color,
-
     required IconData icon,
-
   }) {
-
     return Container(
-
-      padding: EdgeInsets.all(R.sp(context, 24)),
-
+      width: (MediaQuery.of(context).size.width - R.sp(context, 48) - R.sp(context, 16)) / 2,
+      padding: EdgeInsets.all(R.sp(context, 14)),
       decoration: BoxDecoration(
-
         color: Colors.white,
-
-        borderRadius:
-        BorderRadius.circular(
-          28,
-        ),
-
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
-
           BoxShadow(
-
-            color:
-            Colors.black.withValues(alpha: 
-              0.05,
-            ),
-
-            blurRadius: 18,
-
-            offset:
-            const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-
-      child: Column(
-
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-
+      child: Row(
         children: [
-
           Container(
-
-            padding: EdgeInsets.all(R.sp(context, 14)),
-
-            decoration:
-            BoxDecoration(
-
-              color:
-              color.withValues(alpha: 
-                0.15,
-              ),
-
-              borderRadius:
-              BorderRadius.circular(
-                R.sp(context, 18),
-              ),
+            padding: EdgeInsets.all(R.sp(context, 8)),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
-
-            child: Icon(
-
-              icon,
-
-              color: color,
-
-              size: R.sp(context, 30),
-            ),
+            child: Icon(icon, color: color, size: R.sp(context, 22)),
           ),
-
-          SizedBox(height: R.sp(context, 24)),
-
-          Text(
-
-            value,
-
-            style: TextStyle(
-
-              fontSize: R.fs(context, 34),
-
-              fontWeight:
-              FontWeight.bold,
-
-              color: color,
-            ),
-          ),
-
-          SizedBox(height: R.sp(context, 8)),
-
-          Text(
-
-            title,
-
-            style: TextStyle(
-
-              fontSize: R.fs(context, 18),
-
-              color:
-              Colors.black54,
+          SizedBox(width: R.sp(context, 10)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: R.fs(context, 20),
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                SizedBox(height: R.sp(context, 2)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: R.fs(context, 12),
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
-
   }
 }

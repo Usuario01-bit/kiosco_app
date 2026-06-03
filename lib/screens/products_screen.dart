@@ -997,175 +997,66 @@ class _ProductsScreenState
                           const Spacer(),
 
                           Row(
-
                             children: [
-
                               Expanded(
-
-                                child:
-                                OutlinedButton.icon(
-
-                                  style:
-                                  OutlinedButton.styleFrom(
-
-                                    side:
-                                    const BorderSide(
-
-                                      color: Color(
-                                        0xFF2563EB,
+                                child: SizedBox(
+                                  height: R.sp(context, 42),
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Color(0xFF2563EB)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
+                                      padding: EdgeInsets.zero,
                                     ),
-
-                                    shape:
-                                    RoundedRectangleBorder(
-
-                                      borderRadius:
-                                      BorderRadius.circular(
-                                        14,
-                                      ),
-                                    ),
-
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: R.sp(context, 16),
-                                    ),
-                                  ),
-
-                                  onPressed: () => editProductDialog(product),
-
-                                  icon:
-                                  const Icon(
-
-                                    Icons.edit,
-
-                                    color:
-                                    Color(
-                                      0xFF2563EB,
-                                    ),
-                                  ),
-
-                                  label:
-                                  const Text(
-
-                                    'Editar',
-
-                                    style:
-                                    TextStyle(
-
-                                      color:
-                                      Color(
-                                        0xFF2563EB,
-                                      ),
-
-                                      fontWeight:
-                                      FontWeight.bold,
-                                    ),
+                                    onPressed: () => editProductDialog(product),
+                                    icon: const Icon(Icons.edit, size: 16),
+                                    label: const Text('Editar', style: TextStyle(fontSize: 12)),
                                   ),
                                 ),
                               ),
-
-                              const SizedBox(
-                                width: 10,
-                              ),
-
+                              const SizedBox(width: 6),
                               Expanded(
-
-                                child:
-                                OutlinedButton.icon(
-
-                                  style:
-                                  OutlinedButton.styleFrom(
-
-                                    side:
-                                    const BorderSide(
-
-                                      color: Colors.red,
-                                    ),
-
-                                    shape:
-                                    RoundedRectangleBorder(
-
-                                      borderRadius:
-                                      BorderRadius.circular(
-                                        14,
+                                child: SizedBox(
+                                  height: R.sp(context, 42),
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Colors.red),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
+                                      padding: EdgeInsets.zero,
                                     ),
-
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: R.sp(context, 16),
-                                    ),
-                                  ),
-
-                                  onPressed: () {
-
-                                    showDialog(
-
-                                      context: context,
-
-                                      builder: (ctx) => AlertDialog(
-
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          title: const Text('Eliminar producto'),
+                                          content: Text('¿Seguro que querés eliminar "${product['name']}"?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx),
+                                              child: const Text('Cancelar'),
+                                            ),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.red,
+                                              ),
+                                              onPressed: () {
+                                                Navigator.pop(ctx);
+                                                deleteProduct(product['id']);
+                                              },
+                                              child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+                                            ),
+                                          ],
                                         ),
-
-                                        title: const Text('Eliminar producto'),
-
-                                        content: Text('¿Seguro que querés eliminar "${product['name']}"?'),
-
-                                        actions: [
-
-                                          TextButton(
-
-                                            onPressed: () => Navigator.pop(ctx),
-                                            child: const Text('Cancelar'),
-                                          ),
-
-                                          ElevatedButton(
-
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.red,
-                                            ),
-
-                                            onPressed: () {
-
-                                              Navigator.pop(ctx);
-
-                                              deleteProduct(
-                                                product['id'],
-                                              );
-                                            },
-
-                                            child: const Text(
-                                              'Eliminar',
-                                              style: TextStyle(color: Colors.white),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-
-                                  icon:
-                                  const Icon(
-
-                                    Icons.delete,
-
-                                    color: Colors.red,
-                                  ),
-
-                                  label:
-                                  const Text(
-
-                                    'Eliminar',
-
-                                    style:
-                                    TextStyle(
-
-                                      color:
-                                      Colors.red,
-
-                                      fontWeight:
-                                      FontWeight.bold,
-                                    ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.delete, size: 16),
+                                    label: const Text('Eliminar', style: TextStyle(fontSize: 12)),
                                   ),
                                 ),
                               ),

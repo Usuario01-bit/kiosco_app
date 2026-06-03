@@ -122,13 +122,21 @@ class FirestoreService {
     return 0;
   }
 
+  List<Map<String, dynamic>> _sortSalesByDateTime(List<Map<String, dynamic>> sales) {
+    sales.sort((a, b) {
+      final dateCmp = (b['date'] as String? ?? '').compareTo(a['date'] as String? ?? '');
+      if (dateCmp != 0) return dateCmp;
+      return (b['time'] as String? ?? '').compareTo(a['time'] as String? ?? '');
+    });
+    return sales;
+  }
+
   Future<List<Map<String, dynamic>>> getSales() async {
     final snap = await _db
         .collection('sales')
         .orderBy('date', descending: true)
-        .orderBy('time', descending: true)
         .get();
-    return snap.docs.map(_docToMap).toList();
+    return _sortSalesByDateTime(snap.docs.map(_docToMap).toList());
   }
 
   Future<int> paySale(dynamic id) async {
@@ -170,9 +178,8 @@ class FirestoreService {
         .collection('sales')
         .where('student', isEqualTo: student)
         .orderBy('date', descending: true)
-        .orderBy('time', descending: true)
         .get();
-    return snap.docs.map(_docToMap).toList();
+    return _sortSalesByDateTime(snap.docs.map(_docToMap).toList());
   }
 
   Future<List<Map<String, dynamic>>> getRecentSales(int limit) async {
@@ -261,11 +268,13 @@ class FirestoreService {
     final snap = await _db
         .collection('sales')
         .where('student', isEqualTo: student)
-        .where('paymentMethod', isEqualTo: 'Pendiente')
         .get();
     double sum = 0;
     for (final doc in snap.docs) {
-      sum += (doc.data()['total'] as num?)?.toDouble() ?? 0;
+      final pm = doc.data()['paymentMethod'] as String? ?? '';
+      if (pm.toLowerCase().contains('pendiente')) {
+        sum += (doc.data()['total'] as num?)?.toDouble() ?? 0;
+      }
     }
     return sum;
   }
@@ -414,5 +423,30 @@ class FirestoreService {
         });
       }
     }
+
+    // Migrate existing dates from DD/MM/YYYY to yyyy-MM-dd
+    await _migrateOldDates('sales');
+    await _migrateOldDates('pending');
+  }
+
+  Future<void> _migrateOldDates(String collection) async {
+    final sample = await _db.collection(collection).limit(1).get();
+    if (sample.docs.isEmpty) return;
+    final date = sample.docs.first.data()['date'] as String? ?? '';
+    if (!date.contains('/')) return;
+
+    final all = await _db.collection(collection).get();
+    final batch = _db.batch();
+    int count = 0;
+    for (final doc in all.docs) {
+      final raw = doc.data()['date'] as String? ?? '';
+      if (!raw.contains('/')) continue;
+      final parts = raw.split('/');
+      if (parts.length != 3) continue;
+      final newDate = '${parts[2].padLeft(4, '0')}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+      batch.update(doc.reference, {'date': newDate});
+      count++;
+    }
+    if (count > 0) await batch.commit();
   }
 }

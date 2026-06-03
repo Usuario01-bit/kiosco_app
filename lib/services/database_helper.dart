@@ -20,6 +20,26 @@ class DatabaseHelper {
 
   DatabaseHelper._init();
 
+  // =====================================================
+  // CACHE
+  // =====================================================
+  static final Map<String, List<Map<String, dynamic>>?>
+      _listCache = {};
+
+  static void _invalidateCache(String table) {
+    _listCache.remove(table);
+  }
+
+  Future<List<Map<String, dynamic>>>
+  _cachedQuery(String table, {String? orderBy}) async {
+    if (_listCache.containsKey(table)) {
+      return _listCache[table]!;
+    }
+    final db = await database;
+    final result = await db.query(table, orderBy: orderBy);
+    _listCache[table] = result;
+    return result;
+  }
 
   // =====================================================
   // DATABASE
@@ -37,10 +57,7 @@ class DatabaseHelper {
     return _database!;
       }
   Future<List<Map<String, dynamic>>> getStudents() async {
-
-    final db = await database;
-
-    return await db.query('students');
+    return _cachedQuery('students');
   }
 
   // =====================================================
@@ -281,23 +298,17 @@ class DatabaseHelper {
       product.remove('icon');
     }
 
-    return await db.insert(
+    final id = await db.insert(
       'products',
       product,
     );
+    _invalidateCache('products');
+    return id;
   }
 
   Future<List<Map<String, dynamic>>>
   getProducts() async {
-
-    final db = await database;
-
-    return await db.query(
-
-      'products',
-
-      orderBy: 'id DESC',
-    );
+    return _cachedQuery('products', orderBy: 'id DESC');
   }
 
   Future<int> deleteProduct(
@@ -306,7 +317,7 @@ class DatabaseHelper {
 
     final db = await database;
 
-    return await db.delete(
+    final rows = await db.delete(
 
       'products',
 
@@ -314,6 +325,8 @@ class DatabaseHelper {
 
       whereArgs: [id],
     );
+    _invalidateCache('products');
+    return rows;
   }
 
   Future<int> updateProduct(
@@ -335,7 +348,7 @@ class DatabaseHelper {
       data.remove('icon');
     }
 
-    return await db.update(
+    final rows = await db.update(
 
       'products',
       data,
@@ -344,6 +357,8 @@ class DatabaseHelper {
 
       whereArgs: [id],
     );
+    _invalidateCache('products');
+    return rows;
   }
 
   Future<int> updateProductStock(
@@ -353,7 +368,7 @@ class DatabaseHelper {
 
     final db = await database;
 
-    return await db.update(
+    final rows = await db.update(
 
       'products',
 
@@ -365,6 +380,8 @@ class DatabaseHelper {
 
       whereArgs: [id],
     );
+    _invalidateCache('products');
+    return rows;
   }
 
   // =====================================================
@@ -377,23 +394,17 @@ class DatabaseHelper {
 
     final db = await database;
 
-    return await db.insert(
+    final id = await db.insert(
       'sales',
       sale,
     );
+    _invalidateCache('sales');
+    return id;
   }
 
   Future<List<Map<String, dynamic>>>
   getSales() async {
-
-    final db = await database;
-
-    return await db.query(
-
-      'sales',
-
-      orderBy: 'id DESC',
-    );
+    return _cachedQuery('sales', orderBy: 'id DESC');
   }
   Future<int> paySale(int id) async {
 
@@ -407,7 +418,7 @@ class DatabaseHelper {
     final hasPaidAt =
     columns.any((c) => c['name'] == 'paid_at');
 
-    return await db.update(
+    final rows = await db.update(
 
       'sales',
 
@@ -424,6 +435,8 @@ class DatabaseHelper {
 
       whereArgs: [id],
     );
+    _invalidateCache('sales');
+    return rows;
   }
 
   Future<void> payPendingSales(String student) async {
@@ -477,6 +490,8 @@ class DatabaseHelper {
 
       whereArgs: [student],
     );
+    _invalidateCache('sales');
+    _invalidateCache('pending');
   }
   // =====================================================
   // PENDING
@@ -534,23 +549,17 @@ class DatabaseHelper {
 
     // SI NO EXISTE → INSERTAR
 
-    return await db.insert(
+    final id = await db.insert(
       'pending',
       pending,
     );
+    _invalidateCache('pending');
+    return id;
   }
 
   Future<List<Map<String, dynamic>>>
   getPendings() async {
-
-    final db = await database;
-
-    return await db.query(
-
-      'pending',
-
-      orderBy: 'id DESC',
-    );
+    return _cachedQuery('pending', orderBy: 'id DESC');
   }
 
   Future<int> deletePending(
@@ -559,7 +568,7 @@ class DatabaseHelper {
 
     final db = await database;
 
-    return await db.delete(
+    final rows = await db.delete(
 
       'pending',
 
@@ -567,6 +576,8 @@ class DatabaseHelper {
 
       whereArgs: [id],
     );
+    _invalidateCache('pending');
+    return rows;
   }
 // =====================================================
 // INSERT STUDENT
@@ -578,10 +589,12 @@ class DatabaseHelper {
 
     final db = await database;
 
-    return await db.insert(
+    final id = await db.insert(
       'students',
       row,
     );
+    _invalidateCache('students');
+    return id;
   }
 
 // =====================================================
@@ -594,7 +607,7 @@ class DatabaseHelper {
 
     final db = await database;
 
-    return await db.delete(
+    final rows = await db.delete(
 
       'students',
 
@@ -602,6 +615,8 @@ class DatabaseHelper {
 
       whereArgs: [id],
     );
+    _invalidateCache('students');
+    return rows;
   }
   // =====================================================
 // SALES BY STUDENT

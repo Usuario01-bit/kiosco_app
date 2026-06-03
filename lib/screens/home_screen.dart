@@ -51,19 +51,19 @@ class _HomeScreenState
   @override
   Widget build(BuildContext context) {
 
-    final List<Widget> screens = [
+    final List<Widget> screens = const [
 
-      const DashboardScreen(),
+      DashboardScreen(),
 
-      const SalesScreen(),
+      SalesScreen(),
 
-      const StudentsScreen(),
+      StudentsScreen(),
 
-      const ProductsScreen(),
+      ProductsScreen(),
 
-      const ReportsScreen(),
+      ReportsScreen(),
 
-      const PendingScreen(),
+      PendingScreen(),
     ];
 
     return Scaffold(

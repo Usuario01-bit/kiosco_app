@@ -147,12 +147,13 @@ class FirestoreService {
     return 1;
   }
 
-  Future<void> payPendingSales(String student) async {
+  Future<void> payPendingSales(String student, dynamic pendingId) async {
+    final batch = _db.batch();
+
     final salesSnap = await _db
         .collection('sales')
         .where('student', isEqualTo: student)
         .get();
-    final batch = _db.batch();
     for (final doc in salesSnap.docs) {
       final pm = doc.data()['paymentMethod'] as String? ?? '';
       if (!pm.toLowerCase().contains('pendiente')) continue;
@@ -161,13 +162,20 @@ class FirestoreService {
         'paidAt': DateTime.now().toIso8601String(),
       });
     }
-    final pendingSnap = await _db
-        .collection('pending')
-        .where('student', isEqualTo: student)
-        .get();
-    for (final doc in pendingSnap.docs) {
-      batch.delete(doc.reference);
+
+    // Delete by pending doc ID directly (more reliable than student name match)
+    if (pendingId != null) {
+      batch.delete(_db.collection('pending').doc(pendingId.toString()));
+    } else {
+      final pendingSnap = await _db
+          .collection('pending')
+          .where('student', isEqualTo: student)
+          .get();
+      for (final doc in pendingSnap.docs) {
+        batch.delete(doc.reference);
+      }
     }
+
     await batch.commit();
   }
 

@@ -451,31 +451,15 @@ class _StudentsScreenState
 
                       Container(
 
-                        padding: EdgeInsets.all(
-                          R.sp(context, 16),
+                        padding: EdgeInsets.all(R.sp(context, 12)),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDBEAFE).withValues(alpha: 0.9),
+                          shape: BoxShape.circle,
                         ),
-
-                        decoration:
-                        BoxDecoration(
-
-                          color: const Color(
-                              0xFFDBEAFE)
-                              .withValues(alpha: 
-                              0.9),
-
-                          shape: BoxShape
-                              .circle,
-                        ),
-
-                        child:
-                        const Icon(
-
+                        child: const Icon(
                           Icons.person,
-
-                          color: Color(
-                              0xFF2563EB),
-
-                          size: 30,
+                          color: Color(0xFF2563EB),
+                          size: 24,
                         ),
                       ),
 
@@ -503,7 +487,7 @@ class _StudentsScreenState
                       IconButton(
 
                         onPressed: () async {
-
+                          try {
                           final sales =
                           await FirestoreService.instance
                               .getSalesByStudent(
@@ -652,11 +636,19 @@ class _StudentsScreenState
                               );
                             },
                           );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error al cargar historial: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
 
-                        icon: Icon(
-
-                          Icons.history,
+                      icon: Icon(
+                        Icons.history,
 
                           color: Colors.blue,
 

@@ -71,7 +71,7 @@ class _PendingScreenState
     try {
 
       await FirestoreService.instance
-          .payPendingSales(student);
+          .payPendingSales(student, id);
 
       await loadPending();
 

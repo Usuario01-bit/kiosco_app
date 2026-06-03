@@ -859,69 +859,38 @@ class _ProductsScreenState
                           ),
 
                           Container(
-
-                            width: R.sp(context, 90),
-
-                            height: R.sp(context, 90),
-
-                            decoration:
-                            BoxDecoration(
-
+                            width: R.sp(context, 60),
+                            height: R.sp(context, 60),
+                            decoration: BoxDecoration(
                               color: color,
-
-                              shape:
-                              BoxShape.circle,
+                              shape: BoxShape.circle,
                             ),
-
                             child: Icon(
-
-                              getProductIcon(
-                                product,
-                              ),
-
-                              size: R.sp(context, 50),
-
-                              color:
-                              const Color(
-                                0xFF2563EB,
-                              ),
+                              getProductIcon(product),
+                              size: R.sp(context, 32),
+                              color: const Color(0xFF2563EB),
                             ),
                           ),
 
-                          SizedBox(
-                            height: R.sp(context, 20),
-                          ),
+                          SizedBox(height: R.sp(context, 12)),
 
                           Text(
-
                             product['name'],
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-
-                            style:
-                            TextStyle(
-
-                              fontSize: R.fs(context, 30),
-
-                              fontWeight:
-                              FontWeight.bold,
+                            style: TextStyle(
+                              fontSize: R.fs(context, 26),
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
 
-                          SizedBox(
-                            height: R.sp(context, 10),
-                          ),
+                          SizedBox(height: R.sp(context, 6)),
 
                           Text(
-
                             '\$${product['price'].toStringAsFixed(2)}',
-
                             style: TextStyle(
-
-                              fontSize: R.fs(context, 26),
-
+                              fontSize: R.fs(context, 22),
                               color: const Color(0xFF16A34A),
-
                               fontWeight: FontWeight.bold,
                             ),
                           ),

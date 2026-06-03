@@ -208,9 +208,11 @@ class _LoginScreenState
       }
     } catch (e) {
 
+      debugPrint('Login error: $e');
+
       setState(() {
 
-        errorMsg = 'Error de conexión: revisá Firebase';
+        errorMsg = 'Error: $e';
         loading = false;
       });
     }

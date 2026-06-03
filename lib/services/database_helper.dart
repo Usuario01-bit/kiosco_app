@@ -1,14 +1,9 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
-
-  // =====================================================
-  // FFI INIT (una sola vez)
-  // =====================================================
-  static bool _didFfiInit = false;
 
   // =====================================================
   // SINGLETON
@@ -67,12 +62,6 @@ class DatabaseHelper {
   Future<Database> _initDB(
       String filePath,
       ) async {
-
-    if (!_didFfiInit) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-      _didFfiInit = true;
-    }
 
     final dbPath =
     await getDatabasesPath();

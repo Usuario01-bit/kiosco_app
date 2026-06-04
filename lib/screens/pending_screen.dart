@@ -227,7 +227,7 @@ class _PendingScreenState
     return Scaffold(
 
       backgroundColor:
-      const Color(0xFFF5F7FB),
+      Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
 
@@ -277,6 +277,9 @@ class _PendingScreenState
 
                 fontWeight:
                 FontWeight.bold,
+
+                color:
+                Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
 
@@ -426,6 +429,9 @@ class _PendingScreenState
 
                         fontWeight:
                         FontWeight.bold,
+
+                        color:
+                        Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
 
@@ -530,6 +536,7 @@ class _PendingScreenState
                                     style: TextStyle(
                                       fontSize: R.fs(context, 28),
                                       fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).textTheme.bodyLarge?.color,
                                     ),
                                   ),
 
@@ -568,7 +575,7 @@ class _PendingScreenState
                               height: 42,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue,
+                                  backgroundColor: Theme.of(context).colorScheme.primary,
                                   padding: EdgeInsets.zero,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(18),
@@ -585,7 +592,7 @@ class _PendingScreenState
                                 child: Text(
                                   'Abonar',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                     fontSize: R.fs(context, 16),
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -599,7 +606,7 @@ class _PendingScreenState
                             SizedBox(
                               width: 80,
                               height: 42,
-                              child: ElevatedButton(
+                                child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
                                   padding: EdgeInsets.zero,
@@ -616,7 +623,7 @@ class _PendingScreenState
                                 child: Text(
                                   'Pagar',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                     fontSize: R.fs(context, 16),
                                     fontWeight: FontWeight.bold,
                                   ),

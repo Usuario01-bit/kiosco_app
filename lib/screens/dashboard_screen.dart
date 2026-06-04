@@ -113,26 +113,29 @@ class _DashboardScreenState
         mainAxisAlignment:
         MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-                  fontSize: R.fs(context, 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                    fontSize: R.fs(context, 16),
+                  ),
                 ),
-              ),
-              SizedBox(height: R.sp(context, 10)),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: R.fs(context, 26),
-                  fontWeight: FontWeight.bold,
+                SizedBox(height: R.sp(context, 10)),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: R.fs(context, 26),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           Container(
             padding: EdgeInsets.all(R.sp(context, 14)),

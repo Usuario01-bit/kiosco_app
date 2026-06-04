@@ -144,7 +144,7 @@ class _StudentsScreenState
     return Scaffold(
 
       backgroundColor:
-      const Color(0xFFF5F7FB),
+      Theme.of(context).scaffoldBackgroundColor,
 
       body: Column(
 
@@ -210,43 +210,44 @@ class _StudentsScreenState
                     ),
                   ),
 
-                  SizedBox(width: R.sp(context, 20)),
+                  SizedBox(width: R.sp(context, 12)),
 
-                  Column(
+                  Expanded(
+                    child: Column(
 
-                    crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
 
-                    children: [
+                      children: [
 
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'Estudiantes',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: R.fs(context, 34),
-                            fontWeight: FontWeight.bold,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Estudiantes',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: R.fs(context, 34),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
 
-                      SizedBox(height: R.sp(context, 6)),
+                        SizedBox(height: R.sp(context, 6)),
 
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'Gestiona los estudiantes',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: R.fs(context, 18),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Gestiona los estudiantes',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: R.fs(context, 18),
+                            ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-                  const Spacer(),
                   IconButton(
                     onPressed: importFromExcel,
                     icon: const Icon(
@@ -344,7 +345,7 @@ class _StudentsScreenState
                 filled: true,
 
                 fillColor:
-                Colors.white,
+                Theme.of(context).cardColor,
 
                 border:
                 OutlineInputBorder(
@@ -380,14 +381,14 @@ class _StudentsScreenState
 
               decoration: BoxDecoration(
 
-                color: Colors.white,
+                color:
+                Theme.of(context).cardColor,
 
                 borderRadius:
                 BorderRadius.circular(
                     28),
 
                 boxShadow: [
-
                   BoxShadow(
 
                     color: Colors.black
@@ -426,8 +427,7 @@ class _StudentsScreenState
                         filled: true,
 
                         fillColor:
-                        const Color(
-                            0xFFF5F5F5),
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
 
                         border:
                         OutlineInputBorder(
@@ -479,11 +479,10 @@ class _StudentsScreenState
                           .styleFrom(
 
                         backgroundColor:
-                        const Color(
-                            0xFF2196F3),
+                        Theme.of(context).colorScheme.primary,
 
                         foregroundColor:
-                        Colors.white,
+                        Theme.of(context).colorScheme.onPrimary,
 
                         padding:
                         const EdgeInsets
@@ -582,7 +581,7 @@ class _StudentsScreenState
                             Icon(
                               Icons.school,
                               size: R.fs(context, 22),
-                              color: const Color(0xFF4A90E2),
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                             SizedBox(width: R.sp(context, 8)),
                             Text(
@@ -590,7 +589,7 @@ class _StudentsScreenState
                               style: TextStyle(
                                 fontSize: R.fs(context, 22),
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF4A90E2),
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             Spacer(),
@@ -598,7 +597,7 @@ class _StudentsScreenState
                               '${entry.value.length}',
                               style: TextStyle(
                                 fontSize: R.fs(context, 18),
-                                color: Colors.grey,
+                                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                               ),
                             ),
                           ],
@@ -661,9 +660,9 @@ class _StudentsScreenState
                                   color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.person,
-                                  color: Color(0xFF2563EB),
+                                  color: Theme.of(context).colorScheme.primary,
                                   size: 22,
                                 ),
                               ),
@@ -682,6 +681,7 @@ class _StudentsScreenState
                                       style: TextStyle(
                                         fontSize: R.fs(context, 22),
                                         fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
                                       ),
                                     ),
                                     if (student['grado'] != null && (student['grado'] as String).trim().isNotEmpty)
@@ -689,7 +689,7 @@ class _StudentsScreenState
                                         student['grado'],
                                         style: TextStyle(
                                           fontSize: R.fs(context, 16),
-                                          color: Colors.grey,
+                                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                                         ),
                                       ),
                                   ],
@@ -861,7 +861,7 @@ class _StudentsScreenState
                               icon: Icon(
                                 Icons.history,
 
-                                  color: Colors.blue,
+                                  color: Theme.of(context).colorScheme.primary,
 
                                   size: R.sp(context, 26),
                                 ),

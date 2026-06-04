@@ -75,7 +75,7 @@ class DatabaseHelper {
 
       path,
 
-      version: 5,
+      version: 6,
 
       onCreate: _createDB,
 
@@ -177,7 +177,8 @@ class DatabaseHelper {
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE,
   password_hash TEXT,
-  salt TEXT
+  salt TEXT,
+  role TEXT DEFAULT 'admin'
 )
 ''');
 
@@ -230,6 +231,26 @@ class DatabaseHelper {
         // columna ya existe — ignorar
       }
     }
+
+    if (oldVersion < 6) {
+
+      try {
+
+        await db.execute(
+          "ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'admin'",
+        );
+
+        await db.update(
+          'users',
+          {'role': 'super_admin'},
+          where: 'username = ?',
+          whereArgs: ['admin'],
+        );
+      } catch (_) {
+
+        // columna ya existe — ignorar
+      }
+    }
   }
 
   Future<void> _seedDefaultAdmin(Database db) async {
@@ -246,6 +267,7 @@ class DatabaseHelper {
         'username': 'admin',
         'password_hash': hash,
         'salt': salt,
+        'role': 'super_admin',
       });
     }
   }
@@ -707,6 +729,33 @@ class DatabaseHelper {
     );
 
     return true;
+  }
+
+  Future<int> createUser(String username, String password) async {
+    final db = await database;
+    final salt = _generateSalt();
+    final hash = _hashPassword(password, salt);
+    await db.insert('users', {
+      'username': username.toLowerCase().trim(),
+      'password_hash': hash,
+      'salt': salt,
+      'role': 'admin',
+    });
+    return 1;
+  }
+
+  Future<int> deleteUser(int id) async {
+    final db = await database;
+    final user = await db.query('users', where: 'id = ?', whereArgs: [id]);
+    if (user.isEmpty) return 0;
+    if (user.first['role'] == 'super_admin') return -1;
+    await db.delete('users', where: 'id = ?', whereArgs: [id]);
+    return 1;
+  }
+
+  Future<List<Map<String, dynamic>>> getUsers() async {
+    final db = await database;
+    return db.query('users', orderBy: 'username');
   }
 
   // =====================================================

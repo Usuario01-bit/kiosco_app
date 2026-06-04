@@ -169,7 +169,10 @@ class _LoginScreenState
 
           context,
           MaterialPageRoute(
-            builder: (_) => const HomeScreen(),
+            builder: (_) => HomeScreen(
+              username: user['username'] as String,
+              role: user['role'] as String? ?? 'admin',
+            ),
           ),
         );
       } else {

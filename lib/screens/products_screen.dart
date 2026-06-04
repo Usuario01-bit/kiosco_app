@@ -362,7 +362,7 @@ class _ProductsScreenState
                             entry.value,
                             color: isSelected
                                 ? const Color(0xFF2563EB)
-                                : Colors.grey[600],
+                                                : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
                             size: 24,
                           ),
                         ),
@@ -637,13 +637,13 @@ class _ProductsScreenState
     return Scaffold(
 
       backgroundColor:
-      const Color(0xFFF5F7FB),
+      Theme.of(context).scaffoldBackgroundColor,
 
       floatingActionButton:
       FloatingActionButton(
 
         backgroundColor:
-        const Color(0xFF2563EB),
+        Theme.of(context).colorScheme.primary,
 
         elevation: 10,
 
@@ -796,7 +796,7 @@ class _ProductsScreenState
                       color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: Colors.grey.withValues(alpha: 0.15),
+                        color: Theme.of(context).dividerColor,
                       ),
                     ),
                     child: Padding(
@@ -809,7 +809,7 @@ class _ProductsScreenState
                               Icon(
                                 getProductIcon(product),
                                 size: R.sp(context, 28),
-                                color: const Color(0xFF2563EB),
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                               SizedBox(width: R.sp(context, 10)),
                               Expanded(
@@ -820,6 +820,7 @@ class _ProductsScreenState
                                   style: TextStyle(
                                     fontSize: R.fs(context, 15),
                                     fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
                                   ),
                                 ),
                               ),
@@ -833,7 +834,9 @@ class _ProductsScreenState
                                 '\$${product['price'].toStringAsFixed(2)}',
                                 style: TextStyle(
                                   fontSize: R.fs(context, 18),
-                                  color: const Color(0xFF16A34A),
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.green.shade300
+                                      : const Color(0xFF16A34A),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -843,14 +846,16 @@ class _ProductsScreenState
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: product['stock'] <= 0 ? Colors.red.shade50 : Colors.orange.shade50,
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? (product['stock'] <= 0 ? Colors.red.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.2))
+                                          : (product['stock'] <= 0 ? Colors.red.shade50 : Colors.orange.shade50),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       product['stock'] <= 0 ? 'AGOTADO' : '${product['stock']}',
                                       style: TextStyle(
                                         fontSize: R.fs(context, 11),
-                                        color: product['stock'] <= 0 ? Colors.red : Colors.orange.shade700,
+                                        color: product['stock'] <= 0 ? Colors.red : Colors.orange,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -861,7 +866,7 @@ class _ProductsScreenState
                                 height: 30,
                                 child: OutlinedButton.icon(
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Color(0xFF2563EB)),
+                                    side: BorderSide(color: Theme.of(context).colorScheme.primary),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),

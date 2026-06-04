@@ -400,6 +400,15 @@ class FirestoreService {
     return snap.count ?? 0;
   }
 
+  Future<List<Map<String, dynamic>>> getAllPending() async {
+    final snap = await _db.collection('pending').get();
+    return snap.docs.map((doc) {
+      final data = _docToMap(doc);
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+  }
+
   Future<double> getTotalPending() async {
     final snap = await _db.collection('pending').get();
     double sum = 0;

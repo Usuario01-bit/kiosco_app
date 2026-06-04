@@ -284,7 +284,7 @@ class _SalesScreenState
     return Scaffold(
 
       backgroundColor:
-      const Color(0xFFF5F7FB),
+      Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
 
@@ -497,7 +497,9 @@ class _SalesScreenState
                                   style: TextStyle(
                                     fontSize: R.fs(context, isWide ? 18 : 16),
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF1E1E2D),
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.white
+                                        : Colors.black87,
                                   ),
                                 ),
                                 Text(

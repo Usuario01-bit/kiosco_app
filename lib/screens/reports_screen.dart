@@ -200,7 +200,7 @@ class _ReportsScreenState
     return Scaffold(
 
       backgroundColor:
-      const Color(0xFFF5F7FB),
+      Theme.of(context).scaffoldBackgroundColor,
 
 
       body: RefreshIndicator(
@@ -285,7 +285,7 @@ class _ReportsScreenState
                 FontWeight.bold,
 
                 color:
-                const Color(0xFF1E1E2D),
+                Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
 
@@ -300,7 +300,7 @@ class _ReportsScreenState
                 fontSize: R.fs(context, 18),
 
                 color:
-                Colors.black54,
+                Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
               ),
             ),
 
@@ -360,7 +360,8 @@ class _ReportsScreenState
               decoration:
               BoxDecoration(
 
-                color: Colors.white,
+                color:
+                Theme.of(context).cardColor,
 
                 borderRadius:
                 BorderRadius.circular(
@@ -405,6 +406,9 @@ class _ReportsScreenState
 
                       fontWeight:
                       FontWeight.bold,
+
+                      color:
+                      Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
 
@@ -590,12 +594,6 @@ class _ReportsScreenState
               ),
             ),
 
-            SizedBox(height: R.sp(context, 30)),
-
-            // =================================================
-            // SALES LIST
-            // =================================================
-
             Container(
 
               padding: EdgeInsets.all(
@@ -605,7 +603,8 @@ class _ReportsScreenState
               decoration:
               BoxDecoration(
 
-                color: Colors.white,
+                color:
+                Theme.of(context).cardColor,
 
                 borderRadius:
                 BorderRadius.circular(
@@ -613,11 +612,10 @@ class _ReportsScreenState
                 ),
 
                 boxShadow: [
-
                   BoxShadow(
 
                     color: Colors.black
-                        .withValues(alpha: 
+                        .withValues(alpha:
                       0.05,
                     ),
 
@@ -650,6 +648,9 @@ class _ReportsScreenState
 
                       fontWeight:
                       FontWeight.bold,
+
+                      color:
+                      Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
 
@@ -709,9 +710,7 @@ class _ReportsScreenState
                         BoxDecoration(
 
                           color:
-                          const Color(
-                            0xFFF8F4FB,
-                          ),
+                          Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
 
                           borderRadius:
                           BorderRadius.circular(
@@ -733,20 +732,19 @@ class _ReportsScreenState
                               BoxDecoration(
 
                                 color:
-                                Colors.blue
-                                    .shade100,
+                                Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
 
                                 shape:
                                 BoxShape.circle,
                               ),
 
                               child:
-                              const Icon(
+                              Icon(
 
                                 Icons.receipt_long,
 
                                 color:
-                                Colors.blue,
+                                Theme.of(context).colorScheme.primary,
                               ),
                             ),
 
@@ -787,10 +785,10 @@ class _ReportsScreenState
                                     '${sale['product']} • ${sale['paymentMethod']}',
 
                                     style:
-                                    const TextStyle(
+                                    TextStyle(
 
                                       color:
-                                      Colors.black54,
+                                      Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                                     ),
                                   ),
                                 ],
@@ -810,7 +808,9 @@ class _ReportsScreenState
                                 FontWeight.bold,
 
                                 color:
-                                Colors.green,
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.green.shade300
+                                    : Colors.green,
                               ),
                             ),
                           ],
@@ -825,8 +825,8 @@ class _ReportsScreenState
         ),
       ),
       ),
-      );
-    }
+    );
+  }
   Widget filterButton(
       String title,
       bool isSelected,
@@ -846,8 +846,8 @@ class _ReportsScreenState
         decoration: BoxDecoration(
           color:
           isSelected
-              ? Colors.blue
-              : Colors.white,
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).cardColor,
 
           borderRadius:
           BorderRadius.circular(18),
@@ -859,8 +859,8 @@ class _ReportsScreenState
           style: TextStyle(
             color:
             isSelected
-                ? Colors.white
-                : Colors.black,
+                ? Theme.of(context).colorScheme.onPrimary
+                : Theme.of(context).textTheme.bodyLarge?.color,
 
             fontWeight: FontWeight.bold,
           ),
@@ -882,7 +882,7 @@ class _ReportsScreenState
       width: (MediaQuery.of(context).size.width - R.sp(context, 48) - R.sp(context, 16)) / 2,
       padding: EdgeInsets.all(R.sp(context, 14)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -920,7 +920,7 @@ class _ReportsScreenState
                   title,
                   style: TextStyle(
                     fontSize: R.fs(context, 12),
-                    color: Colors.black54,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                   ),
                 ),
               ],

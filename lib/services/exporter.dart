@@ -26,30 +26,30 @@ Future<void> exportPendingToExcel(BuildContext context) async {
   final titleStyle = CellStyle(
     bold: true,
     fontSize: 16,
-    fontColorHex: ExcelColor.fromHexString('1A1A2E'),
+    fontColorHex: ExcelColor.fromHexString('FF1A1A2E'),
   );
   final headerStyle = CellStyle(
     bold: true,
     fontSize: 11,
     fontColorHex: ExcelColor.white,
-    backgroundColorHex: ExcelColor.fromHexString('4A90E2'),
+    backgroundColorHex: ExcelColor.fromHexString('FF4A90E2'),
   );
   final groupStyle = CellStyle(
     bold: true,
     fontSize: 12,
-    fontColorHex: ExcelColor.fromHexString('1A1A2E'),
-    backgroundColorHex: ExcelColor.fromHexString('E8F0FE'),
+    fontColorHex: ExcelColor.fromHexString('FF1A1A2E'),
+    backgroundColorHex: ExcelColor.fromHexString('FFE8F0FE'),
   );
   final subtotalStyle = CellStyle(
     bold: true,
     fontSize: 11,
-    fontColorHex: ExcelColor.fromHexString('2563EB'),
+    fontColorHex: ExcelColor.fromHexString('FF2563EB'),
   );
   final grandTotalStyle = CellStyle(
     bold: true,
     fontSize: 13,
     fontColorHex: ExcelColor.white,
-    backgroundColorHex: ExcelColor.fromHexString('1A1A2E'),
+    backgroundColorHex: ExcelColor.fromHexString('FF1A1A2E'),
   );
 
   void setCell(String cell, dynamic value, [CellStyle? style]) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../services/excel_import.dart';
@@ -24,6 +25,8 @@ class _StudentsScreenState
 
   List<Map<String, dynamic>> students = [];
 
+  StreamSubscription? _studentsSub;
+
   // =====================================================
   // INIT
   // =====================================================
@@ -31,11 +34,14 @@ class _StudentsScreenState
   @override
   void initState() {
     super.initState();
-    loadStudents();
+    _studentsSub = FirestoreService.instance
+        .streamStudents()
+        .listen((data) => setState(() => students = data));
   }
 
   @override
   void dispose() {
+    _studentsSub?.cancel();
     searchController.dispose();
     nameController.dispose();
     super.dispose();
@@ -45,16 +51,7 @@ class _StudentsScreenState
   // LOAD STUDENTS
   // =====================================================
 
-  Future<void> loadStudents() async {
-
-    final data =
-    await FirestoreService.instance
-        .getStudents();
-
-    setState(() {
-      students = data;
-    });
-  }
+  Future<void> loadStudents() async {}
 
   List<Map<String, dynamic>> get _filteredStudents {
     final query = searchController.text.toLowerCase().trim();
@@ -697,13 +694,13 @@ class _StudentsScreenState
                               ),
                               IconButton(
 
-                                onPressed: () async {
+                                  onPressed: () async {
                                   try {
                                   final sales =
                                   await FirestoreService.instance
-                                      .getSalesByStudent(
+                                      .getSalesByStudentId(
 
-                                    student['name'],
+                                    student['id'],
                                   );
 
                                   if (!context.mounted) return;
@@ -802,7 +799,7 @@ class _StudentsScreenState
                                                       const SizedBox(height: 4),
 
                                                       Text(
-                                                        '${sale['date'] ?? ''} - ${sale['time'] ?? ''}',
+                                                        '${sale['date'] ?? ''} - ${formatTime(sale['time'])}',
 
                                                         style: const TextStyle(
                                                           fontSize: 12,

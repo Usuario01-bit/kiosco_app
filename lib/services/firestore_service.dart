@@ -70,6 +70,14 @@ class FirestoreService {
     return snap.docs.length;
   }
 
+  Stream<List<Map<String, dynamic>>> streamStudents() {
+    return _db
+        .collection('students')
+        .orderBy('name')
+        .snapshots()
+        .map((snap) => snap.docs.map(_docToMap).toList());
+  }
+
   // =====================================================
   // PRODUCTS
   // =====================================================
@@ -130,6 +138,14 @@ class FirestoreService {
     return _docToMap(doc);
   }
 
+  Stream<List<Map<String, dynamic>>> streamProducts() {
+    return _db
+        .collection('products')
+        .orderBy('name')
+        .snapshots()
+        .map((snap) => snap.docs.map(_docToMap).toList());
+  }
+
   // =====================================================
   // SALES
   // =====================================================
@@ -137,6 +153,7 @@ class FirestoreService {
   Future<int> insertSale(Map<String, dynamic> sale) async {
     await _db.collection('sales').add({
       'student': sale['student'],
+      'studentId': sale['studentId'] ?? '',
       'product': sale['product'],
       'productId': sale['productId'] ?? '',
       'quantity': (sale['quantity'] as num).toInt(),
@@ -175,8 +192,17 @@ class FirestoreService {
     return 1;
   }
 
+  Stream<List<Map<String, dynamic>>> streamSales() {
+    return _db
+        .collection('sales')
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snap) => _sortSalesByDateTime(snap.docs.map(_docToMap).toList()));
+  }
+
   Future<void> payPendingSales(String student, dynamic pendingId) async {
     final batch = _db.batch();
+    double totalPaid = 0;
 
     final salesSnap = await _db
         .collection('sales')
@@ -185,22 +211,28 @@ class FirestoreService {
     for (final doc in salesSnap.docs) {
       final pm = doc.data()['paymentMethod'] as String? ?? '';
       if (!pm.toLowerCase().contains('pendiente')) continue;
+      totalPaid += (doc.data()['total'] as num?)?.toDouble() ?? 0;
       batch.update(doc.reference, {
         'paymentMethod': 'Efectivo',
         'paidAt': DateTime.now().toIso8601String(),
       });
     }
 
-    // Delete by pending doc ID directly (more reliable than student name match)
     if (pendingId != null) {
-      batch.delete(_db.collection('pending').doc(pendingId.toString()));
+      batch.update(_db.collection('pending').doc(pendingId.toString()), {
+        'paid': totalPaid,
+        'paidAt': DateTime.now().toIso8601String(),
+      });
     } else {
       final pendingSnap = await _db
           .collection('pending')
           .where('student', isEqualTo: student)
           .get();
       for (final doc in pendingSnap.docs) {
-        batch.delete(doc.reference);
+        batch.update(doc.reference, {
+          'paid': totalPaid,
+          'paidAt': DateTime.now().toIso8601String(),
+        });
       }
     }
 
@@ -213,6 +245,16 @@ class FirestoreService {
     final snap = await _db
         .collection('sales')
         .where('student', isEqualTo: student)
+        .get();
+    return _sortSalesByDateTime(snap.docs.map(_docToMap).toList());
+  }
+
+  Future<List<Map<String, dynamic>>> getSalesByStudentId(
+    String studentId,
+  ) async {
+    final snap = await _db
+        .collection('sales')
+        .where('studentId', isEqualTo: studentId)
         .get();
     return _sortSalesByDateTime(snap.docs.map(_docToMap).toList());
   }
@@ -357,6 +399,17 @@ class FirestoreService {
         .orderBy('student')
         .get();
     return snap.docs.map(_docToMap).toList();
+  }
+
+  Stream<List<Map<String, dynamic>>> streamPendings() {
+    return _db
+        .collection('pending')
+        .orderBy('student')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map(_docToMap)
+            .where((d) => d['paidAt'] == null)
+            .toList());
   }
 
   Future<List<Map<String, dynamic>>> getAllPendingSales() async {

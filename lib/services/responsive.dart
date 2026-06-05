@@ -1,5 +1,16 @@
 import 'package:flutter/material.dart';
 
+String formatTime(String? time) {
+  if (time == null || time.isEmpty) return '';
+  final parts = time.split(':');
+  if (parts.length < 2) return time;
+  final h = int.tryParse(parts[0]) ?? 0;
+  final m = parts[1];
+  final period = h >= 12 ? 'PM' : 'AM';
+  final h12 = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+  return '$h12:$m $period';
+}
+
 class R {
   R._();
 

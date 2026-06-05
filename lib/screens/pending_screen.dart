@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../services/firestore_service.dart';
@@ -23,46 +24,35 @@ class _PendingScreenState
 
   bool loading = true;
 
+  StreamSubscription? _pendingSub;
+
   @override
   void initState() {
-
     super.initState();
-
-    loadPending();
-  }
-
-  // =========================
-  // CARGAR PENDIENTES
-  // =========================
-
-  Future<void> loadPending() async {
-
-    final data =
-    await FirestoreService.instance
-        .getPendings();
-
-    double total = 0;
-
-    for (var item in data) {
-
-      final amount =
-          (item['amount'] as num)
-              .toDouble();
-      final paid =
-          (item['paid'] as num?)
-              ?.toDouble() ?? 0;
-      total += amount - paid;
-    }
-
-    setState(() {
-
-      pendingList = data;
-
-      totalPending = total;
-
-      loading = false;
+    _pendingSub = FirestoreService.instance
+        .streamPendings()
+        .listen((data) {
+      double total = 0;
+      for (var item in data) {
+        final amount = (item['amount'] as num).toDouble();
+        final paid = (item['paid'] as num?)?.toDouble() ?? 0;
+        total += amount - paid;
+      }
+      setState(() {
+        pendingList = data;
+        totalPending = total;
+        loading = false;
+      });
     });
   }
+
+  @override
+  void dispose() {
+    _pendingSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> loadPending() async {}
 
   // =========================
   // ABONAR (PARCIAL)

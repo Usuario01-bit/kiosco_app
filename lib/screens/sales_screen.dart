@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import '../services/product_icons.dart';
@@ -28,12 +29,16 @@ class _SalesScreenState
   List<Map<String, dynamic>> cart = [];
 
   String? selectedStudent;
+  String? selectedStudentId;
 
   String paymentMethod = 'Efectivo';
 
   double total = 0;
 
   final studentSearchController = TextEditingController();
+
+  StreamSubscription? _studentsSub;
+  StreamSubscription? _productsSub;
 
   List<Map<String, dynamic>> get _filteredStudents {
     final query = studentSearchController.text.toLowerCase().trim();
@@ -50,38 +55,21 @@ class _SalesScreenState
 
   @override
   void initState() {
-
     super.initState();
-
-    loadData();
+    _studentsSub = FirestoreService.instance
+        .streamStudents()
+        .listen((data) => setState(() => students = data));
+    _productsSub = FirestoreService.instance
+        .streamProducts()
+        .listen((data) => setState(() => products = data));
   }
 
   @override
   void dispose() {
+    _studentsSub?.cancel();
+    _productsSub?.cancel();
     studentSearchController.dispose();
     super.dispose();
-  }
-
-  // =====================================================
-  // LOAD DATA
-  // =====================================================
-
-  Future<void> loadData() async {
-
-    final studentsData =
-    await FirestoreService.instance
-        .getStudents();
-
-    final productsData =
-    await FirestoreService.instance
-        .getProducts();
-
-    setState(() {
-
-      students = studentsData;
-
-      products = productsData;
-    });
   }
 
   // =====================================================
@@ -143,135 +131,104 @@ class _SalesScreenState
   // =====================================================
 
   Future<void> completeSale() async {
+    try {
+      if (selectedStudent == null ||
+          cart.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Selecciona estudiante y productos',
+              ),
+            ),
+          );
+        }
+        return;
+      }
 
-    if (selectedStudent == null ||
-        cart.isEmpty) {
+      final now = DateTime.now();
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      String recreo = 'Fuera de recreo';
 
-        const SnackBar(
-          content: Text(
-            'Selecciona estudiante y productos',
+      // RECREO 1
+      if (now.hour == 10) {
+        recreo = 'Recreo 1';
+      }
+
+      // RECREO 2
+      if (now.hour == 12 &&
+          now.minute >= 20) {
+        recreo = 'Recreo 2';
+      }
+
+      for (var item in cart) {
+        await FirestoreService.instance
+            .insertSale({
+          'student': selectedStudent,
+          'studentId': selectedStudentId ?? '',
+          'product': item['name'],
+          'quantity': item['quantity'],
+          'total':
+          (item['price'] as num)
+              .toDouble() *
+              item['quantity'],
+          'paymentMethod':
+          paymentMethod,
+          'date':
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
+          'time':
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+          'recreo': recreo,
+        });
+
+        await FirestoreService.instance
+            .updateProductStock(
+          item['id'],
+          item['stock'] -
+              item['quantity'],
+        );
+      }
+
+      if (paymentMethod
+          .toLowerCase()
+          .trim() == 'pendiente') {
+        await FirestoreService.instance
+            .insertPending({
+          'student': selectedStudent,
+          'amount': total,
+          'date':
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
+          'time':
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+          'recreo': recreo,
+        });
+      }
+
+      if (mounted) {
+        setState(() {
+          cart.clear();
+          total = 0;
+        });
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text('Venta completada'),
           ),
-        ),
-      );
-
-      return;
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar venta: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-
-    final now = DateTime.now();
-
-    String recreo = 'Fuera de recreo';
-
-    // RECREO 1
-    if (now.hour == 10) {
-      recreo = 'Recreo 1';
-    }
-
-    // RECREO 2
-    if (now.hour == 12 &&
-        now.minute >= 20) {
-      recreo = 'Recreo 2';
-    }
-
-    for (var item in cart) {
-
-      // =========================================
-      // SAVE SALE
-      // =========================================
-
-      await FirestoreService.instance
-          .insertSale({
-
-        'student': selectedStudent,
-
-        'product': item['name'],
-
-        'quantity': item['quantity'],
-
-        'total':
-        (item['price'] as num)
-            .toDouble() *
-            item['quantity'],
-
-        'paymentMethod':
-        paymentMethod,
-
-        'date':
-        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
-
-        'time':
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-
-        'recreo': recreo,
-      });
-
-      // =========================================
-      // UPDATE STOCK
-      // =========================================
-
-      await FirestoreService.instance
-          .updateProductStock(
-
-        item['id'],
-
-        item['stock'] -
-            item['quantity'],
-      );
-    }
-
-    // =========================================
-    // SAVE PENDING
-    // =========================================
-
-    if (paymentMethod
-        .toLowerCase()
-        .trim() == 'pendiente') {
-
-      await FirestoreService.instance
-          .insertPending({
-
-        'student': selectedStudent,
-
-        'amount': total,
-
-        'date':
-        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
-
-        'time':
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-
-        'recreo': recreo,
-      });
-    }
-
-    // =========================================
-    // RELOAD
-    // =========================================
-
-    await loadData();
-
-    // =========================================
-    // CLEAR
-    // =========================================
-
-    setState(() {
-
-      cart.clear();
-
-      total = 0;
-    });
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-
-      const SnackBar(
-
-        content:
-        Text('Venta completada'),
-      ),
-    );
   }
 
   // =====================================================
@@ -321,6 +278,7 @@ class _SalesScreenState
                             onPressed: () {
                               setState(() {
                                 selectedStudent = null;
+                                selectedStudentId = null;
                                 studentSearchController.clear();
                               });
                             },
@@ -329,7 +287,10 @@ class _SalesScreenState
                   ),
                   onChanged: (value) {
                     setState(() {
-                      if (selectedStudent != null) selectedStudent = null;
+                      if (selectedStudent != null) {
+                        selectedStudent = null;
+                        selectedStudentId = null;
+                      }
                     });
                   },
                 ),
@@ -398,11 +359,12 @@ class _SalesScreenState
                                 )
                               : null,
                           onTap: () {
-                            setState(() {
-                              selectedStudent = s['name'];
-                              studentSearchController.text = s['name'];
-                            });
-                          },
+                                setState(() {
+                                  selectedStudent = s['name'];
+                                  selectedStudentId = s['id'];
+                                  studentSearchController.clear();
+                                });
+                              },
                         );
                       },
                     ),
@@ -435,7 +397,7 @@ class _SalesScreenState
               if (!isWide) headerWidget,
               Expanded(
                 child: RefreshIndicator(
-                  onRefresh: loadData,
+                  onRefresh: () async {},
                   child: GridView.builder(
                     padding: EdgeInsets.all(R.sp(context, isWide ? 20 : 16)),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

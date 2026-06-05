@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../services/firestore_service.dart';
@@ -23,27 +24,28 @@ class _ProductsScreenState
 
   bool loading = true;
 
+  StreamSubscription? _productsSub;
+
   @override
   void initState() {
-
     super.initState();
-
-    loadProducts();
-  }
-
-  Future<void> loadProducts() async {
-
-    final dbProducts =
-    await FirestoreService.instance
-        .getProducts();
-
-    setState(() {
-
-      products = dbProducts;
-
-      loading = false;
+    _productsSub = FirestoreService.instance
+        .streamProducts()
+        .listen((data) {
+      setState(() {
+        products = data;
+        loading = false;
+      });
     });
   }
+
+  @override
+  void dispose() {
+    _productsSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> loadProducts() async {}
 
   Future<void> addProductDialog() async {
 

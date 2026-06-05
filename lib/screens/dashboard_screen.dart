@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/firestore_service.dart';
@@ -27,64 +28,124 @@ class _DashboardScreenState
   bool isLoading = true;
   String? loadError;
 
+  StreamSubscription? _salesSub;
+  StreamSubscription? _pendingSub;
+  StreamSubscription? _productsSub;
+
   @override
   void initState() {
-
     super.initState();
-    loadDashboard();
+    _loadInitialSales();
+    _salesSub = FirestoreService.instance
+        .streamSales()
+        .listen(_onSalesChanged)
+      ..onError((e) => setState(() => loadError = e.toString()));
+    _pendingSub = FirestoreService.instance
+        .streamPendings()
+        .listen((data) {
+      double sum = 0;
+      for (final doc in data) {
+        final amount = (doc['amount'] as num?)?.toDouble() ?? 0;
+        final paid = (doc['paid'] as num?)?.toDouble() ?? 0;
+        sum += amount - paid;
+      }
+      setState(() {
+        totalPending = sum;
+        isLoading = false;
+      });
+    });
+    _productsSub = FirestoreService.instance
+        .streamProducts()
+        .listen((data) {
+      setState(() {
+        totalProducts = data.length;
+        isLoading = false;
+      });
+    });
   }
 
-  Future<void> loadDashboard()
-  async {
+  Future<void> _loadInitialSales() async {
+    try {
+      final sales = await FirestoreService.instance.getSales();
+      if (mounted) _onSalesChanged(sales);
+    } catch (_) {}
+  }
+
+  void _onSalesChanged(List<Map<String, dynamic>> sales) {
+    final now = DateTime.now();
+    final todayStr =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final weekAgo = now
+        .subtract(const Duration(days: 6))
+        .toIso8601String()
+        .substring(0, 10);
+
+    double totalSum = 0;
+    double todaySum = 0;
+    final Map<String, int> productCounts = {};
+    final Map<String, double> productTotals = {};
+    final Map<String, double> weeklyGrouped = {};
+
+    for (final sale in sales) {
+      final total = (sale['total'] as num?)?.toDouble() ?? 0;
+      totalSum += total;
+
+      final pm = (sale['paymentMethod'] as String? ?? '').toLowerCase();
+      final date = sale['date'] as String? ?? '';
+
+      if (!pm.contains('pendiente')) {
+        if (date == todayStr) todaySum += total;
+        if (date.compareTo(weekAgo) >= 0) {
+          weeklyGrouped[date] = (weeklyGrouped[date] ?? 0) + total;
+        }
+      }
+
+      final product = sale['product'] as String? ?? '';
+      if (product.isNotEmpty) {
+        final qty = (sale['quantity'] as num?)?.toInt() ?? 0;
+        productCounts[product] = (productCounts[product] ?? 0) + qty;
+        productTotals[product] = (productTotals[product] ?? 0) + total;
+      }
+    }
+
+    final sortedWeekly = weeklyGrouped.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    final sortedEntries = productTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final topProductsList = sortedEntries
+        .take(5)
+        .map((e) => {'product': e.key, 'total': e.value})
+        .toList();
 
     setState(() {
-      loadError = null;
-      isLoading = true;
+      totalSales = totalSum;
+      todaySales = todaySum;
+      totalSalesCount = sales.length;
+      topProduct = productCounts.entries.isEmpty
+          ? null
+          : productCounts.entries
+              .reduce((a, b) => a.value > b.value ? a : b)
+              .key;
+      recentSales = sales.take(20).toList();
+      weeklySales = sortedWeekly
+          .map((e) => {'date': e.key, 'total': e.value})
+          .toList();
+      topProducts = topProductsList;
+      isLoading = false;
     });
+  }
 
-    try {
+  @override
+  void dispose() {
+    _salesSub?.cancel();
+    _pendingSub?.cancel();
+    _productsSub?.cancel();
+    super.dispose();
+  }
 
-      final results = await Future.wait([
-        FirestoreService.instance.getTotalSales(),
-        FirestoreService.instance.getTotalPending(),
-        FirestoreService.instance.getTotalSalesCount(),
-        FirestoreService.instance.getProductsCount(),
-        FirestoreService.instance.getTodaySales(),
-        FirestoreService.instance.getTopProduct(),
-        FirestoreService.instance.getRecentSales(5),
-        FirestoreService.instance.getWeeklySales(),
-        FirestoreService.instance.getTopProducts(5),
-      ]);
-
-      setState(() {
-
-        totalSales = results[0] as double;
-
-        totalPending = results[1] as double;
-
-        totalSalesCount = results[2] as int;
-
-        totalProducts = results[3] as int;
-
-        todaySales = results[4] as double;
-
-        topProduct = results[5] as String?;
-
-        recentSales = results[6] as List<Map<String, dynamic>>;
-
-        weeklySales = results[7] as List<Map<String, dynamic>>;
-
-        topProducts = results[8] as List<Map<String, dynamic>>;
-
-        isLoading = false;
-      });
-    } catch (e) {
-
-      setState(() {
-        loadError = e.toString();
-        isLoading = false;
-      });
-    }
+  Future<void> loadDashboard() async {
+    setState(() => loadError = null);
   }
 
   Widget buildCard({
@@ -836,9 +897,9 @@ class _DashboardScreenState
               recentSales[index];
 
               final isPending =
-              (sale['paymentMethod'] ??
+              (sale['paymentMethod']
+                      ?.toString() ??
                   '')
-                  .toString()
                   .toLowerCase()
                   .contains('pendiente');
 
@@ -872,7 +933,7 @@ class _DashboardScreenState
                   ),
                 ),
                 title: Text(
-                  sale['product'] ??
+                  sale['product']?.toString() ??
                       'Producto',
                   style:
                   const TextStyle(
@@ -880,13 +941,13 @@ class _DashboardScreenState
                   ),
                 ),
                 subtitle: Text(
-                  '${sale['date'] ?? ''} · ${sale['time'] ?? ''}',
+                  '${sale['date'] ?? ''} · ${formatTime(sale['time'])}',
                   style: const TextStyle(
                     fontSize: 12,
                   ),
                 ),
                 trailing: Text(
-                  '\$${(sale['total'] as num).toDouble().toStringAsFixed(2)}',
+                  '\$${((sale['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
                   style: TextStyle(
                     fontWeight:
                     FontWeight.bold,

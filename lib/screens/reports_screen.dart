@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -38,55 +39,49 @@ class _ReportsScreenState
 
   List<Map<String, dynamic>> sales = [];
 
+  List<Map<String, dynamic>> _allSales = [];
+
+  StreamSubscription? _salesSub;
+
   // =====================================================
   // INIT
   // =====================================================
 
   @override
   void initState() {
-
     super.initState();
-
-    loadReports();
+    _salesSub = FirestoreService.instance
+        .streamSales()
+        .listen((data) {
+      _allSales = data;
+      _computeReports();
+    })
+      ..onError((e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error en reportes: $e'), backgroundColor: Colors.red),
+          );
+        }
+      });
   }
 
-  // =====================================================
-  // LOAD REPORTS
-  // =====================================================
+  @override
+  void dispose() {
+    _salesSub?.cancel();
+    super.dispose();
+  }
 
-  Future<void> loadReports() async {
-
-    var salesData =
-    await FirestoreService.instance
-        .getSales();
-
-    double total = 0;
-
-    double efectivo = 0;
-
-    double yappy = 0;
-
-    double pendiente = 0;
-
-    Map<String, int> productCounter = {};
-
-    String bestProduct = 'Ninguno';
-
-    int bestCount = 0;
-    final now = DateTime.now();
-
-      salesData = salesData.where((sale) {
-
+  void _computeReports() {
+    var salesData = _allSales.where((sale) {
       final dateText = sale['date'] ?? '';
+      final now = DateTime.now();
 
-      // HOY
       if (selectedFilter == 'Hoy') {
         final todayStr =
             '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
         return dateText == todayStr;
       }
 
-      // SEMANA
       if (selectedFilter == 'Semana') {
         final weekAgo = DateTime.now()
             .subtract(const Duration(days: 6))
@@ -95,7 +90,6 @@ class _ReportsScreenState
         return dateText.compareTo(weekAgo) >= 0;
       }
 
-      // MES
       if (selectedFilter == 'Mes') {
         final monthStr =
             '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}';
@@ -103,92 +97,59 @@ class _ReportsScreenState
       }
 
       return true;
-
     }).toList();
+
+    double total = 0;
+    double efectivo = 0;
+    double yappy = 0;
+    double pendiente = 0;
+    double r1 = 0;
+    double r2 = 0;
+    Map<String, int> productCounter = {};
+    String bestProduct = 'Ninguno';
+    int bestCount = 0;
+
     for (var sale in salesData) {
-
-      String product =
-          sale['product'] ?? '';
-
+      String product = sale['product'] ?? '';
       if (product.isNotEmpty) {
-
-        productCounter[product] =
-            (productCounter[product] ?? 0) + 1;
-
-        if (productCounter[product]! >
-            bestCount) {
-
-          bestCount =
-          productCounter[product]!;
-
+        productCounter[product] = (productCounter[product] ?? 0) + 1;
+        if (productCounter[product]! > bestCount) {
+          bestCount = productCounter[product]!;
           bestProduct = product;
         }
       }
 
-      final amount =
-
-      (sale['total'] as num)
-          .toDouble();
-
+      final amount = (sale['total'] as num).toDouble();
       total += amount;
 
-      if (sale['paymentMethod'] ==
-          'Efectivo') {
-
+      if (sale['paymentMethod'] == 'Efectivo') {
         efectivo += amount;
       }
-
-      if (sale['paymentMethod'] ==
-          'Yappy') {
-
+      if (sale['paymentMethod'] == 'Yappy') {
         yappy += amount;
       }
-
-        if (sale['paymentMethod'] ==
-            'Pendiente') {
-
-          pendiente += amount;
-
-          if (sale['recreo'] ==
-              'Recreo 1') {
-
-            recreo1Total += amount;
-          }
-
-          if (sale['recreo'] ==
-              'Recreo 2') {
-
-            recreo2Total += amount;
-          }
-        }
+      if (sale['paymentMethod'] == 'Pendiente') {
+        pendiente += amount;
+        if (sale['recreo'] == 'Recreo 1') r1 += amount;
+        if (sale['recreo'] == 'Recreo 2') r2 += amount;
+      }
     }
 
     setState(() {
-      this.recreo1Total =
-          recreo1Total;
-
-      this.recreo2Total =
-          recreo2Total;
-
-      sales = salesData;
-
+      this.sales = salesData;
       totalSales = total;
-
       efectivoTotal = efectivo;
-
       yappyTotal = yappy;
-
       pendienteTotal = pendiente;
-
-      totalTransactions =
-          salesData.length;
-
+      recreo1Total = r1;
+      recreo2Total = r2;
+      totalTransactions = salesData.length;
       topProduct = bestProduct;
-
       topProductCount = bestCount;
-
     });
   }
+
+  Future<void> loadReports() async {}
 
   // =====================================================
   // BUILD
@@ -231,12 +192,11 @@ class _ReportsScreenState
                   filterButton(
                     'Hoy',
                     selectedFilter == 'Hoy',
-                        () {
+                    () {
                       setState(() {
                         selectedFilter = 'Hoy';
                       });
-
-                      loadReports();
+                      _computeReports();
                     },
                   ),
 
@@ -247,8 +207,7 @@ class _ReportsScreenState
                       setState(() {
                         selectedFilter = 'Semana';
                       });
-
-                      loadReports();
+                      _computeReports();
                     },
                   ),
 
@@ -259,10 +218,11 @@ class _ReportsScreenState
                       setState(() {
                         selectedFilter = 'Mes';
                       });
-
-                      loadReports();
+                      _computeReports();
                     },
                   ),
+
+
 
                 ],
               ),
@@ -679,144 +639,102 @@ class _ReportsScreenState
                     ),
                   )
 
-                      : ListView.builder(
-
-                    shrinkWrap: true,
-
-                    physics:
-                    const NeverScrollableScrollPhysics(),
-
-                    itemCount:
-                    sales.length,
-
-                    itemBuilder:
-                        (context,
-                        index) {
-
-                      final sale =
-                      sales[index];
-
+                      : Column(
+                    children: sales.map((sale) {
+                      final isPending = (sale['paymentMethod'] ?? '')
+                          .toString().toLowerCase().contains('pendiente');
                       return Container(
-
                         margin: EdgeInsets.only(
                           bottom: R.sp(context, 16),
                         ),
-
                         padding: EdgeInsets.all(
                           R.sp(context, 20),
                         ),
-
-                        decoration:
-                        BoxDecoration(
-
-                          color:
-                          Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-
-                          borderRadius:
-                          BorderRadius.circular(
-                            24,
-                          ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-
                         child: Row(
-
                           children: [
-
                             Container(
-
-                              padding: EdgeInsets.all(
-                                R.sp(context, 14),
+                              padding: EdgeInsets.all(R.sp(context, 14)),
+                              decoration: BoxDecoration(
+                                color: (isPending ? Colors.orange : Colors.green).withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
                               ),
-
-                              decoration:
-                              BoxDecoration(
-
-                                color:
-                                Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-
-                                shape:
-                                BoxShape.circle,
-                              ),
-
-                              child:
-                              Icon(
-
-                                Icons.receipt_long,
-
-                                color:
-                                Theme.of(context).colorScheme.primary,
+                              child: Icon(
+                                isPending ? Icons.access_time : Icons.check,
+                                color: isPending ? Colors.orange : Colors.green,
                               ),
                             ),
-
-                            SizedBox(
-                              width: R.sp(context, 18),
-                            ),
-
+                            SizedBox(width: R.sp(context, 18)),
                             Expanded(
-
                               child: Column(
-
-                                crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .start,
-
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          sale['student']?.toString() ?? '',
+                                          style: TextStyle(
+                                            fontSize: R.fs(context, 20),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (isPending)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text(
+                                            'Pendiente',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.orange,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  SizedBox(height: R.sp(context, 4)),
                                   Text(
-
-                                    sale['student'],
-
-                                  style:
-                                  TextStyle(
-
-                                    fontSize: R.fs(context, 20),
-
-                                    fontWeight:
-                                    FontWeight.bold,
+                                    '${sale['product'] ?? ''}',
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                                     ),
                                   ),
-
-                                  SizedBox(
-                                    height: R.sp(context, 4),
-                                  ),
-
                                   Text(
-
-                                    '${sale['product']} • ${sale['paymentMethod']}',
-
-                                    style:
-                                    TextStyle(
-
-                                      color:
-                                      Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                    '${sale['date'] ?? ''} · ${formatTime(sale['time'])}',
+                                    style: TextStyle(
+                                      fontSize: R.fs(context, 12),
+                                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-
                             Text(
-
-                              '\$${(sale['total'] as num).toDouble().toStringAsFixed(2)}',
-
-                              style:
-                              TextStyle(
-
+                              '\$${((sale['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                              style: TextStyle(
                                 fontSize: R.fs(context, 22),
-
-                                fontWeight:
-                                FontWeight.bold,
-
-                                color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.green.shade300
-                                    : Colors.green,
+                                fontWeight: FontWeight.bold,
+                                color: isPending
+                                    ? Colors.orange
+                                    : (Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.green.shade300
+                                        : Colors.green),
                               ),
                             ),
                           ],
                         ),
                       );
-                    },
+                    }).toList(),
                   ),
                 ],
               ),

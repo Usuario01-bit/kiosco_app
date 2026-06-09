@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import 'database_helper.dart';
 
@@ -83,6 +84,59 @@ class FirestoreService {
   // =====================================================
   // PRODUCTS
   // =====================================================
+
+  Future<void> seedDefaultProducts() async {
+    final defaultProducts = [
+      // Emparedados
+      {'name': 'Jamón / Salami', 'price': 1.50, 'stock': 999, 'icon': 'breakfast_dining', 'category': 'Emparedados'},
+      {'name': 'Peperoni / Pollo', 'price': 1.75, 'stock': 999, 'icon': 'local_pizza', 'category': 'Emparedados'},
+      // Empanadas asadas
+      {'name': 'Empanada Queso', 'price': 1.00, 'stock': 999, 'icon': 'set_meal', 'category': 'Empanadas'},
+      {'name': 'Empanada Carne', 'price': 1.00, 'stock': 999, 'icon': 'set_meal', 'category': 'Empanadas'},
+      {'name': 'Empanada Pollo', 'price': 1.00, 'stock': 999, 'icon': 'set_meal', 'category': 'Empanadas'},
+      // Derretido
+      {'name': 'Derretido Queso Amarillo', 'price': 2.25, 'stock': 999, 'icon': 'bakery_dining', 'category': 'Especiales'},
+      // Hot Dog / Hamburguesa
+      {'name': 'Hot Dog', 'price': 2.50, 'stock': 999, 'icon': 'fastfood', 'category': 'Especiales'},
+      {'name': 'Hamburguesa', 'price': 2.75, 'stock': 999, 'icon': 'lunch_dining', 'category': 'Especiales'},
+      // Café
+      {'name': 'Café Negro', 'price': 0.60, 'stock': 999, 'icon': 'coffee', 'category': 'Café'},
+      {'name': 'Café con Leche', 'price': 0.75, 'stock': 999, 'icon': 'coffee', 'category': 'Café'},
+      {'name': 'Té', 'price': 0.50, 'stock': 999, 'icon': 'emoji_food_beverage', 'category': 'Café'},
+      // Bebidas
+      {'name': 'Jugo Tetrapack', 'price': 0.60, 'stock': 999, 'icon': 'water_drop', 'category': 'Bebidas'},
+      {'name': 'Jugo de Lata', 'price': 0.80, 'stock': 999, 'icon': 'local_drink', 'category': 'Bebidas'},
+      {'name': 'Agua Saborizada', 'price': 1.00, 'stock': 999, 'icon': 'water_drop', 'category': 'Bebidas'},
+      {'name': 'Jugo Natural', 'price': 1.00, 'stock': 999, 'icon': 'local_drink', 'category': 'Bebidas'},
+      {'name': 'Té Frío', 'price': 1.00, 'stock': 999, 'icon': 'emoji_food_beverage', 'category': 'Bebidas'},
+      // Duros
+      {'name': 'Duro Fresa - Leche Condensada', 'price': 1.00, 'stock': 999, 'icon': 'icecream', 'category': 'Duros'},
+      {'name': 'Duro Piña', 'price': 0.50, 'stock': 999, 'icon': 'apple', 'category': 'Duros'},
+      {'name': 'Duro Mango', 'price': 0.50, 'stock': 999, 'icon': 'apple', 'category': 'Duros'},
+      {'name': 'Duro Sandía', 'price': 0.50, 'stock': 999, 'icon': 'apple', 'category': 'Duros'},
+      {'name': 'Duro Nance', 'price': 0.50, 'stock': 999, 'icon': 'apple', 'category': 'Duros'},
+    ];
+
+    final existing = await _db.collection('products').get();
+    final existingNames = existing.docs.map((d) => d.data()['name'] as String? ?? '').toSet();
+
+    int count = 0;
+    final batch = _db.batch();
+    for (final p in defaultProducts) {
+      if (existingNames.contains(p['name'])) continue;
+      final doc = _db.collection('products').doc();
+      batch.set(doc, {
+        'name': p['name'],
+        'price': p['price'],
+        'stock': p['stock'],
+        'icon': p['icon'],
+        'category': p['category'],
+      });
+      count++;
+    }
+    if (count > 0) await batch.commit();
+    debugPrint('Seeded $count default products');
+  }
 
   Future<int> insertProduct(Map<String, dynamic> data) async {
     await _db.collection('products').add({

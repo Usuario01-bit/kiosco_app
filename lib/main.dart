@@ -208,6 +208,7 @@ void main() async {
 
   try {
     await FirestoreService.instance.seedFromLocal();
+    await FirestoreService.instance.seedDefaultProducts();
   } catch (e) {
     debugPrint('Seed/migration error: $e');
   }

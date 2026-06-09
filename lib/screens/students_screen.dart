@@ -21,8 +21,13 @@ class _StudentsScreenState
   final TextEditingController nameController =
   TextEditingController();
 
+  final TextEditingController gradoController =
+  TextEditingController();
+
   final TextEditingController searchController =
   TextEditingController();
+
+  String currentRole = 'alumno';
 
   List<Map<String, dynamic>> students = [];
 
@@ -45,6 +50,7 @@ class _StudentsScreenState
     _studentsSub?.cancel();
     searchController.dispose();
     nameController.dispose();
+    gradoController.dispose();
     super.dispose();
   }
 
@@ -63,22 +69,44 @@ class _StudentsScreenState
     }).toList();
   }
 
-  Map<String?, List<Map<String, dynamic>>> get _groupedByGrado {
+  Map<String, List<Map<String, dynamic>>> get _groupedByRole {
     final filtered = _filteredStudents;
-    final Map<String?, List<Map<String, dynamic>>> groups = {};
+    final Map<String, List<Map<String, dynamic>>> groups = {};
     for (final s in filtered) {
-      final grado = s['grado'] as String?;
-      final key = (grado != null && grado.trim().isNotEmpty) ? grado.trim() : null;
-      groups.putIfAbsent(key, () => []);
-      groups[key]!.add(s);
+      final role = s['role'] as String? ?? 'alumno';
+      groups.putIfAbsent(role, () => []);
+      groups[role]!.add(s);
     }
-    final sortedKeys = groups.keys.toList()
-      ..sort((a, b) {
-        if (a == null) return 1;
-        if (b == null) return -1;
-        return a.compareTo(b);
-      });
-    return {for (final k in sortedKeys) k: groups[k]!};
+    final ordered = <String>['alumno', 'profesor', 'otro'];
+    for (final key in ordered.reversed) {
+      if (groups.containsKey(key)) {
+        final entry = groups.remove(key)!;
+        if (key == 'alumno') {
+          final Map<String?, List<Map<String, dynamic>>> gradoGroups = {};
+          for (final s in entry) {
+            final g = s['grado'] as String?;
+            final k = (g != null && g.trim().isNotEmpty) ? g.trim() : null;
+            gradoGroups.putIfAbsent(k, () => []);
+            gradoGroups[k]!.add(s);
+          }
+          final sortedKeys = gradoGroups.keys.toList()..sort((a, b) {
+            if (a == null) return 1;
+            if (b == null) return -1;
+            return a.compareTo(b);
+          });
+          for (final k in sortedKeys) {
+            final list = gradoGroups[k]!;
+            list.sort((a, b) => (a['name'] as String? ?? '').compareTo(b['name'] as String? ?? ''));
+            groups['alumno__${k ?? '_'}'] = list;
+          }
+        } else {
+          final list = entry;
+          list.sort((a, b) => (a['name'] as String? ?? '').compareTo(b['name'] as String? ?? ''));
+          groups[key] = list;
+        }
+      }
+    }
+    return groups;
   }
 
   // =====================================================
@@ -86,33 +114,133 @@ class _StudentsScreenState
   // =====================================================
 
   Future<void> addStudent() async {
+    final name = nameController.text.trim();
+    if (name.isEmpty) return;
 
-    if (nameController.text
-        .trim()
-        .isEmpty) {
-      return;
-    }
+    final grado = gradoController.text.trim();
 
-    await FirestoreService.instance
-        .insertStudent({
-
-      'name': nameController.text.trim(),
-
+    await FirestoreService.instance.insertStudent({
+      'name': name,
+      if (grado.isNotEmpty) 'grado': grado,
+      'role': currentRole,
     });
 
     nameController.clear();
+    gradoController.clear();
 
     await loadStudents();
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${StoreConfig.instance.entityName} agregado')),
+    );
+  }
 
-      SnackBar(
+  Future<void> showAddDialog() async {
+    nameController.clear();
+    gradoController.clear();
+    currentRole = 'alumno';
 
-        content:
-        Text('${StoreConfig.instance.entityName} agregado'),
-
-      ),
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.person_add,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Agregar ${StoreConfig.instance.entityLC()}',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        labelText: 'Nombre y apellido',
+                        hintText: 'Ej: Juan Pérez',
+                        prefixIcon: const Icon(Icons.person),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: currentRole,
+                      decoration: InputDecoration(
+                        labelText: 'Rol',
+                        prefixIcon: const Icon(Icons.badge),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'alumno', child: Text('Alumno')),
+                        DropdownMenuItem(value: 'profesor', child: Text('Profesor')),
+                        DropdownMenuItem(value: 'otro', child: Text('Otro')),
+                      ],
+                      onChanged: (v) {
+                        setDialogState(() => currentRole = v ?? 'alumno');
+                      },
+                    ),
+                    if (currentRole == 'alumno') ...[
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: gradoController,
+                        decoration: InputDecoration(
+                          labelText: 'Grado',
+                          hintText: 'Ej: 5° A',
+                          prefixIcon: const Icon(Icons.school),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    addStudent();
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Agregar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -121,7 +249,7 @@ class _StudentsScreenState
   // =====================================================
 
   Future<void> deleteStudent(
-      int id) async {
+      dynamic id) async {
 
     await FirestoreService.instance
         .deleteStudent(id);
@@ -136,7 +264,7 @@ class _StudentsScreenState
   @override
   Widget build(BuildContext context) {
 
-    final groups = _groupedByGrado;
+    final groups = _groupedByRole;
     final totalFiltered = _filteredStudents.length;
 
     return Scaffold(
@@ -362,144 +490,29 @@ class _StudentsScreenState
           ),
 
           // =================================================
-          // INPUT
+          // ADD BUTTON
           // =================================================
 
           Padding(
-
             padding: EdgeInsets.symmetric(
               horizontal: R.sp(context, 24),
+              vertical: R.sp(context, 12),
             ),
-
-            child: Container(
-
-              padding: EdgeInsets.all(
-                R.sp(context, 20),
-              ),
-
-              decoration: BoxDecoration(
-
-                color:
-                Theme.of(context).cardColor,
-
-                borderRadius:
-                BorderRadius.circular(
-                    28),
-
-                boxShadow: [
-                  BoxShadow(
-
-                    color: Colors.black
-                        .withValues(alpha: 0.05),
-
-                    blurRadius: 20,
-
-                    offset:
-                    const Offset(0, 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: showAddDialog,
+                icon: const Icon(Icons.person_add),
+                label: Text(
+                  'Agregar ${StoreConfig.instance.entityLC()}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
                   ),
-                ],
-              ),
-
-              child: Row(
-
-                children: [
-
-                  Expanded(
-
-                    child: TextField(
-
-                      controller:
-                      nameController,
-
-                      decoration:
-                      InputDecoration(
-
-                        hintText:
-                        'Nombre del ${StoreConfig.instance.entityLC()}',
-
-                        prefixIcon:
-                        const Icon(
-                          Icons.person,
-                        ),
-
-                        filled: true,
-
-                        fillColor:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
-
-                        border:
-                        OutlineInputBorder(
-
-                          borderRadius:
-                          BorderRadius
-                              .circular(
-                              20),
-
-                          borderSide:
-                          BorderSide
-                              .none,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 20),
-
-                  SizedBox(
-
-                    height: R.sp(context, 72),
-
-                    child:
-                    ElevatedButton.icon(
-
-                      onPressed:
-                      addStudent,
-
-                      icon: const Icon(
-                        Icons.add,
-                      ),
-
-                      label: Text(
-
-                        'Agregar',
-
-                        style: TextStyle(
-
-                          fontSize: R.fs(context, 18),
-
-                          fontWeight:
-                          FontWeight.bold,
-                        ),
-                      ),
-
-                      style:
-                      ElevatedButton
-                          .styleFrom(
-
-                        backgroundColor:
-                        Theme.of(context).colorScheme.primary,
-
-                        foregroundColor:
-                        Theme.of(context).colorScheme.onPrimary,
-
-                        padding:
-                        const EdgeInsets
-                            .symmetric(
-                          horizontal: 28,
-                        ),
-
-                        shape:
-                        RoundedRectangleBorder(
-
-                          borderRadius:
-                          BorderRadius
-                              .circular(
-                              22),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -569,7 +582,7 @@ class _StudentsScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
 
-                      // Grade header
+                      // Section header
                       Padding(
                         padding: EdgeInsets.symmetric(
                           vertical: R.sp(context, 8),
@@ -577,17 +590,37 @@ class _StudentsScreenState
                         child: Row(
                           children: [
                             Icon(
-                              Icons.school,
+                              entry.key == 'profesor'
+                                  ? Icons.school
+                                  : entry.key == 'otro'
+                                      ? Icons.person
+                                      : Icons.school,
                               size: R.fs(context, 22),
-                              color: Theme.of(context).colorScheme.primary,
+                              color: entry.key == 'profesor'
+                                  ? Colors.green
+                                  : entry.key == 'otro'
+                                      ? Colors.grey
+                                      : Theme.of(context).colorScheme.primary,
                             ),
                             SizedBox(width: R.sp(context, 8)),
                             Text(
-                              entry.key ?? 'Sin grado',
+                              entry.key == 'profesor'
+                                  ? 'Profesores'
+                                  : entry.key == 'otro'
+                                      ? 'Otros'
+                                      : entry.key.startsWith('alumno__')
+                                          ? (entry.key == 'alumno___'
+                                              ? 'Sin grado'
+                                              : entry.key.substring(8))
+                                          : entry.key,
                               style: TextStyle(
                                 fontSize: R.fs(context, 22),
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
+                                color: entry.key == 'profesor'
+                                    ? Colors.green
+                                    : entry.key == 'otro'
+                                        ? Colors.grey
+                                        : Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             Spacer(),

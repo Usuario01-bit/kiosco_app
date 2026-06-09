@@ -29,6 +29,7 @@ class FirestoreService {
       'name': row['name'],
       if (row.containsKey('grado') && row['grado'] != null && (row['grado'] as String).trim().isNotEmpty)
         'grado': row['grado'].toString().trim(),
+      'role': row['role'] ?? 'alumno',
     });
     return 0;
   }
@@ -41,6 +42,7 @@ class FirestoreService {
         'name': row['name'],
         if (row.containsKey('grado') && row['grado'] != null && (row['grado'] as String).trim().isNotEmpty)
           'grado': row['grado'].toString().trim(),
+        'role': row['role'] ?? 'alumno',
       });
     }
     await batch.commit();
@@ -169,8 +171,16 @@ class FirestoreService {
 
   List<Map<String, dynamic>> _sortSalesByDateTime(List<Map<String, dynamic>> sales) {
     sales.sort((a, b) {
-      final dateCmp = (b['date'] as String? ?? '').compareTo(a['date'] as String? ?? '');
-      if (dateCmp != 0) return dateCmp;
+      final aDate = _parseDate(a['date'] as String?);
+      final bDate = _parseDate(b['date'] as String?);
+      if (aDate != null && bDate != null) {
+        final cmp = bDate.compareTo(aDate);
+        if (cmp != 0) return cmp;
+      } else if (aDate != null) {
+        return -1;
+      } else if (bDate != null) {
+        return 1;
+      }
       return (b['time'] as String? ?? '').compareTo(a['time'] as String? ?? '');
     });
     return sales;
@@ -372,6 +382,8 @@ class FirestoreService {
           (doc.data()['amount'] as num?)?.toDouble() ?? 0;
       await doc.reference.update({
         'amount': cur + (pending['amount'] as num).toDouble(),
+        'paidAt': null,
+        'paid': 0,
       });
       return 1;
     }
@@ -555,12 +567,8 @@ class FirestoreService {
   }
 
   Future<void> _migrateOldDates(String collection) async {
-    final sample = await _db.collection(collection).limit(1).get();
-    if (sample.docs.isEmpty) return;
-    final date = sample.docs.first.data()['date'] as String? ?? '';
-    if (!date.contains('/')) return;
-
     final all = await _db.collection(collection).get();
+    if (all.docs.isEmpty) return;
     final batch = _db.batch();
     int count = 0;
     for (final doc in all.docs) {
@@ -573,5 +581,19 @@ class FirestoreService {
       count++;
     }
     if (count > 0) await batch.commit();
+  }
+
+  DateTime? _parseDate(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    if (raw.contains('-')) {
+      return DateTime.tryParse(raw);
+    }
+    final parts = raw.split('/');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[2]);
+    final m = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[0]);
+    if (y == null || m == null || d == null) return null;
+    return DateTime(y, m, d);
   }
 }

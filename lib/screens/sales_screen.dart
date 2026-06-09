@@ -148,6 +148,12 @@ class _SalesScreenState
         return;
       }
 
+      final currentStudent = selectedStudent;
+      final currentStudentId = selectedStudentId;
+      final currentPaymentMethod = paymentMethod;
+      final currentTotal = total;
+      final cartSnapshot = cart.map((e) => Map<String, dynamic>.from(e)).toList();
+
       final now = DateTime.now();
 
       String recreo = 'Fuera de recreo';
@@ -163,11 +169,11 @@ class _SalesScreenState
         recreo = 'Recreo 2';
       }
 
-      for (var item in cart) {
+      for (var item in cartSnapshot) {
         await FirestoreService.instance
             .insertSale({
-          'student': selectedStudent,
-          'studentId': selectedStudentId ?? '',
+          'student': currentStudent,
+          'studentId': currentStudentId ?? '',
           'product': item['name'],
           'quantity': item['quantity'],
           'total':
@@ -175,7 +181,7 @@ class _SalesScreenState
               .toDouble() *
               item['quantity'],
           'paymentMethod':
-          paymentMethod,
+          currentPaymentMethod,
           'date':
           '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
           'time':
@@ -191,13 +197,13 @@ class _SalesScreenState
         );
       }
 
-      if (paymentMethod
+      if (currentPaymentMethod
           .toLowerCase()
           .trim() == 'pendiente') {
         await FirestoreService.instance
             .insertPending({
-          'student': selectedStudent,
-          'amount': total,
+          'student': currentStudent,
+          'amount': currentTotal,
           'date':
           '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
           'time':

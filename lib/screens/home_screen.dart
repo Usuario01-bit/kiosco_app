@@ -8,7 +8,10 @@ import 'reports_screen.dart';
 import 'pending_screen.dart';
 import 'admin_screen.dart';
 import 'login_screen.dart';
+import 'config_screen.dart';
+import '../services/exporter.dart';
 import '../services/database_helper.dart';
+import '../services/store_config.dart';
 import '../services/theme_provider.dart';
 import '../services/responsive.dart';
 
@@ -146,6 +149,34 @@ class _HomeScreenState
                     );
                   },
                 ),
+
+              if (isSuperAdmin)
+                ListTile(
+                  leading: const Icon(Icons.store),
+                  title: const Text('Configuración de tienda'),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ConfigScreen()),
+                    );
+                  },
+                ),
+
+              ListTile(
+                leading: const Icon(Icons.backup),
+                title: const Text('Exportar todo'),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  exportBackupToExcel(context);
+                },
+              ),
 
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
@@ -337,7 +368,7 @@ class _HomeScreenState
           });
         },
 
-        destinations: const [
+        destinations: [
 
           NavigationDestination(
 
@@ -358,7 +389,7 @@ class _HomeScreenState
 
             icon: Icon(Icons.people),
 
-            label: 'Alumnos',
+            label: StoreConfig.instance.entityPlural,
           ),
 
           NavigationDestination(

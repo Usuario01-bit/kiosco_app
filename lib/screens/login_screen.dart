@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/database_helper.dart';
 import '../services/responsive.dart';
+import '../services/store_config.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -297,13 +298,14 @@ class _LoginScreenState
                       ),
                     ),
 
-                    child: const Icon(
-
-                      Icons.store_rounded,
-
-                      size: 56,
-
-                      color: Colors.white,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: Image.asset(
+                        'assets/app_icon.png',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
 
@@ -311,9 +313,9 @@ class _LoginScreenState
 
                   // TITLE
 
-                  const Text(
+                  Text(
 
-                    'Kiosco Escolar',
+                    StoreConfig.instance.storeName,
 
                     style: TextStyle(
 

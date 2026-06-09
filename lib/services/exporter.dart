@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'firestore_service.dart';
+import 'store_config.dart';
 
 Future<void> exportPendingToExcel(BuildContext context) async {
   final data = await FirestoreService.instance.getAllPendingSales();
@@ -75,7 +76,7 @@ Future<void> exportPendingToExcel(BuildContext context) async {
   sheet.merge(CellIndex.indexByString('A2'), CellIndex.indexByString('G2'));
 
   // ── ROW 4: HEADERS ──
-  setCell('A4', 'Estudiante', headerStyle);
+  setCell('A4', StoreConfig.instance.entityName, headerStyle);
   setCell('B4', 'Producto', headerStyle);
   setCell('C4', 'Cant.', headerStyle);
   setCell('D4', 'Precio', headerStyle);
@@ -193,7 +194,107 @@ Future<void> exportPendingToExcel(BuildContext context) async {
   if (context.mounted) {
     await Share.shareXFiles(
       [XFile(file.path)],
-      text: 'Reporte de Deudores - Kiosco Escolar',
+      text: '${StoreConfig.instance.debtorTitle} - ${StoreConfig.instance.storeName}',
+    );
+  }
+}
+
+Future<void> exportBackupToExcel(BuildContext context) async {
+  final data = await Future.wait([
+    FirestoreService.instance.getSales(),
+    FirestoreService.instance.getStudents(),
+    FirestoreService.instance.getProducts(),
+    FirestoreService.instance.getAllPendingSales(),
+  ]);
+  final sales = data[0];
+  final students = data[1];
+  final products = data[2];
+  final pending = data[3];
+
+  final excel = Excel.createExcel();
+  final sheets = {
+    'Ventas': {
+      'headers': ['Producto', 'Precio', 'Cantidad', 'Total', 'Fecha', 'Estudiante', 'Método de pago'],
+      'rows': sales.map((s) => [
+        s['productName'] ?? '',
+        s['price']?.toString() ?? '',
+        s['quantity']?.toString() ?? '',
+        s['total']?.toString() ?? '',
+        s['date']?.toString() ?? '',
+        s['studentName'] ?? '',
+        s['paymentMethod'] ?? '',
+      ]).toList(),
+    },
+    'Alumnos': {
+      'headers': ['Nombre'],
+      'rows': students.map((s) => [s['name'] ?? '']).toList(),
+    },
+    'Productos': {
+      'headers': ['Nombre', 'Precio', 'Categoría', 'Icono'],
+      'rows': products.map((p) => [
+        p['name'] ?? '',
+        p['price']?.toString() ?? '',
+        p['category'] ?? '',
+        p['icon'] ?? '',
+      ]).toList(),
+    },
+    'Pendientes': {
+      'headers': ['Estudiante', 'Producto', 'Monto', 'Fecha', 'Pagado'],
+      'rows': pending.map((p) => [
+        p['studentName'] ?? '',
+        p['productName'] ?? '',
+        p['total']?.toString() ?? '',
+        p['date']?.toString() ?? '',
+        p['paidAt'] != null ? 'Sí' : 'No',
+      ]).toList(),
+    },
+  };
+
+  for (final entry in sheets.entries) {
+    final sheet = excel[entry.key];
+    final h = entry.value['headers'] as List<String>;
+    final r = entry.value['rows'] as List<List<dynamic>>;
+
+    final headerStyle = CellStyle(
+      fontColorHex: ExcelColor.fromHexString('FFFFFFFF'),
+      backgroundColorHex: ExcelColor.fromHexString('FF4A90E2'),
+      bold: true,
+    );
+
+    for (var col = 0; col < h.length; col++) {
+      final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0));
+      cell.value = TextCellValue(h[col]);
+      cell.cellStyle = headerStyle;
+    }
+
+    for (var i = 0; i < r.length; i++) {
+      for (var col = 0; col < r[i].length; col++) {
+        final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: i + 1));
+        final val = r[i][col];
+        cell.value = TextCellValue(val.toString());
+      }
+    }
+  }
+
+  final fileBytes = excel.save();
+  if (fileBytes == null) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al generar el archivo'), backgroundColor: Colors.red),
+      );
+    }
+    return;
+  }
+
+  final now = DateTime.now();
+  final dir = await getTemporaryDirectory();
+  final file = File('${dir.path}/Backup_${now.day}_${now.month}_${now.year}.xlsx');
+  await file.writeAsBytes(fileBytes);
+
+  if (context.mounted) {
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      text: 'Backup - ${StoreConfig.instance.storeName}',
     );
   }
 }

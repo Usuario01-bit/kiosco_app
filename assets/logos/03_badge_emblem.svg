@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2D9CDB"/>
+      <stop offset="100%" stop-color="#6FCF97"/>
+    </linearGradient>
+  </defs>
+  <!-- Circular badge -->
+  <circle cx="256" cy="256" r="230" fill="url(#ring)"/>
+  <circle cx="256" cy="256" r="200" fill="white"/>
+  <!-- Inner decorative ring -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#2D9CDB" stroke-width="2" stroke-dasharray="8 6"/>
+  <!-- Kiosk icon inside -->
+  <rect x="156" y="200" width="200" height="150" rx="16" fill="#2D9CDB" opacity="0.9"/>
+  <polygon points="116,200 256,130 396,200" fill="#6FCF97"/>
+  <!-- Door -->
+  <rect x="216" y="280" width="80" height="70" rx="8" fill="white"/>
+  <circle cx="278" cy="320" r="5" fill="#2D9CDB"/>
+  <!-- Text arc - using manual text -->
+  <text x="256" y="90" text-anchor="middle" fill="white" font-family="sans-serif" font-size="28" font-weight="bold" letter-spacing="6">K I O S C O</text>
+  <!-- Star accents -->
+  <polygon points="140,140 145,155 160,155 148,165 152,180 140,170 128,180 132,165 120,155 135,155" fill="#FFD166"/>
+  <polygon points="372,140 377,155 392,155 380,165 384,180 372,170 360,180 364,165 352,155 367,155" fill="#FFD166"/>
+</svg>

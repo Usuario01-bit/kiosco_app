@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/excel_import.dart';
 import '../services/firestore_service.dart';
 import '../services/responsive.dart';
+import '../services/store_config.dart';
 
 class StudentsScreen extends StatefulWidget {
 
@@ -106,10 +107,10 @@ class _StudentsScreenState
     ScaffoldMessenger.of(context)
         .showSnackBar(
 
-      const SnackBar(
+      SnackBar(
 
         content:
-        Text('Estudiante agregado'),
+        Text('${StoreConfig.instance.entityName} agregado'),
 
       ),
     );
@@ -221,7 +222,7 @@ class _StudentsScreenState
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            'Estudiantes',
+                            StoreConfig.instance.entityPlural,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: R.fs(context, 34),
@@ -235,7 +236,7 @@ class _StudentsScreenState
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            'Gestiona los estudiantes',
+                            'Gestiona los ${StoreConfig.instance.entityPluralLC()}',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: R.fs(context, 18),
@@ -263,7 +264,7 @@ class _StudentsScreenState
                             borderRadius: BorderRadius.circular(20),
                           ),
                           title: const Text('Eliminar todos'),
-                          content: const Text('¿Seguro que querés borrar TODOS los estudiantes?'),
+                          content: Text('¿Seguro que querés borrar TODOS los ${StoreConfig.instance.entityPluralLC()}?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, false),
@@ -282,7 +283,7 @@ class _StudentsScreenState
                         if (!context.mounted) return;
                         await loadStudents();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('$count estudiante${count == 1 ? '' : 's'} eliminado${count == 1 ? '' : 's'}')),
+                          SnackBar(content: Text('$count ${count == 1 ? StoreConfig.instance.entityLC() : StoreConfig.instance.entityPluralLC()} eliminado${count == 1 ? '' : 's'}')),
                         );
                       }
                     },
@@ -291,7 +292,7 @@ class _StudentsScreenState
                       color: Colors.white,
                       size: 28,
                     ),
-                    tooltip: 'Eliminar todos los estudiantes',
+                    tooltip: 'Eliminar todos los ${StoreConfig.instance.entityPluralLC()}',
                   ),
                 ],
               ),
@@ -321,7 +322,7 @@ class _StudentsScreenState
               InputDecoration(
 
                 hintText:
-                'Buscar estudiante...',
+                'Buscar ${StoreConfig.instance.entityLC()}...',
 
                 prefixIcon:
                 const Icon(
@@ -414,7 +415,7 @@ class _StudentsScreenState
                       InputDecoration(
 
                         hintText:
-                        'Nombre del estudiante',
+                        'Nombre del ${StoreConfig.instance.entityLC()}',
 
                         prefixIcon:
                         const Icon(
@@ -517,7 +518,7 @@ class _StudentsScreenState
 
               child: Text(
 
-                'No hay estudiantes',
+                'No hay ${StoreConfig.instance.entityPluralLC()}',
 
                 style: TextStyle(
 
@@ -877,7 +878,7 @@ class _StudentsScreenState
                                         borderRadius: BorderRadius.circular(20),
                                       ),
 
-                                      title: const Text('Eliminar estudiante'),
+                                      title: Text('Eliminar ${StoreConfig.instance.entityLC()}'),
 
                                       content: Text('¿Seguro que querés eliminar a "${student['name']}"?'),
 
@@ -960,7 +961,7 @@ class _StudentsScreenState
 
       if (count == 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se importaron estudiantes')),
+          SnackBar(content: Text('No se importaron ${StoreConfig.instance.entityPluralLC()}')),
         );
       } else if (count == -1) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -973,7 +974,7 @@ class _StudentsScreenState
       } else {
         await loadStudents();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Se importaron $count estudiantes')),
+          SnackBar(content: Text('Se importaron $count ${StoreConfig.instance.entityPluralLC()}')),
         );
       }
     } catch (e) {

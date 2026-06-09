@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/firestore_service.dart';
 import '../services/responsive.dart';
+import '../services/store_config.dart';
 
 class DashboardScreen extends StatefulWidget {
 
@@ -233,7 +234,7 @@ class _DashboardScreenState
 
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Kiosco Escolar'),
+          title: Text(StoreConfig.instance.storeName),
           foregroundColor: Colors.white,
           elevation: 0,
           backgroundColor: const Color(0xFF4A90E2),
@@ -286,7 +287,7 @@ class _DashboardScreenState
       backgroundColor:
       Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Kiosco Escolar'),
+        title: Text(StoreConfig.instance.storeName),
         foregroundColor: Colors.white,
         elevation: 0,
         backgroundColor: const Color(
@@ -362,7 +363,7 @@ class _DashboardScreenState
               ),
               SizedBox(height: R.sp(context, 8)),
               Text(
-                'Resumen general del kiosco',
+                StoreConfig.instance.appSubtitle,
                 style: TextStyle(
                   color: Theme.of(
                     context,

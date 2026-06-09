@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import '../services/responsive.dart';
 import '../services/exporter.dart';
+import '../services/store_config.dart';
 
 class PendingScreen extends StatefulWidget {
 
@@ -279,7 +280,7 @@ class _PendingScreenState
 
             Text(
 
-              '${pendingList.length} estudiantes con deuda',
+              '${pendingList.length} ${StoreConfig.instance.entityLC()} con deuda',
 
               style: TextStyle(
 

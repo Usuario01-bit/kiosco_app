@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import '../services/product_icons.dart';
 import '../services/responsive.dart';
+import '../services/store_config.dart';
 
 class SalesScreen extends StatefulWidget {
 
@@ -137,9 +138,9 @@ class _SalesScreenState
         if (mounted) {
           ScaffoldMessenger.of(context)
               .showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Selecciona estudiante y productos',
+              SnackBar(
+                content: Text(
+                  'Selecciona ${StoreConfig.instance.entityLC()} y productos',
               ),
             ),
           );
@@ -267,7 +268,7 @@ class _SalesScreenState
                 TextField(
                   controller: studentSearchController,
                   decoration: InputDecoration(
-                    labelText: 'Estudiante',
+                    labelText: StoreConfig.instance.entityName,
                     hintText: 'Escribí el nombre...',
                     border: const OutlineInputBorder(),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -556,7 +557,7 @@ class _SalesScreenState
                   onPressed: () {
                     if (selectedStudent == null || cart.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Seleccioná estudiante y productos')),
+                        SnackBar(content: Text('Seleccioná ${StoreConfig.instance.entityLC()} y productos')),
                       );
                       return;
                     }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/firestore_service.dart';
 import '../services/responsive.dart';
+import '../services/store_config.dart';
 
 class ReportsScreen extends StatefulWidget {
 
@@ -253,7 +254,7 @@ class _ReportsScreenState
 
             Text(
 
-              'Resumen general del kiosco',
+              StoreConfig.instance.appSubtitle,
 
               style: TextStyle(
 

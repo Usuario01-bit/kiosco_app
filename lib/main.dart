@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'screens/login_screen.dart';
 import 'services/firestore_service.dart';
+import 'services/store_config.dart';
 import 'services/theme_provider.dart';
 
 final ThemeData lightTheme = ThemeData(
@@ -185,7 +186,7 @@ class MyApp extends StatelessWidget {
 
           debugShowCheckedModeBanner: false,
 
-          title: 'Kiosco Escolar',
+          title: StoreConfig.instance.storeName,
 
           theme: lightTheme,
 
@@ -216,6 +217,8 @@ void main() async {
   } catch (e) {
     debugPrint('Seed/migration error: $e');
   }
+
+  await StoreConfig.instance.load();
 
   runApp(
     const MyApp(),

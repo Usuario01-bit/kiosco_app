@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect x="20" y="20" width="472" height="472" rx="24" fill="#0D0D2B"/>
+  <!-- Abstract geometric kiosk -->
+  <g>
+    <!-- Roof triangle -->
+    <polygon points="60,170 256,60 452,170" fill="#FF6B35"/>
+    <!-- Awning accent -->
+    <rect x="80" y="170" width="352" height="20" rx="4" fill="#FFD166"/>
+    <!-- Main body -->
+    <rect x="100" y="190" width="312" height="240" rx="12" fill="#16213E"/>
+    <!-- Glass panel -->
+    <rect x="130" y="210" width="252" height="150" rx="8" fill="none" stroke="#FF6B35" stroke-width="3"/>
+    <!-- Product dots inside -->
+    <circle cx="180" cy="260" r="16" fill="#FFD166"/>
+    <circle cx="256" cy="250" r="20" fill="#FF6B35"/>
+    <circle cx="332" cy="260" r="16" fill="#6FCF97"/>
+    <!-- Horizontal shelf line -->
+    <line x1="140" y1="300" x2="372" y2="300" stroke="#FFD166" stroke-width="2" opacity="0.5"/>
+    <!-- Bottom door -->
+    <rect x="200" y="370" width="112" height="60" rx="8" fill="#FF6B35"/>
+    <circle cx="290" cy="400" r="5" fill="white"/>
+    <!-- Accent circles -->
+    <circle cx="400" cy="120" r="30" fill="none" stroke="#FFD166" stroke-width="3" opacity="0.3"/>
+    <circle cx="100" cy="380" r="20" fill="none" stroke="#6FCF97" stroke-width="2" opacity="0.2"/>
+  </g>
+</svg>

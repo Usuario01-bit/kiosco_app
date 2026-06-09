@@ -44,6 +44,9 @@ class _PendingScreenState
         totalPending = total;
         loading = false;
       });
+    }, onError: (e) {
+      debugPrint('Pending stream error: $e');
+      setState(() => loading = false);
     });
   }
 

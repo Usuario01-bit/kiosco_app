@@ -169,6 +169,11 @@ class _SalesScreenState
         recreo = 'Recreo 2';
       }
 
+      // SALIDA
+      if (now.hour == 14) {
+        recreo = 'Salida';
+      }
+
       for (var item in cartSnapshot) {
         await FirestoreService.instance
             .insertSale({

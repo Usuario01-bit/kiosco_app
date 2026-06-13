@@ -612,31 +612,25 @@ class SupabaseService {
       sidResolved = s.first['id'].toString();
     }
 
-    final existing = await _client.from('pending').select().eq('student_id', sidResolved).limit(1);
-    if (existing.isNotEmpty) {
-      final doc = existing.first;
-      final paidAt = doc['paid_at'];
-      if (paidAt != null) {
-        await _client.from('pending').update({
-          'amount': (pending['amount'] as num).toDouble(),
-          'paid': 0,
-          'paid_at': null,
-        }).eq('id', doc['id'].toString());
-      } else {
-        final cur = (doc['amount'] as num?)?.toDouble() ?? 0;
-        await _client.from('pending').update({
-          'amount': cur + (pending['amount'] as num).toDouble(),
-          'paid_at': null,
-        }).eq('id', doc['id'].toString());
+    double curAmount = 0;
+    double curPaid = 0;
+    try {
+      final existing = await _client.from('pending').select('amount,paid').eq('student_id', sidResolved).limit(1).maybeSingle();
+      if (existing != null) {
+        curAmount = (existing['amount'] as num?)?.toDouble() ?? 0;
+        curPaid = (existing['paid'] as num?)?.toDouble() ?? 0;
       }
-      return;
+    } catch (_) {
+      // RLS may block anon SELECT — proceed with 0
     }
-    await _client.from('pending').insert({
+
+    await _client.from('pending').upsert({
       'student_id': sidResolved,
-      'amount': (pending['amount'] as num).toDouble(),
-      'paid': 0.0,
+      'amount': curAmount + (pending['amount'] as num).toDouble(),
+      'paid': curPaid,
+      'paid_at': null,
       'created_at': pending['created_at'] ?? DateTime.now().toIso8601String(),
-    });
+    }, onConflict: 'student_id');
   }
 
   Future<void> abonarPending(dynamic pendingId, double amount) async {

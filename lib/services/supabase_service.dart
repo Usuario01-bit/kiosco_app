@@ -612,11 +612,29 @@ class SupabaseService {
       sidResolved = s.first['id'].toString();
     }
 
-    await _client.rpc('upsert_pending', params: {
-      'p_student_id': sidResolved,
-      'p_amount': (pending['amount'] as num).toDouble(),
-      'p_created_at': pending['created_at'] ?? DateTime.now().toIso8601String(),
-    });
+    final newAmount = (pending['amount'] as num).toDouble();
+
+    try {
+      await _client.from('pending').insert({
+        'student_id': sidResolved,
+        'amount': newAmount,
+        'paid': 0.0,
+        'paid_at': null,
+        'created_at': pending['created_at'] ?? DateTime.now().toIso8601String(),
+      });
+    } on Exception catch (e) {
+      if (e.toString().contains('23505')) {
+        // Already exists — add to current amount
+        final cur = await _client.from('pending').select('amount').eq('student_id', sidResolved).limit(1).single();
+        final curAmount = (cur['amount'] as num?)?.toDouble() ?? 0;
+        await _client.from('pending').update({
+          'amount': curAmount + newAmount,
+          'paid_at': null,
+        }).eq('student_id', sidResolved);
+      } else {
+        rethrow;
+      }
+    }
   }
 
   Future<void> abonarPending(dynamic pendingId, double amount) async {

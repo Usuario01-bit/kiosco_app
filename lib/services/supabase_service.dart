@@ -164,7 +164,7 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>> searchStudentsByName(String query) async {
     if (query.trim().isEmpty) return [];
-    final data = await _client.from('students').select().ilike('name', '${query.trim()}%').limit(10).order('name');
+    final data = await _client.from('students').select().ilike('name', '%${query.trim()}%').limit(10).order('name');
     return data;
   }
 

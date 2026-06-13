@@ -109,7 +109,7 @@ class _PendingScreenState
               if (amount == null || amount <= 0) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Ingrese un monto v├ílido'),
+                    content: Text('Ingrese un monto válido'),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -430,7 +430,7 @@ class _PendingScreenState
 
                     Text(
 
-                      'Todas las cuentas est├ín al d├¡a',
+                      'Todas las cuentas están al día',
 
                       style: TextStyle(
 

@@ -1,8 +1,8 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/env.dart';
 import 'screens/login_screen.dart';
-import 'services/firestore_service.dart';
 import 'services/store_config.dart';
 import 'services/theme_provider.dart';
 
@@ -204,16 +204,37 @@ void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp();
+  const supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: Env.supabaseUrl,
+  );
+  const supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: Env.supabaseAnonKey,
+  );
 
-  try {
-    await FirestoreService.instance.seedFromLocal();
-    await FirestoreService.instance.seedDefaultProducts();
-  } catch (e) {
-    debugPrint('Seed/migration error: $e');
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    throw Exception(
+      'Supabase config missing. Build with:\n'
+      'flutter build --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...\n'
+      'Or set default values in lib/core/env.dart',
+    );
   }
 
-  await StoreConfig.instance.load();
+  try {
+    await Supabase.initialize(
+      url: supabaseUrl,
+      publishableKey: supabaseAnonKey,
+    );
+  } catch (_) {
+    // Sin internet — la app arranca igual, los streams se conectan cuando puedan
+  }
+
+  try {
+    await StoreConfig.instance.load();
+  } catch (_) {
+    // StoreConfig offline — usa valores por defecto
+  }
 
   runApp(
     const MyApp(),

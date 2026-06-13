@@ -275,7 +275,6 @@ class _SalesScreenState
           'student': currentStudent,
           'amount': currentTotal,
           'created_at': now.toIso8601String(),
-          'recreo': recreo,
         });
       }
 
@@ -383,9 +382,9 @@ class _SalesScreenState
                             color: Colors.green,
                           ),
                         ),
-                        if (students.any((s) => s['name'] == selectedStudent && s['grado'] != null))
+                        if (students.any((s) => s['name'] == selectedStudent && (s['grade'] ?? s['grado']) != null))
                           Text(
-                            ' (${students.firstWhere((s) => s['name'] == selectedStudent)['grado']})',
+                            ' (${students.firstWhere((s) => s['name'] == selectedStudent)['grade'] ?? students.firstWhere((s) => s['name'] == selectedStudent)['grado']})',
                             style: TextStyle(
                               fontSize: R.fs(context, 16),
                               color: Colors.grey,
@@ -423,9 +422,9 @@ class _SalesScreenState
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          subtitle: s['grado'] != null
+                          subtitle: (s['grade'] ?? s['grado']) != null
                               ? Text(
-                                  s['grado'],
+                                  (s['grade'] ?? s['grado']),
                                   style: TextStyle(
                                     fontSize: R.fs(context, 14),
                                     color: Colors.grey,

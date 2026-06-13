@@ -106,9 +106,9 @@ class _StudentQrDetailScreenState extends State<StudentQrDetailScreen> {
                             widget.student['name'] as String,
                             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                           ),
-                          if (widget.student['grado'] != null && (widget.student['grado'] as String).trim().isNotEmpty)
+                          if ((widget.student['grade'] ?? widget.student['grado']) != null && ((widget.student['grade'] ?? widget.student['grado']) as String).trim().isNotEmpty)
                             Text(
-                              widget.student['grado'] as String,
+                              (widget.student['grade'] ?? widget.student['grado']) as String,
                               style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
                             ),
                           const Divider(height: 28),

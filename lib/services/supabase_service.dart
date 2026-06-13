@@ -373,7 +373,6 @@ class SupabaseService {
         'student_id': studentId,
         'amount': total,
         'created_at': now.toIso8601String(),
-        'recreo': recreo,
       });
     }
   }
@@ -637,7 +636,6 @@ class SupabaseService {
       'amount': (pending['amount'] as num).toDouble(),
       'paid': 0.0,
       'created_at': pending['created_at'] ?? DateTime.now().toIso8601String(),
-      if (pending['recreo'] != null) 'recreo': pending['recreo'],
     });
   }
 

@@ -95,7 +95,7 @@ class _StudentsScreenState
         if (key == 'alumno') {
           final Map<String?, List<Map<String, dynamic>>> gradoGroups = {};
           for (final s in entry) {
-            final g = s['grado'] as String?;
+            final g = (s['grade'] ?? s['grado']) as String?;
             final k = (g != null && g.trim().isNotEmpty) ? g.trim() : null;
             gradoGroups.putIfAbsent(k, () => []);
             gradoGroups[k]!.add(s);
@@ -811,9 +811,9 @@ class _StudentsScreenState
                                         color: Theme.of(context).textTheme.bodyLarge?.color,
                                       ),
                                     ),
-                                    if (student['grado'] != null && (student['grado'] as String).trim().isNotEmpty)
+                                    if ((student['grade'] ?? student['grado']) != null && ((student['grade'] ?? student['grado']) as String).trim().isNotEmpty)
                                       Text(
-                                        student['grado'],
+                                        student['grade'] ?? student['grado'],
                                         style: TextStyle(
                                           fontSize: R.fs(context, 16),
                                           color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),

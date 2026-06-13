@@ -93,7 +93,7 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                                     ),
                                     Text(
-                                      widget.student['grado'] as String? ?? '',
+                                      (widget.student['grade'] ?? widget.student['grado']) as String? ?? '',
                                       style: TextStyle(color: cs.onSurfaceVariant),
                                     ),
                                   ],

@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/excel_import.dart';
-import '../services/firestore_service.dart';
+import '../services/supabase_service.dart';
+import '../services/local_cache_service.dart';
 import '../services/responsive.dart';
 import '../services/store_config.dart';
 
@@ -24,6 +27,9 @@ class _StudentsScreenState
   final TextEditingController gradoController =
   TextEditingController();
 
+  final TextEditingController tempPasswordCtrl =
+  TextEditingController();
+
   final TextEditingController searchController =
   TextEditingController();
 
@@ -40,9 +46,19 @@ class _StudentsScreenState
   @override
   void initState() {
     super.initState();
-    _studentsSub = FirestoreService.instance
+    _loadCachedThenStream();
+  }
+
+  Future<void> _loadCachedThenStream() async {
+    final cached = await LocalCacheService.instance.getCachedStudents();
+    if (cached.isNotEmpty && mounted) {
+      setState(() => students = cached);
+    }
+    _studentsSub = SupabaseService.instance
         .streamStudents()
-        .listen((data) => setState(() => students = data));
+        .listen((data) {
+      if (mounted) setState(() => students = data);
+    }, onError: (_) {});
   }
 
   @override
@@ -51,14 +67,9 @@ class _StudentsScreenState
     searchController.dispose();
     nameController.dispose();
     gradoController.dispose();
+    tempPasswordCtrl.dispose();
     super.dispose();
   }
-
-  // =====================================================
-  // LOAD STUDENTS
-  // =====================================================
-
-  Future<void> loadStudents() async {}
 
   List<Map<String, dynamic>> get _filteredStudents {
     final query = searchController.text.toLowerCase().trim();
@@ -118,27 +129,44 @@ class _StudentsScreenState
     if (name.isEmpty) return;
 
     final grado = gradoController.text.trim();
+    final tempPassword = tempPasswordCtrl.text.trim();
 
-    await FirestoreService.instance.insertStudent({
-      'name': name,
-      if (grado.isNotEmpty) 'grado': grado,
-      'role': currentRole,
-    });
+    try {
+      await SupabaseService.instance.insertStudent({
+        'name': name,
+        if (grado.isNotEmpty) 'grado': grado,
+        'role': currentRole,
+        'tempPassword': tempPassword,
+      });
 
-    nameController.clear();
-    gradoController.clear();
+      nameController.clear();
+      gradoController.clear();
+      tempPasswordCtrl.clear();
 
-    await loadStudents();
-
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${StoreConfig.instance.entityName} agregado')),
-    );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$name agregado'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al agregar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> showAddDialog() async {
     nameController.clear();
     gradoController.clear();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    final rng = Random();
+    tempPasswordCtrl.text = List.generate(8, (_) => chars[rng.nextInt(chars.length)]).join();
     currentRole = 'alumno';
 
     await showDialog(
@@ -219,6 +247,33 @@ class _StudentsScreenState
                           ),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: tempPasswordCtrl,
+                        keyboardType: TextInputType.text,
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(8),
+                        ],
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña temporal',
+                          hintText: 'Ej: aB3kF9x2',
+                          prefixIcon: const Icon(Icons.lock),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.refresh),
+                            tooltip: 'Generar nueva contraseña',
+                            onPressed: () {
+                              const _chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+                              final rng = Random();
+                              setDialogState(() {
+                                tempPasswordCtrl.text = List.generate(8, (_) => _chars[rng.nextInt(_chars.length)]).join();
+                              });
+                            },
+                          ),
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -229,9 +284,9 @@ class _StudentsScreenState
                   child: const Text('Cancelar'),
                 ),
                 FilledButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx);
-                    addStudent();
+                    await addStudent();
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('Agregar'),
@@ -251,10 +306,56 @@ class _StudentsScreenState
   Future<void> deleteStudent(
       dynamic id) async {
 
-    await FirestoreService.instance
+    await SupabaseService.instance
         .deleteStudent(id);
+  }
 
-    await loadStudents();
+  Future<void> _showPasswordDialog(Map<String, dynamic> student) async {
+    final pwCtrl = TextEditingController();
+
+    final newPw = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Cambiar contraseña de ${student['name']}'),
+        content: TextField(
+          controller: pwCtrl,
+          keyboardType: TextInputType.text,
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(8),
+          ],
+          decoration: InputDecoration(
+            labelText: 'Nueva contraseña (máx 8 caracteres)',
+            prefixIcon: const Icon(Icons.lock),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, pwCtrl.text.trim()),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (newPw != null && newPw.isNotEmpty && mounted) {
+      try {
+        await SupabaseService.instance.setStudentTempPassword(student['id'], newPw);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Contraseña actualizada'), backgroundColor: Colors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
   }
 
   // =====================================================
@@ -407,9 +508,8 @@ class _StudentsScreenState
                         ),
                       );
                       if (confirm == true) {
-                        final count = await FirestoreService.instance.deleteAllStudents();
+                        final count = await SupabaseService.instance.deleteAllStudents();
                         if (!context.mounted) return;
-                        await loadStudents();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('$count ${count == 1 ? StoreConfig.instance.entityLC() : StoreConfig.instance.entityPluralLC()} eliminado${count == 1 ? '' : 's'}')),
                         );
@@ -543,11 +643,7 @@ class _StudentsScreenState
               ),
             )
 
-                : RefreshIndicator(
-
-                onRefresh: loadStudents,
-
-                child: ListView(
+                : ListView(
 
               padding: EdgeInsets.symmetric(
                 horizontal: R.sp(context, 24),
@@ -723,6 +819,7 @@ class _StudentsScreenState
                                           color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                                         ),
                                       ),
+
                                   ],
                                 ),
                               ),
@@ -731,7 +828,7 @@ class _StudentsScreenState
                                   onPressed: () async {
                                   try {
                                   final sales =
-                                  await FirestoreService.instance
+                                  await SupabaseService.instance
                                       .getSalesByStudentId(
 
                                     student['id'],
@@ -785,14 +882,12 @@ class _StudentsScreenState
 
                                                   onTap: () async {
 
-                                                    final method = (sale['paymentMethod'] ?? '').toString().toLowerCase();
+                                                    final method = (sale['payment_method'] ?? '').toString().toLowerCase();
 
                                                     if (method.contains('pendiente')) {
 
-                                                      await FirestoreService.instance
+                                                      await SupabaseService.instance
                                                           .paySale(sale['id']);
-
-                                                      await loadStudents();
 
                                                       if (ctx.mounted) Navigator.pop(ctx);
                                                     }
@@ -810,17 +905,17 @@ class _StudentsScreenState
                                                     CrossAxisAlignment.start,
                                                     children: [
                                                       Text(
-                                                        sale['paid_at'] != null && (sale['paid_at'] as String).length >= 10
-                                                            ? 'Pagado el ${sale['paid_at'].toString().substring(0, 10)}'
-                                                            : (sale['paymentMethod'] ?? '')
-                                                            .toString()
-                                                            .toLowerCase()
-                                                            .contains('pendiente')
-                                                            ? 'Pendiente'
-                                                            : 'Pagado',
+sale['paid_at'] != null && (sale['paid_at'] as String).length >= 10
+                                                              ? 'Pagado el ${sale['paid_at'].toString().substring(0, 10)}'
+                                                              : (sale['payment_method'] ?? '')
+                                                              .toString()
+                                                              .toLowerCase()
+                                                              .contains('pendiente')
+                                                              ? 'Pendiente'
+                                                              : 'Pagado',
 
                                                         style: TextStyle(
-                                                          color: (sale['paymentMethod'] ?? '')
+                                                          color: (sale['payment_method'] ?? '')
                                                               .toString()
                                                               .toLowerCase()
                                                               .contains('pendiente')
@@ -848,8 +943,8 @@ class _StudentsScreenState
                                                           fontSize: 12,
                                                           color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                                                         ),
-                                                      ),
-                                                    ],
+                  ),
+                ],
                                                   ),
                                                   trailing: Text(
 
@@ -896,6 +991,17 @@ class _StudentsScreenState
 
                                   size: R.sp(context, 26),
                                 ),
+                              ),
+                              IconButton(
+                                onPressed: () => _showPasswordDialog(student),
+                                icon: Icon(
+                                  Icons.lock,
+                                  color: student['tempPassword'] != null && (student['tempPassword'] as String).isNotEmpty
+                                      ? Colors.orange.shade600
+                                      : Colors.grey,
+                                  size: R.sp(context, 26),
+                                ),
+                                tooltip: 'Cambiar contraseña temporal',
                               ),
                               IconButton(
 
@@ -965,7 +1071,6 @@ class _StudentsScreenState
                   ),
               ],
             ),
-            ),
           ),
         ],
       ),
@@ -1005,7 +1110,6 @@ class _StudentsScreenState
           const SnackBar(content: Text('El Excel debe tener columnas: PrimerNombre, SegundoNombre, ApellidoMaterno, Grado')),
         );
       } else {
-        await loadStudents();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Se importaron $count ${StoreConfig.instance.entityPluralLC()}')),
         );

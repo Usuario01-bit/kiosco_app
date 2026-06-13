@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../services/firestore_service.dart';
+import '../services/supabase_service.dart';
+import '../services/date_utils.dart';
 import '../services/responsive.dart';
 import '../services/store_config.dart';
 
@@ -37,11 +38,11 @@ class _DashboardScreenState
   void initState() {
     super.initState();
     _loadInitialSales();
-    _salesSub = FirestoreService.instance
+    _salesSub = SupabaseService.instance
         .streamSales()
         .listen(_onSalesChanged)
       ..onError((e) => setState(() => loadError = e.toString()));
-    _pendingSub = FirestoreService.instance
+    _pendingSub = SupabaseService.instance
         .streamPendings()
         .listen((data) {
       double sum = 0;
@@ -55,19 +56,21 @@ class _DashboardScreenState
         isLoading = false;
       });
     });
-    _productsSub = FirestoreService.instance
+    _productsSub = SupabaseService.instance
         .streamProducts()
         .listen((data) {
       setState(() {
         totalProducts = data.length;
         isLoading = false;
       });
+    }, onError: (_) {
+      if (mounted) setState(() => isLoading = false);
     });
   }
 
   Future<void> _loadInitialSales() async {
     try {
-      final sales = await FirestoreService.instance.getSales();
+      final sales = await SupabaseService.instance.getSales();
       if (mounted) _onSalesChanged(sales);
     } catch (_) {}
   }
@@ -75,7 +78,7 @@ class _DashboardScreenState
   void _onSalesChanged(List<Map<String, dynamic>> sales) {
     final now = DateTime.now();
     final todayStr =
-        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        toISODate(now);
     final weekAgo = now
         .subtract(const Duration(days: 6))
         .toIso8601String()
@@ -91,7 +94,7 @@ class _DashboardScreenState
       final total = (sale['total'] as num?)?.toDouble() ?? 0;
       totalSum += total;
 
-      final pm = (sale['paymentMethod'] as String? ?? '').toLowerCase();
+      final pm = (sale['payment_method'] as String? ?? '').toLowerCase();
       final date = sale['date'] as String? ?? '';
 
       if (!pm.contains('pendiente')) {
@@ -143,10 +146,6 @@ class _DashboardScreenState
     _pendingSub?.cancel();
     _productsSub?.cancel();
     super.dispose();
-  }
-
-  Future<void> loadDashboard() async {
-    setState(() => loadError = null);
   }
 
   Widget buildCard({
@@ -268,7 +267,7 @@ class _DashboardScreenState
                 ),
                 SizedBox(height: R.sp(context, 24)),
                 ElevatedButton.icon(
-                  onPressed: loadDashboard,
+                  onPressed: () {},
                   icon: const Icon(Icons.refresh),
                   label: const Text('Reintentar'),
                 ),
@@ -287,16 +286,20 @@ class _DashboardScreenState
       backgroundColor:
       Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(StoreConfig.instance.storeName),
+        title: Row(
+          children: [
+            Image.asset('assets/logos/logo oficial.png', height: 32),
+            const SizedBox(width: 8),
+            Expanded(child: Text(StoreConfig.instance.storeName)),
+          ],
+        ),
         foregroundColor: Colors.white,
         elevation: 0,
         backgroundColor: const Color(
             0xFF4A90E2),
         actions: const [],
       ),
-      body: RefreshIndicator(
-        onRefresh: loadDashboard,
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
           padding: EdgeInsets.all(R.sp(context, 20)),
           child: Column(
             crossAxisAlignment:
@@ -307,7 +310,7 @@ class _DashboardScreenState
                 MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Dashboard',
+                    'Panel de Ventas',
                     style: TextStyle(
                       fontSize: R.fs(context, 34),
                       fontWeight: FontWeight.bold,
@@ -426,7 +429,6 @@ class _DashboardScreenState
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -898,7 +900,7 @@ class _DashboardScreenState
               recentSales[index];
 
               final isPending =
-              (sale['paymentMethod']
+              (sale['payment_method']
                       ?.toString() ??
                   '')
                   .toLowerCase()

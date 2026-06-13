@@ -5,15 +5,18 @@ Proyecto Flutter: gestión de kiosco escolar. Sin state management, sin router, 
 ## Stack
 
 - Flutter + Dart (Material 3)
-- SQLite (`sqflite` + `sqflite_common_ffi` en Windows)
+- **Supabase** (`supabase_flutter`) — backend, auth, BD en la nube
 - `shared_preferences` para tema oscuro y lockout de login
 - `fl_chart` para gráficos
 - `crypto` (SHA-256) para hash de contraseñas
+- `mobile_scanner` + `qr_flutter` para QR
+- `excel` + `share_plus` + `file_picker` para import/export
 
 ## Arquitectura
 
 - **Sin state management framework** — todo es `StatefulWidget` + `setState`.
-- `DatabaseHelper.instance` — singleton que extiende `ChangeNotifier` (pero no se usa como tal, solo como singleton). Toda la lógica de BD vive ahí.
+- `SupabaseService.instance` — singleton. Toda la lógica de BD (CRUD, streams, auth) vive ahí.
+- `StoreConfig.instance` — singleton que lee la config del kiosco desde Supabase (tabla `store_config`).
 - `ThemeProvider.instance` — singleton `ChangeNotifier` escuchado con `ListenableBuilder` en `main.dart`.
 - UI en español (rioplatense con voseo). No mezclar con inglés.
 - Sin `go_router` ni navegación declarativa — usa `Navigator.pushReplacement` directo.
@@ -41,8 +44,8 @@ flutter test
 
 ## Database
 
-- Versión actual: **5**. Si se agregan columnas/tablas, incrementar versión y agregar caso en `_onUpgrade`.
-- En Windows requiere `sqfliteFfiInit()` + `databaseFactory = databaseFactoryFfi` (ya resuelto en `_initDB`).
+- Supabase PostgreSQL. Sin migraciones locales — el schema se maneja en la consola de Supabase.
+- `SupabaseService.instance` singleton para toda interacción con BD.
 - Fecha en formato `dd/mm/yyyy` (no ISO) en sales/pending.
 - Admin por defecto: `admin` / `admin123`.
 
@@ -55,6 +58,9 @@ flutter test
 - **Iconos de productos**: mapeo string → IconData en `services/product_icons.dart`. Usar `getIcon()`.
 - **`ListenableBuilder`** en main.dart — **no usar** `Consumer`/`Provider`/`context.watch` para el theme.
 - **Sin `build_runner`**, sin generación de código, sin inyección de dependencias.
+- **`toISODate()`**: helper en `services/date_utils.dart`. Usar para fechas ISO (`yyyy-MM-dd`) en queries a Supabase.
+- **`streamActiveOrdersCount`**: filtra solo por `paid_at.isNull`, NO por `prepared_at`. Una orden "Pendiente" (fiado) no tiene `prepared_at` pero debe contar como activa.
+- **`store_config`**: tabla en Supabase con config del kiosco. Leída por `StoreConfig.instance`.
 
 ## Recordatorio post-sesión
 

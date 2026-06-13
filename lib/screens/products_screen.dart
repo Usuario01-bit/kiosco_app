@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../services/firestore_service.dart';
-import '../services/product_icons.dart';
+import '../services/supabase_service.dart';
+import '../services/product_icons.dart' show productIcons, resolveProductIcon;
+import '../services/local_cache_service.dart';
 import '../services/responsive.dart';
 
 
@@ -29,13 +30,20 @@ class _ProductsScreenState
   @override
   void initState() {
     super.initState();
-    _productsSub = FirestoreService.instance
+    _loadCachedThenStream();
+  }
+
+  Future<void> _loadCachedThenStream() async {
+    final cached = await LocalCacheService.instance.getCachedProducts();
+    if (cached.isNotEmpty && mounted) {
+      setState(() { products = cached; loading = false; });
+    }
+    _productsSub = SupabaseService.instance
         .streamProducts()
         .listen((data) {
-      setState(() {
-        products = data;
-        loading = false;
-      });
+      if (mounted) setState(() { products = data; loading = false; });
+    }, onError: (_) {
+      if (mounted) setState(() => loading = false);
     });
   }
 
@@ -44,8 +52,6 @@ class _ProductsScreenState
     _productsSub?.cancel();
     super.dispose();
   }
-
-  Future<void> loadProducts() async {}
 
   Future<void> addProductDialog() async {
 
@@ -59,6 +65,7 @@ class _ProductsScreenState
     TextEditingController();
 
     String selectedIcon = 'inventory_2';
+    String selectedCategory = 'General';
 
     final messenger = ScaffoldMessenger.of(context);
 
@@ -84,7 +91,7 @@ class _ProductsScreenState
 
           content: Column(
 
-            mainAxisSize: MainAxisSize.min, children: [ TextField( controller: nameController, decoration: InputDecoration( labelText: 'Nombre', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: priceController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Precio', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: stockController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Stock', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 20), Align( alignment: Alignment.centerLeft, child: Text( 'Icono', style: TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context) .textTheme .bodyMedium?.color, ), ), ),             const SizedBox(height: 10), SizedBox( height: 120, child: SingleChildScrollView( child: Wrap( spacing: 8, runSpacing: 8, children: productIcons.entries .map((entry) { final isSelected = selectedIcon == entry.key; return GestureDetector( onTap: () { setDialogState(() { selectedIcon = entry.key; }); }, child: Container( width: 48, height: 48, decoration: BoxDecoration( color: isSelected ? const Color(0xFF2563EB) .withValues(alpha:  0.15) : Colors.grey .withValues(alpha: 0.08), borderRadius: BorderRadius.circular( 12), border: isSelected ? Border.all( color: const Color( 0xFF2563EB), width: 2) : null, ), child: Icon( entry.value, color: isSelected ? const Color( 0xFF2563EB) : Colors.grey[600], size: 24, ), ), ); }).toList(), ), ), ), ], ),
+            mainAxisSize: MainAxisSize.min, children: [ TextField( controller: nameController, decoration: InputDecoration( labelText: 'Nombre', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: priceController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Precio', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: stockController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Stock', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), Align( alignment: Alignment.centerLeft, child: Text( 'Categoría', style: TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context) .textTheme .bodyMedium?.color, ), ), ), const SizedBox(height: 8), DropdownButtonFormField<String>( value: selectedCategory, decoration: InputDecoration( border: OutlineInputBorder( borderRadius: BorderRadius.circular(12), ), contentPadding: const EdgeInsets.symmetric( horizontal: 12, vertical: 10, ), ), items: ['Emparedados', 'Empanadas', 'Especiales', 'Café', 'Bebidas', 'Duros', 'General'].map((c) => DropdownMenuItem( value: c, child: Text(c, style: const TextStyle(fontSize: 14)), )).toList(), onChanged: (v) { if (v != null) { setDialogState(() { selectedCategory = v; }); } }, ), const SizedBox(height: 20), Align( alignment: Alignment.centerLeft, child: Text( 'Icono', style: TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context) .textTheme .bodyMedium?.color, ), ), ),             const SizedBox(height: 10), SizedBox( height: 120, child: SingleChildScrollView( child: Wrap( spacing: 8, runSpacing: 8, children: productIcons.entries .map((entry) { final isSelected = selectedIcon == entry.key; return GestureDetector( onTap: () { setDialogState(() { selectedIcon = entry.key; }); }, child: Container( width: 48, height: 48, decoration: BoxDecoration( color: isSelected ? const Color(0xFF2563EB) .withValues(alpha:  0.15) : Colors.grey .withValues(alpha: 0.08), borderRadius: BorderRadius.circular( 12), border: isSelected ? Border.all( color: const Color( 0xFF2563EB), width: 2) : null, ), child: Icon( entry.value, color: isSelected ? const Color( 0xFF2563EB) : Colors.grey[600], size: 24, ), ), ); }).toList(), ), ), ), ], ),
 
           actions: [
 
@@ -140,12 +147,13 @@ class _ProductsScreenState
 
                 try {
 
-                  await FirestoreService.instance
+                  await SupabaseService.instance
                       .insertProduct({
                     'name': name,
                     'price': price,
                     'stock': stock,
                     'icon': selectedIcon,
+                    'category': selectedCategory,
                   });
                 } catch (e) {
 
@@ -165,8 +173,6 @@ class _ProductsScreenState
                 if (!dialogContext.mounted) return;
 
                 Navigator.pop(dialogContext);
-
-                loadProducts();
               },
 
               child: const Text(
@@ -203,6 +209,9 @@ class _ProductsScreenState
     String selectedIcon =
         product['icon'] as String? ??
             'inventory_2';
+    String selectedCategory =
+        product['category'] as String? ??
+            'General';
 
     final messenger = ScaffoldMessenger.of(context);
 
@@ -300,6 +309,63 @@ class _ProductsScreenState
                     ),
                   ),
                 ),
+              ),
+
+              const SizedBox(height: 15),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Categoría',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.color,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(12),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                ),
+                items: [
+                  'Emparedados',
+                  'Empanadas',
+                  'Especiales',
+                  'Café',
+                  'Bebidas',
+                  'Duros',
+                  'General',
+                ].map((c) => DropdownMenuItem(
+                      value: c,
+                      child: Text(
+                        c,
+                        style:
+                            const TextStyle(fontSize: 14),
+                      ),
+                    )).toList(),
+                onChanged: (v) {
+                  if (v != null) {
+                    setDialogState(() {
+                      selectedCategory = v;
+                    });
+                  }
+                },
               ),
 
               const SizedBox(height: 20),
@@ -430,7 +496,7 @@ class _ProductsScreenState
 
                 try {
 
-                  await FirestoreService.instance
+                  await SupabaseService.instance
                       .updateProduct(
                     product['id'],
                     {
@@ -438,6 +504,7 @@ class _ProductsScreenState
                       'price': price,
                       'stock': stock,
                       'icon': selectedIcon,
+                      'category': selectedCategory,
                     },
                   );
                 } catch (e) {
@@ -458,8 +525,6 @@ class _ProductsScreenState
                 if (!dialogContext.mounted) return;
 
                 Navigator.pop(dialogContext);
-
-                loadProducts();
 
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -486,10 +551,8 @@ class _ProductsScreenState
       int id,
       ) async {
 
-    await FirestoreService.instance
+    await SupabaseService.instance
         .deleteProduct(id);
-
-    loadProducts();
   }
 
   Color getProductColor(
@@ -514,113 +577,7 @@ class _ProductsScreenState
     return colors[index % colors.length];
   }
 
-  IconData getProductIcon(
-      Map<String, dynamic> product,
-      ) {
 
-    final iconName =
-        product['icon'] as String?;
-
-    if (iconName != null &&
-        productIcons.containsKey(
-            iconName)) {
-      return productIcons[iconName]!;
-    }
-
-    return _nameBasedIcon(
-        product['name'] as String? ?? '');
-  }
-
-  IconData _nameBasedIcon(String name) {
-
-    switch (name.toLowerCase()) {
-
-    // BEBIDAS
-
-      case 'soda':
-        return Icons.local_drink;
-
-      case 'agua':
-        return Icons.water_drop;
-
-      case 'café':
-        return Icons.coffee;
-
-      case 'jugo':
-        return Icons.emoji_food_beverage;
-
-      case 'té':
-        return Icons.emoji_food_beverage;
-
-    // COMIDA
-
-      case 'empanada':
-        return Icons.bakery_dining;
-
-      case 'pizza':
-        return Icons.local_pizza;
-
-      case 'hamburguesa':
-        return Icons.lunch_dining;
-
-      case 'hotdog':
-        return Icons.fastfood;
-
-      case 'papas':
-        return Icons.fastfood;
-
-      case 'sandwich':
-        return Icons.breakfast_dining;
-
-    // DULCES
-
-      case 'galleta':
-        return Icons.cookie;
-
-      case 'chocolate':
-        return Icons.cake;
-
-      case 'helado':
-        return Icons.icecream;
-
-      case 'donut':
-        return Icons.donut_small;
-
-      case 'cupcake':
-        return Icons.cake_outlined;
-
-    // FRUTAS
-
-      case 'manzana':
-        return Icons.apple;
-
-      case 'banana':
-        return Icons.energy_savings_leaf;
-
-      case 'uva':
-        return Icons.spa;
-
-    // OTROS
-
-      case 'leche':
-        return Icons.local_drink;
-
-      case 'cereal':
-        return Icons.breakfast_dining;
-
-      case 'yogurt':
-        return Icons.icecream;
-
-      case 'pollo':
-        return Icons.set_meal;
-
-      case 'arroz':
-        return Icons.rice_bowl;
-
-      default:
-        return Icons.shopping_bag;
-    }
-  }
   @override
   Widget build(BuildContext context) {
 
@@ -640,26 +597,6 @@ class _ProductsScreenState
 
       backgroundColor:
       Theme.of(context).scaffoldBackgroundColor,
-
-      floatingActionButton:
-      FloatingActionButton(
-
-        backgroundColor:
-        Theme.of(context).colorScheme.primary,
-
-        elevation: 10,
-
-        onPressed: addProductDialog,
-
-        child: const Icon(
-
-          Icons.add,
-
-          color: Colors.white,
-
-          size: 30,
-        ),
-      ),
 
       body: Column(
 
@@ -762,6 +699,17 @@ class _ProductsScreenState
                     ],
                   ),
                 ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white, size: 28),
+                    onPressed: addProductDialog,
+                    tooltip: 'Agregar producto',
+                  ),
+                ),
               ],
             ),
           ),
@@ -770,11 +718,7 @@ class _ProductsScreenState
 
           Expanded(
 
-            child: RefreshIndicator(
-
-              onRefresh: loadProducts,
-
-              child: Padding(
+            child: Padding(
 
               padding: EdgeInsets.all(R.sp(context, 20)),
 
@@ -809,7 +753,7 @@ class _ProductsScreenState
                           Row(
                             children: [
                               Icon(
-                                getProductIcon(product),
+                                resolveProductIcon(product),
                                 size: R.sp(context, 28),
                                 color: Theme.of(context).colorScheme.primary,
                               ),
@@ -931,7 +875,6 @@ class _ProductsScreenState
                 },
               ),
             ),
-          ),
           ),
         ],
       ),

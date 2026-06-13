@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../services/firestore_service.dart';
+import '../services/supabase_service.dart';
+import '../services/date_utils.dart';
 import '../services/responsive.dart';
 import '../services/store_config.dart';
 
@@ -51,7 +52,7 @@ class _ReportsScreenState
   @override
   void initState() {
     super.initState();
-    _salesSub = FirestoreService.instance
+    _salesSub = SupabaseService.instance
         .streamSales()
         .listen((data) {
       _allSales = data;
@@ -79,7 +80,7 @@ class _ReportsScreenState
 
       if (selectedFilter == 'Hoy') {
         final todayStr =
-            '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+            toISODate(now);
         return dateText == todayStr;
       }
 
@@ -123,13 +124,13 @@ class _ReportsScreenState
       final amount = (sale['total'] as num).toDouble();
       total += amount;
 
-      if (sale['paymentMethod'] == 'Efectivo') {
+      if (sale['payment_method'] == 'Efectivo') {
         efectivo += amount;
       }
-      if (sale['paymentMethod'] == 'Yappy') {
+      if (sale['payment_method'] == 'Yappy') {
         yappy += amount;
       }
-      if (sale['paymentMethod'] == 'Pendiente') {
+      if (sale['payment_method'] == 'Pendiente') {
         pendiente += amount;
         if (sale['recreo'] == 'Recreo 1') r1 += amount;
         if (sale['recreo'] == 'Recreo 2') r2 += amount;
@@ -150,8 +151,6 @@ class _ReportsScreenState
     });
   }
 
-  Future<void> loadReports() async {}
-
   // =====================================================
   // BUILD
   // =====================================================
@@ -165,11 +164,7 @@ class _ReportsScreenState
       Theme.of(context).scaffoldBackgroundColor,
 
 
-      body: RefreshIndicator(
-
-        onRefresh: loadReports,
-
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
 
 
         padding: EdgeInsets.all(
@@ -642,7 +637,7 @@ class _ReportsScreenState
 
                       : Column(
                     children: sales.map((sale) {
-                      final isPending = (sale['paymentMethod'] ?? '')
+                      final isPending = (sale['payment_method'] ?? '')
                           .toString().toLowerCase().contains('pendiente');
                       return Container(
                         margin: EdgeInsets.only(
@@ -742,7 +737,6 @@ class _ReportsScreenState
             ),
           ],
         ),
-      ),
       ),
     );
   }

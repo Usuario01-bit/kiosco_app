@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../services/firestore_service.dart';
-import '../services/product_icons.dart';
+import '../services/supabase_service.dart';
+import '../services/date_utils.dart';
+import '../services/product_icons.dart' show productIcons, categoryIcons, resolveProductIcon;
+import '../services/local_cache_service.dart';
 import '../services/responsive.dart';
 import '../services/store_config.dart';
 
@@ -36,7 +38,33 @@ class _SalesScreenState
 
   double total = 0;
 
+  String? selectedCategory;
+
   final studentSearchController = TextEditingController();
+
+  IconData _productIcon(Map<String, dynamic> product) =>
+      resolveProductIcon(product);
+
+  Widget _filterChip(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? Colors.blue.shade100 : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            color: selected ? Colors.blue.shade800 : Colors.grey.shade700,
+          ),
+        ),
+      ),
+    );
+  }
 
   StreamSubscription? _studentsSub;
   StreamSubscription? _productsSub;
@@ -57,12 +85,26 @@ class _SalesScreenState
   @override
   void initState() {
     super.initState();
-    _studentsSub = FirestoreService.instance
+    _loadCachedThenStream();
+  }
+
+  Future<void> _loadCachedThenStream() async {
+    final cachedProducts = await LocalCacheService.instance.getCachedProducts();
+    final cachedStudents = await LocalCacheService.instance.getCachedStudents();
+    if (mounted) setState(() {
+      if (cachedProducts.isNotEmpty) products = cachedProducts;
+      if (cachedStudents.isNotEmpty) students = cachedStudents;
+    });
+    _studentsSub = SupabaseService.instance
         .streamStudents()
-        .listen((data) => setState(() => students = data));
-    _productsSub = FirestoreService.instance
+        .listen((data) {
+      if (mounted) setState(() => students = data);
+    }, onError: (_) {});
+    _productsSub = SupabaseService.instance
         .streamProducts()
-        .listen((data) => setState(() => products = data));
+        .listen((data) {
+      if (mounted) setState(() => products = data);
+    }, onError: (_) {});
   }
 
   @override
@@ -81,6 +123,18 @@ class _SalesScreenState
       Map<String, dynamic> product,
       ) {
 
+    final stock = (product['stock'] as num?)?.toInt() ?? 0;
+
+    if (stock <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Producto agotado'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final existingIndex =
     cart.indexWhere(
 
@@ -88,6 +142,19 @@ class _SalesScreenState
       item['id'] ==
           product['id'],
     );
+
+    if (existingIndex != -1) {
+      final currentQty = cart[existingIndex]['quantity'] as int;
+      if (currentQty >= stock) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Stock máximo disponible: $stock'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
 
     setState(() {
 
@@ -174,45 +241,40 @@ class _SalesScreenState
         recreo = 'Salida';
       }
 
-      for (var item in cartSnapshot) {
-        await FirestoreService.instance
-            .insertSale({
-          'student': currentStudent,
-          'studentId': currentStudentId ?? '',
-          'product': item['name'],
+      final saleRows = cartSnapshot.map((item) {
+        return {
+          'student_id': currentStudentId ?? '',
+          'product_id': item['id'],
           'quantity': item['quantity'],
-          'total':
-          (item['price'] as num)
-              .toDouble() *
-              item['quantity'],
-          'paymentMethod':
-          currentPaymentMethod,
-          'date':
-          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
-          'time':
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+          'total': (item['price'] as num).toDouble() * item['quantity'],
+          'payment_method': currentPaymentMethod,
+          'prepared_at': DateTime.now().toIso8601String(),
+          'date': toISODate(now),
+          'time': '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
           'recreo': recreo,
-        });
+        };
+      }).toList();
 
-        await FirestoreService.instance
+      await SupabaseService.instance.insertSalesBatch(saleRows);
+
+      for (var item in cartSnapshot) {
+        await SupabaseService.instance
             .updateProductStock(
           item['id'],
-          item['stock'] -
-              item['quantity'],
+          (item['stock'] as int) -
+              (item['quantity'] as int),
         );
       }
 
       if (currentPaymentMethod
           .toLowerCase()
           .trim() == 'pendiente') {
-        await FirestoreService.instance
+        await SupabaseService.instance
             .insertPending({
+          'student_id': currentStudentId,
           'student': currentStudent,
           'amount': currentTotal,
-          'date':
-          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
-          'time':
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+          'created_at': now.toIso8601String(),
           'recreo': recreo,
         });
       }
@@ -407,6 +469,30 @@ class _SalesScreenState
           return Column(
             children: [
               if (!isWide) headerWidget,
+              SizedBox(height: R.sp(context, 8)),
+              SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: R.sp(context, isWide ? 20 : 16)),
+                  children: [
+
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _filterChip('Todas', selectedCategory == null, () => setState(() => selectedCategory = null)),
+                    ),
+
+                    ...products
+                        .map((p) => p['category'] as String? ?? 'General')
+                        .toSet()
+                        .map((cat) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: _filterChip(cat, selectedCategory == cat, () => setState(() => selectedCategory = cat)),
+                            )),
+                  ],
+                ),
+              ),
+              SizedBox(height: R.sp(context, 4)),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async {},
@@ -418,9 +504,14 @@ class _SalesScreenState
                       mainAxisSpacing: isWide ? 16 : 12,
                       childAspectRatio: isWide ? 0.85 : 0.72,
                     ),
-                    itemCount: products.length,
+                    itemCount: selectedCategory == null
+                        ? products.length
+                        : products.where((p) => (p['category'] as String? ?? 'General') == selectedCategory).length,
                     itemBuilder: (context, index) {
-                      final product = products[index];
+                      final filtered = selectedCategory == null
+                          ? products
+                          : products.where((p) => (p['category'] as String? ?? 'General') == selectedCategory).toList();
+                      final product = filtered[index];
                       return GestureDetector(
                         onTap: () => addToCart(product),
                         child: AnimatedContainer(
@@ -458,7 +549,7 @@ class _SalesScreenState
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
-                                    productIcons[product['icon'] as String?] ?? Icons.fastfood_rounded,
+                                    _productIcon(product),
                                     size: R.sp(context, 36),
                                     color: Colors.blue,
                                   ),
@@ -522,7 +613,8 @@ class _SalesScreenState
         },
       ),
       bottomNavigationBar: Container(
-        height: 80,
+        height: 80 + MediaQuery.of(context).padding.bottom,
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           boxShadow: [
@@ -581,14 +673,16 @@ class _SalesScreenState
                       builder: (ctx) {
                         return StatefulBuilder(
                           builder: (ctx, setSheetState) {
+                            final bottomInset = MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom;
                             return Padding(
                               padding: EdgeInsets.fromLTRB(
                                 R.sp(context, 24),
                                 R.sp(context, 24),
                                 R.sp(context, 24),
-                                MediaQuery.of(ctx).viewInsets.bottom + R.sp(context, 24),
+                                bottomInset + R.sp(context, 24),
                               ),
-                              child: Column(
+                              child: SingleChildScrollView(
+                                child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -737,7 +831,8 @@ class _SalesScreenState
                                   ),
                                 ],
                               ),
-                            );
+                            ),
+                          );
                           },
                         );
                       },

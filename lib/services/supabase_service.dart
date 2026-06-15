@@ -81,7 +81,7 @@ class SupabaseService {
   // STUDENTS
   // =====================================================
 
-  Future<int> insertStudent(Map<String, dynamic> row) async {
+  Future<void> insertStudent(Map<String, dynamic> row) async {
     final tempPw = row['tempPassword'] as String? ?? _generateTempPassword();
     await _client.from('students').insert({
       'name': row['name'],
@@ -92,7 +92,6 @@ class SupabaseService {
       'role': row['role'] ?? 'alumno',
       'temp_password': tempPw,
     });
-    return 0;
   }
 
   Future<int> insertManyStudents(List<Map<String, dynamic>> students) async {
@@ -245,7 +244,7 @@ class SupabaseService {
     debugPrint('Seeded ${toInsert.length} default products');
   }
 
-  Future<int> insertProduct(Map<String, dynamic> data) async {
+  Future<void> insertProduct(Map<String, dynamic> data) async {
     await _client.from('products').insert({
       'name': data['name'],
       'price': (data['price'] as num).toDouble(),
@@ -253,7 +252,6 @@ class SupabaseService {
       'icon': data['icon'] ?? 'inventory_2',
       'category': data['category'] ?? 'General',
     });
-    return 0;
   }
 
   Future<List<Map<String, dynamic>>> getProducts() async {
@@ -302,7 +300,7 @@ class SupabaseService {
   // SALES
   // =====================================================
 
-  Future<int> insertSale(Map<String, dynamic> sale) async {
+  Future<void> insertSale(Map<String, dynamic> sale) async {
     await _client.from('sales').insert({
       'student_id': sale['studentId'],
       'product_id': sale['productId'],
@@ -315,7 +313,6 @@ class SupabaseService {
       'paid_at': sale['paidAt'],
       'prepared_at': sale['preparedAt'],
     });
-    return 0;
   }
 
   Future<void> checkoutStudentOrder({
@@ -365,7 +362,7 @@ class SupabaseService {
     await _client.from('sales').update({
       'payment_method': 'Pendiente',
       'prepared_at': now.toIso8601String(),
-    }).eq('student_id', studentId).eq('date', today).eq('recreo', recreo).isFilter('prepared_at', null);
+    }).eq('student_id', studentId).eq('date', today).eq('recreo', recreo).isFilter('prepared_at', null).isFilter('paid_at', null);
 
     if (total > 0) {
       await insertPending({
@@ -472,7 +469,10 @@ class SupabaseService {
     if (studentData.isEmpty) return;
     final studentId = studentData.first['id'].toString();
 
-    final salesSnap = await _client.from('sales').select('total,payment_method').eq('student_id', studentId);
+    final salesSnap = await _client.from('sales')
+        .select('total,payment_method')
+        .eq('student_id', studentId)
+        .isFilter('paid_at', null);
     double totalPaid = 0;
     for (final doc in salesSnap) {
       final pm = doc['payment_method'] as String? ?? '';
@@ -484,7 +484,7 @@ class SupabaseService {
     await _client.from('sales').update({
       'payment_method': 'Efectivo',
       'paid_at': now,
-    }).eq('student_id', studentId).ilike('payment_method', '%pendiente%');
+    }).eq('student_id', studentId).isFilter('paid_at', null).ilike('payment_method', '%pendiente%');
 
     if (pendingId != null) {
       await _client.from('pending').update({

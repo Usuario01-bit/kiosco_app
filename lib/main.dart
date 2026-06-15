@@ -226,14 +226,14 @@ void main() async {
       url: supabaseUrl,
       publishableKey: supabaseAnonKey,
     );
-  } catch (_) {
-    // Sin internet — la app arranca igual, los streams se conectan cuando puedan
+  } catch (e) {
+    debugPrint('Supabase init error: $e');
   }
 
   try {
     await StoreConfig.instance.load();
-  } catch (_) {
-    // StoreConfig offline — usa valores por defecto
+  } catch (e) {
+    debugPrint('StoreConfig load error: $e');
   }
 
   runApp(

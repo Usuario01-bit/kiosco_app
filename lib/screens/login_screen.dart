@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
-import '../services/database_helper.dart';
+import '../core/env.dart';
 import '../services/responsive.dart';
 import '../services/store_config.dart';
+import '../services/supabase_service.dart';
 import 'home_screen.dart';
+import 'student_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
 
@@ -29,100 +31,10 @@ class _LoginScreenState
 
   String? errorMsg;
 
-  int attempts = 0;
-
-  DateTime? lockoutUntil;
-
-  static const int maxAttempts = 3;
-
-  static const Duration lockoutDuration =
-      Duration(seconds: 30);
-
-  static const Duration lockoutDuration2 =
-      Duration(minutes: 2);
-
   @override
   void initState() {
 
     super.initState();
-
-    _loadLockoutState();
-  }
-
-  Future<void> _loadLockoutState() async {
-
-    final prefs =
-    await SharedPreferences.getInstance();
-
-    setState(() {
-
-      attempts =
-      prefs.getInt('login_attempts') ?? 0;
-
-      final until =
-      prefs.getString('lockout_until');
-
-      lockoutUntil = until != null
-          ? DateTime.tryParse(until)
-          : null;
-    });
-  }
-
-  Future<void> _saveLockoutState() async {
-
-    final prefs =
-    await SharedPreferences.getInstance();
-
-    await prefs.setInt(
-      'login_attempts',
-      attempts,
-    );
-
-    if (lockoutUntil != null) {
-
-      await prefs.setString(
-        'lockout_until',
-        lockoutUntil!.toIso8601String(),
-      );
-    } else {
-
-      await prefs.remove('lockout_until');
-    }
-  }
-
-  Future<void> _resetLockout() async {
-
-    attempts = 0;
-
-    lockoutUntil = null;
-
-    await _saveLockoutState();
-  }
-
-  bool get isLockedOut {
-
-    if (lockoutUntil == null) return false;
-
-    if (DateTime.now().isAfter(lockoutUntil!)) {
-
-      lockoutUntil = null;
-
-      return false;
-    }
-
-    return true;
-  }
-
-  Duration get remainingLockout {
-
-    if (lockoutUntil == null) return Duration.zero;
-
-    final remaining =
-        lockoutUntil!.difference(DateTime.now());
-
-    return remaining.isNegative
-        ? Duration.zero
-        : remaining;
   }
 
   Future<void> _login() async {
@@ -145,8 +57,6 @@ class _LoginScreenState
       return;
     }
 
-    if (isLockedOut) return;
-
     setState(() {
 
       loading = true;
@@ -156,15 +66,15 @@ class _LoginScreenState
 
     try {
 
+      final email = '$username@kiosco.app';
+
       final user =
-      await DatabaseHelper.instance
-          .login(username, password);
+      await SupabaseService.instance
+          .loginAdmin(email, password);
 
       if (!mounted) return;
 
       if (user != null) {
-
-        await _resetLockout();
 
         Navigator.pushReplacement(
 
@@ -178,37 +88,13 @@ class _LoginScreenState
         );
       } else {
 
-        attempts++;
+        setState(() {
 
-        if (attempts >= maxAttempts) {
+          errorMsg =
+          'Usuario o contraseña incorrectos';
 
-          lockoutUntil = DateTime.now().add(
-            attempts >= 5
-                ? lockoutDuration2
-                : lockoutDuration,
-          );
-
-          await _saveLockoutState();
-
-          setState(() {
-
-            errorMsg =
-            'Demasiados intentos. Esperá ${attempts >= 5 ? "2 min" : "30 seg"}';
-
-            loading = false;
-          });
-        } else {
-
-          await _saveLockoutState();
-
-          setState(() {
-
-            errorMsg =
-            'Usuario o contraseña incorrectos ($attempts/$maxAttempts)';
-
-            loading = false;
-          });
-        }
+          loading = false;
+        });
       }
     } catch (e) {
 
@@ -573,76 +459,6 @@ class _LoginScreenState
                           height: 28,
                         ),
 
-                        // LOCKOUT
-
-                        if (isLockedOut)
-
-                          Container(
-
-                            width:
-                            double.infinity,
-
-                            padding:
-                            const EdgeInsets
-                                .all(12),
-
-                            margin:
-                            const EdgeInsets
-                                .only(
-                              bottom: 16,
-                            ),
-
-                            decoration:
-                            BoxDecoration(
-
-                              color: Colors
-                                  .orange
-                                  .shade50,
-
-                              borderRadius:
-                              BorderRadius.circular(
-                                16,
-                              ),
-                            ),
-
-                            child: Row(
-
-                              mainAxisAlignment:
-                              MainAxisAlignment
-                                  .center,
-
-                              children: [
-
-                                const Icon(
-
-                                  Icons
-                                      .timer_off,
-
-                                  color: Colors
-                                      .orange,
-                                ),
-
-                                const SizedBox(
-                                  width: 10,
-                                ),
-
-                                Text(
-
-                                  'Esperá ${remainingLockout.inSeconds} seg',
-
-                                  style:
-                                  const TextStyle(
-                                    color: Colors
-                                        .orange,
-                                    fontWeight:
-                                    FontWeight
-                                        .bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
                         // BUTTON
 
                         ClipRRect(
@@ -678,9 +494,7 @@ class _LoginScreenState
                             child: ElevatedButton(
 
                               onPressed:
-                                  isLockedOut
-                                  ? null
-                                  : loading
+                                  loading
                                       ? null
                                       : _login,
 
@@ -708,40 +522,106 @@ class _LoginScreenState
                                 elevation: 0,
                               ),
 
-                              child: loading
-                                  ? const SizedBox(
-                                      width: 28,
-                                      height:
-                                          28,
-                                      child:
-                                          CircularProgressIndicator(
-                                        color: Colors
-                                            .white,
-                                        strokeWidth:
-                                            2.5,
+                      child: loading
+                                    ? const SizedBox(
+                                        width: 28,
+                                        height:
+                                            28,
+                                        child:
+                                            CircularProgressIndicator(
+                                          color: Colors
+                                              .white,
+                                          strokeWidth:
+                                              2.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Ingresar',
+                                        style:
+                                            TextStyle(
+                                          color: Colors
+                                              .white,
+                                          fontSize:
+                                              20,
+                                          fontWeight:
+                                              FontWeight
+                                                  .bold,
+                                        ),
                                       ),
-                                    )
-                                  : const Text(
-                                      'Ingresar',
-                                      style:
-                                          TextStyle(
-                                        color: Colors
-                                            .white,
-                                        fontSize:
-                                            20,
-                                        fontWeight:
-                                            FontWeight
-                                                .bold,
-                                      ),
-                                    ),
                             ),
                           ),
+                        ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const StudentLoginScreen()),
+                                );
+                              },
+                              icon: const Icon(Icons.school),
+                              label: const Text('Portal del Alumno'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF2563EB),
+                                side: const BorderSide(color: Color(0xFF2563EB)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                textStyle: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // QR DOWNLOAD
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: QrImageView(
+                            data: Env.downloadUrl,
+                            size: 60,
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '¿No tenés la app?',
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Escaneá el QR para descargar',
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   // FOOTER
 

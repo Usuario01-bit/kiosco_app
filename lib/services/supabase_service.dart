@@ -575,14 +575,12 @@ class SupabaseService {
     final studentData = await _client.from('students').select('id').eq('name', studentName).limit(1);
     if (studentData.isEmpty) return 0;
     final studentId = studentData.first['id'].toString();
-    final pendingSnap = await _client.from('pending').select('amount,paid,paid_at').eq('student_id', studentId).limit(1);
+    final pendingSnap = await _client.from('pending').select('amount,paid').eq('student_id', studentId).limit(1);
     if (pendingSnap.isNotEmpty) {
       final data = pendingSnap.first;
-      if (data['paid_at'] == null) {
-        final amount = (data['amount'] as num?)?.toDouble() ?? 0;
-        final paid = (data['paid'] as num?)?.toDouble() ?? 0;
-        return amount - paid;
-      }
+      final amount = (data['amount'] as num?)?.toDouble() ?? 0;
+      final paid = (data['paid'] as num?)?.toDouble() ?? 0;
+      return amount - paid;
     }
     return 0;
   }
@@ -625,8 +623,8 @@ class SupabaseService {
     } on Exception catch (e) {
       if (e.toString().contains('23505')) {
         // Already exists — add to current amount
-        final cur = await _client.from('pending').select('amount').eq('student_id', sidResolved).limit(1).single();
-        final curAmount = (cur['amount'] as num?)?.toDouble() ?? 0;
+        final cur = await _client.from('pending').select('amount').eq('student_id', sidResolved).limit(1).maybeSingle();
+        final curAmount = (cur?['amount'] as num?)?.toDouble() ?? 0;
         await _client.from('pending').update({
           'amount': curAmount + newAmount,
           'paid_at': null,
@@ -650,7 +648,11 @@ class SupabaseService {
   Stream<List<Map<String, dynamic>>> streamPendings() {
     _ensureCache();
     return _client.from('pending').stream(primaryKey: ['id']).order('created_at', ascending: true).map((data) {
-      return data.where((d) => d['paid_at'] == null).map((d) {
+      return data.where((d) {
+        final amount = (d['amount'] as num?)?.toDouble() ?? 0;
+        final paid = (d['paid'] as num?)?.toDouble() ?? 0;
+        return amount > paid;
+      }).map((d) {
         d['student'] = _studentNames[d['student_id']?.toString()] ?? 'Desconocido';
         return d;
       }).toList();

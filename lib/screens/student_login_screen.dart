@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/supabase_service.dart';
 import '../services/store_config.dart';
@@ -91,17 +93,25 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
           loggingIn = false;
         });
       }
-    } catch (e) {
-      String msg;
-      if (e.toString().contains('SocketException') || e.toString().contains('TimeoutException')) {
-        msg = 'Sin conexión. Verificá tu conexión a internet.';
-      } else if (e.toString().contains('PGRST')) {
-        msg = 'Error del servidor. Intentá de nuevo.';
-      } else {
-        msg = 'Ocurrió un error inesperado. Intentá de nuevo.';
-      }
+    } on SocketException {
       setState(() {
-        errorMsg = msg;
+        errorMsg = 'Sin conexión. Verificá tu conexión a internet.';
+        loggingIn = false;
+      });
+    } on TimeoutException {
+      setState(() {
+        errorMsg = 'Tiempo de espera agotado. Verificá tu conexión.';
+        loggingIn = false;
+      });
+    } on PostgrestException {
+      setState(() {
+        errorMsg = 'Error del servidor. Intentá de nuevo.';
+        loggingIn = false;
+      });
+    } catch (e) {
+      debugPrint('Login error: $e');
+      setState(() {
+        errorMsg = 'Ocurrió un error inesperado. Intentá de nuevo.';
         loggingIn = false;
       });
     }

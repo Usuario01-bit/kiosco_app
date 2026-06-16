@@ -598,6 +598,7 @@ class SupabaseService {
         final curAmount = (cur?['amount'] as num?)?.toDouble() ?? 0;
         await _client.from('pending').update({
           'amount': curAmount + newAmount,
+          'paid': 0,
           'paid_at': null,
         }).eq('student_id', sidResolved);
       } else {

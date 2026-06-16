@@ -115,8 +115,11 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Confirmar pedido')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 24),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         children: [
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -252,10 +255,25 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               );
             }),
 
-          const SizedBox(height: 24),
-          Text('¿Cómo vas a pagar?', style: styles.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Row(
+          ],  // ListView children
+        ),    // ListView
+      ),      // Expanded
+
+          const SizedBox(height: 16),
+          // --- Fixed bottom payment section ---
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, -2))],
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('¿Cómo vas a pagar?', style: styles.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Row(
             children: [
               Expanded(
                 child: _buildPaymentOption(Icons.money, 'Efectivo', Colors.green),
@@ -286,6 +304,10 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
                 foregroundColor: cs.onPrimary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              ),
+            ),
+                ],
               ),
             ),
           ),

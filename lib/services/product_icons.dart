@@ -22,6 +22,25 @@ const Map<String, IconData> productIcons = {
   'shopping_cart': Icons.shopping_cart_outlined,
 };
 
-IconData getIcon(String? iconName) {
-  return productIcons[iconName] ?? Icons.inventory_2;
+const Map<String, String> categoryIcons = {
+  'Emparedados': 'breakfast_dining',
+  'Empanadas': 'set_meal',
+  'Especiales': 'fastfood',
+  'Café': 'coffee',
+  'Bebidas': 'local_drink',
+  'Duros': 'icecream',
+  'General': 'inventory_2',
+};
+
+IconData resolveProductIcon(Map<String, dynamic> product) {
+  final iconName = product['icon'] as String?;
+  if (iconName != null && productIcons.containsKey(iconName)) {
+    return productIcons[iconName]!;
+  }
+  final cat = product['category'] as String? ?? 'General';
+  final catIcon = categoryIcons[cat];
+  if (catIcon != null && productIcons.containsKey(catIcon)) {
+    return productIcons[catIcon]!;
+  }
+  return Icons.shopping_bag;
 }

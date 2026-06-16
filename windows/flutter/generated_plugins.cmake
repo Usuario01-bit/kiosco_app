@@ -3,8 +3,8 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  cloud_firestore
-  firebase_core
+  app_links
+  flutter_secure_storage_windows
   share_plus
   url_launcher_windows
 )

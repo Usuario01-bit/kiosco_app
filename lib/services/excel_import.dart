@@ -4,7 +4,7 @@ import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
-import 'firestore_service.dart';
+import 'supabase_service.dart';
 
 Future<int> pickAndImportStudents(BuildContext context) async {
   final result = await FilePicker.platform.pickFiles(
@@ -63,5 +63,5 @@ Future<int> pickAndImportStudents(BuildContext context) async {
 
   if (students.isEmpty) return 0;
 
-  return FirestoreService.instance.insertManyStudents(students);
+  return SupabaseService.instance.insertManyStudents(students);
 }

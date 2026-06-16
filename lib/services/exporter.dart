@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'firestore_service.dart';
+import 'supabase_service.dart';
 import 'store_config.dart';
 
 Future<void> exportPendingToExcel(BuildContext context) async {
-  final data = await FirestoreService.instance.getAllPendingSales();
+  final data = await SupabaseService.instance.getAllPendingSales();
 
   if (data.isEmpty) {
     if (context.mounted) {
@@ -94,7 +94,7 @@ Future<void> exportPendingToExcel(BuildContext context) async {
   sheet.setColumnWidth(7, 12);
 
   // ── LOAD PENDING RECORDS with paid amounts ──
-  final pendingRecords = await FirestoreService.instance.getAllPending();
+  final pendingRecords = await SupabaseService.instance.getAllPending();
   final paidByStudent = <String, double>{};
   final totalByStudent = <String, double>{};
   for (final p in pendingRecords) {
@@ -200,11 +200,25 @@ Future<void> exportPendingToExcel(BuildContext context) async {
 }
 
 Future<void> exportBackupToExcel(BuildContext context) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Exportar respaldo'),
+      content: const Text('Se va a exportar un archivo Excel con TODOS los datos del sistema (ventas, alumnos, productos, deudas). ¿Querés continuar?'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Exportar')),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+
   final data = await Future.wait([
-    FirestoreService.instance.getSales(),
-    FirestoreService.instance.getStudents(),
-    FirestoreService.instance.getProducts(),
-    FirestoreService.instance.getAllPendingSales(),
+    SupabaseService.instance.getSales(),
+    SupabaseService.instance.getStudents(),
+    SupabaseService.instance.getProducts(),
+    SupabaseService.instance.getAllPendingSales(),
   ]);
   final sales = data[0];
   final students = data[1];

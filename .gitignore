@@ -48,3 +48,6 @@ app.*.map.json
 # Keystore and signing config (contains passwords)
 /android/app/kiosco_keystore.jks
 /android/key.properties
+
+# Firebase config (per-device, contains API keys)
+/android/app/google-services.json

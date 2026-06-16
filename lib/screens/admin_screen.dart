@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/database_helper.dart';
+import '../services/supabase_service.dart';
 import '../services/responsive.dart';
 
 class AdminScreen extends StatefulWidget {
@@ -20,7 +20,7 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Future<void> loadUsers() async {
-    final data = await DatabaseHelper.instance.getUsers();
+    final data = await SupabaseService.instance.getAdminUsers();
     setState(() {
       users = data;
       loading = false;
@@ -69,14 +69,14 @@ class _AdminScreenState extends State<AdminScreen> {
                 );
                 return;
               }
-              if (passCtrl.text.length < 4) {
+              if (passCtrl.text.length < 8) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Contraseña mínimo 4 caracteres'), backgroundColor: Colors.red),
+                  const SnackBar(content: Text('Contraseña mínimo 8 caracteres'), backgroundColor: Colors.red),
                 );
                 return;
               }
               try {
-                await DatabaseHelper.instance.createUser(userCtrl.text.trim(), passCtrl.text);
+                await SupabaseService.instance.createAdminUser(userCtrl.text.trim(), passCtrl.text);
                 if (!ctx.mounted) return;
                 Navigator.pop(ctx);
                 await loadUsers();
@@ -127,7 +127,7 @@ class _AdminScreenState extends State<AdminScreen> {
     );
 
     if (confirm == true) {
-      await DatabaseHelper.instance.deleteUser(user['id'] as int);
+      await SupabaseService.instance.deleteAdminUser(user['id']);
       await loadUsers();
     }
   }

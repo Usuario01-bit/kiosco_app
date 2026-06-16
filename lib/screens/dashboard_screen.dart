@@ -310,7 +310,7 @@ class _DashboardScreenState
                 MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Panel de Ventas',
+                    'Panel de ventas',
                     style: TextStyle(
                       fontSize: R.fs(context, 34),
                       fontWeight: FontWeight.bold,

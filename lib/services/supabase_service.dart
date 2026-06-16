@@ -593,11 +593,13 @@ class SupabaseService {
       });
     } on Exception catch (e) {
       if (e.toString().contains('23505')) {
-        // Already exists — add to current amount
-        final cur = await _client.from('pending').select('amount').eq('student_id', sidResolved).limit(1).maybeSingle();
+        final cur = await _client.from('pending').select('amount,paid').eq('student_id', sidResolved).limit(1).maybeSingle();
         final curAmount = (cur?['amount'] as num?)?.toDouble() ?? 0;
+        final curPaid = (cur?['paid'] as num?)?.toDouble() ?? 0;
+        // If previous debt was settled, start fresh. Otherwise add to existing.
+        final newTotal = curPaid >= curAmount ? newAmount : curAmount + newAmount;
         await _client.from('pending').update({
-          'amount': curAmount + newAmount,
+          'amount': newTotal,
           'paid': 0,
           'paid_at': null,
         }).eq('student_id', sidResolved);

@@ -382,30 +382,11 @@ class SupabaseService {
     if (studentData.isEmpty) return;
     final studentId = studentData.first['id'].toString();
 
-    final snap = await _client.from('sales').select('total').eq('student_id', studentId).eq('date', today).eq('recreo', recreo);
-
-    double totalPaid = 0;
-    for (final doc in snap) {
-      totalPaid += (doc['total'] as num?)?.toDouble() ?? 0;
-    }
-
     await _client.from('sales').update({
       'payment_method': paymentMethod,
       'paid_at': now.toIso8601String(),
       'prepared_at': now.toIso8601String(),
     }).eq('student_id', studentId).eq('date', today).eq('recreo', recreo);
-
-    final pendingSnap = await _client.from('pending').select().eq('student_id', studentId).limit(1);
-    if (pendingSnap.isNotEmpty) {
-      final pendingDoc = pendingSnap.first;
-      final curPaid = (pendingDoc['paid'] as num?)?.toDouble() ?? 0;
-      final newPaid = curPaid + totalPaid;
-      final amount = (pendingDoc['amount'] as num?)?.toDouble() ?? 0;
-      await _client.from('pending').update({
-        'paid': newPaid,
-        if (newPaid >= amount) 'paid_at': now.toIso8601String(),
-      }).eq('id', pendingDoc['id'].toString());
-    }
   }
 
   Stream<int> streamActiveOrdersCount() {

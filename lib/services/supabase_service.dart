@@ -412,7 +412,7 @@ class SupabaseService {
     final now = DateTime.now();
     final today = toISODate(now);
     return _client.from('sales').stream(primaryKey: ['id']).eq('date', today).map((snap) {
-      return snap.length;
+      return snap.where((s) => s['prepared_at'] == null).length;
     });
   }
 

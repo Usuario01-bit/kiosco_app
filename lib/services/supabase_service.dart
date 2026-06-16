@@ -469,33 +469,23 @@ class SupabaseService {
     if (studentData.isEmpty) return;
     final studentId = studentData.first['id'].toString();
 
-    final salesSnap = await _client.from('sales')
-        .select('total,payment_method')
-        .eq('student_id', studentId)
-        .isFilter('paid_at', null);
-    double totalPaid = 0;
-    for (final doc in salesSnap) {
-      final pm = doc['payment_method'] as String? ?? '';
-      if (!pm.toLowerCase().contains('pendiente')) continue;
-      totalPaid += (doc['total'] as num?)?.toDouble() ?? 0;
-    }
-
+    // Mark all unpaid pending sales as paid
     final now = DateTime.now().toIso8601String();
     await _client.from('sales').update({
       'payment_method': 'Efectivo',
       'paid_at': now,
     }).eq('student_id', studentId).isFilter('paid_at', null).ilike('payment_method', '%pendiente%');
 
+    // Pay the full pending amount
     if (pendingId != null) {
-      await _client.from('pending').update({
-        'paid': totalPaid,
-        'paid_at': now,
-      }).eq('id', pendingId.toString());
-    } else {
-      await _client.from('pending').update({
-        'paid': totalPaid,
-        'paid_at': now,
-      }).eq('student_id', studentId);
+      final pendingSnap = await _client.from('pending').select('amount').eq('id', pendingId.toString()).limit(1);
+      if (pendingSnap.isNotEmpty) {
+        final fullAmount = (pendingSnap.first['amount'] as num?)?.toDouble() ?? 0;
+        await _client.from('pending').update({
+          'paid': fullAmount,
+          'paid_at': now,
+        }).eq('id', pendingId.toString());
+      }
     }
   }
 

@@ -9,11 +9,16 @@ import 'pending_screen.dart';
 import 'admin_screen.dart';
 import 'login_screen.dart';
 import 'config_screen.dart';
+import 'student_login_screen.dart';
+import 'student_qr_scanner_screen.dart';
+import 'admin_orders_screen.dart';
 import '../services/exporter.dart';
-import '../services/database_helper.dart';
+
 import '../services/store_config.dart';
 import '../services/theme_provider.dart';
 import '../services/responsive.dart';
+import 'dart:async';
+import '../services/supabase_service.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -36,22 +41,24 @@ class _HomeScreenState
     extends State<HomeScreen> {
 
   int selectedIndex = 0;
+  int activeOrders = 0;
+  StreamSubscription? _ordersSub;
 
   bool get isSuperAdmin => widget.role == 'super_admin';
 
   @override
   void initState() {
-
     super.initState();
-
+    _ordersSub = SupabaseService.instance.streamActiveOrdersCount().listen((active) {
+      if (mounted) setState(() => activeOrders = active);
+    });
     ThemeProvider.instance.addListener(_refresh);
   }
 
   @override
   void dispose() {
-
+    _ordersSub?.cancel();
     ThemeProvider.instance.removeListener(_refresh);
-
     super.dispose();
   }
 
@@ -63,20 +70,27 @@ class _HomeScreenState
   void _showSettings() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            R.sp(context, 24),
-            R.sp(context, 16),
-            R.sp(context, 24),
-            R.sp(context, 24),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+        return DraggableScrollableSheet(
+          initialChildSize: 0.65,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollCtrl) => SingleChildScrollView(
+            controller: scrollCtrl,
+            padding: EdgeInsets.fromLTRB(
+              R.sp(context, 24),
+              R.sp(context, 16),
+              R.sp(context, 24),
+              R.sp(context, 32),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
 
               Center(
                 child: Container(
@@ -179,6 +193,38 @@ class _HomeScreenState
               ),
 
               ListTile(
+                leading: const Icon(Icons.school, color: Color(0xFF2563EB)),
+                title: const Text('Portal del Alumno'),
+                subtitle: const Text('Los estudiantes pueden comprar'),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const StudentLoginScreen()),
+                  );
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.qr_code_scanner, color: Color(0xFF7C3AED)),
+                title: const Text('Escanear QR'),
+                subtitle: const Text('Ver pedidos de un alumno'),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const StudentQrScannerScreen()),
+                  );
+                },
+              ),
+
+              ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text('Cerrar sesión', style: TextStyle(color: Colors.red)),
                 shape: RoundedRectangleBorder(
@@ -195,8 +241,9 @@ class _HomeScreenState
               ),
             ],
           ),
-        );
-      },
+        ),
+      );
+    },
     );
   }
 
@@ -260,7 +307,7 @@ class _HomeScreenState
                 return;
               }
               try {
-                final ok = await DatabaseHelper.instance.changePassword(
+                final ok = await SupabaseService.instance.changePassword(
                   widget.username,
                   oldCtrl.text,
                   newCtrl.text,
@@ -304,11 +351,27 @@ class _HomeScreenState
       const ReportsScreen(),
 
       const PendingScreen(),
+
     ];
 
     return Scaffold(
 
       body: screens[selectedIndex],
+
+      floatingActionButton: Badge(
+        isLabelVisible: activeOrders > 0,
+        label: Text('$activeOrders', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: Colors.red,
+        textStyle: const TextStyle(color: Colors.white),
+        child: FloatingActionButton(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminOrdersScreen()),
+          ),
+          tooltip: 'Pedidos del día',
+          child: const Icon(Icons.receipt_long),
+        ),
+      ),
 
       bottomNavigationBar:
       Column(

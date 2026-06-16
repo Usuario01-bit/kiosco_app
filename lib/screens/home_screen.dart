@@ -43,6 +43,9 @@ class _HomeScreenState
   int selectedIndex = 0;
   int activeOrders = 0;
   StreamSubscription? _ordersSub;
+  double _fabX = 0;
+  double _fabY = 0;
+  bool _fabInit = false;
 
   bool get isSuperAdmin => widget.role == 'super_admin';
 
@@ -356,21 +359,45 @@ class _HomeScreenState
 
     return Scaffold(
 
-      body: screens[selectedIndex],
-
-      floatingActionButton: Badge(
-        isLabelVisible: activeOrders > 0,
-        label: Text('$activeOrders', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: Colors.red,
-        textStyle: const TextStyle(color: Colors.white),
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AdminOrdersScreen()),
-          ),
-          tooltip: 'Pedidos del día',
-          child: const Icon(Icons.receipt_long),
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (!_fabInit) {
+            _fabX = constraints.maxWidth - 72;
+            _fabY = constraints.maxHeight - 190;
+            _fabInit = true;
+          }
+          return Stack(
+            children: [
+              screens[selectedIndex],
+              Positioned(
+                left: _fabX,
+                top: _fabY,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    setState(() {
+                      _fabX = (_fabX + details.delta.dx).clamp(0, constraints.maxWidth - 56);
+                      _fabY = (_fabY + details.delta.dy).clamp(0, constraints.maxHeight - 56);
+                    });
+                  },
+                  child: Badge(
+                    isLabelVisible: activeOrders > 0,
+                    label: Text('$activeOrders', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                    backgroundColor: Colors.red,
+                    textStyle: const TextStyle(color: Colors.white),
+                    child: FloatingActionButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AdminOrdersScreen()),
+                      ),
+                      tooltip: 'Pedidos del día',
+                      child: const Icon(Icons.receipt_long),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
 
       bottomNavigationBar:

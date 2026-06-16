@@ -596,13 +596,20 @@ class SupabaseService {
         final cur = await _client.from('pending').select('amount,paid').eq('student_id', sidResolved).limit(1).maybeSingle();
         final curAmount = (cur?['amount'] as num?)?.toDouble() ?? 0;
         final curPaid = (cur?['paid'] as num?)?.toDouble() ?? 0;
-        // If previous debt was settled, start fresh. Otherwise add to existing.
-        final newTotal = curPaid >= curAmount ? newAmount : curAmount + newAmount;
-        await _client.from('pending').update({
-          'amount': newTotal,
-          'paid': 0,
-          'paid_at': null,
-        }).eq('student_id', sidResolved);
+        if (curPaid >= curAmount) {
+          // Previous debt was settled — start fresh
+          await _client.from('pending').update({
+            'amount': newAmount,
+            'paid': 0,
+            'paid_at': null,
+          }).eq('student_id', sidResolved);
+        } else {
+          // Previous debt still open — add to existing, keep paid
+          await _client.from('pending').update({
+            'amount': curAmount + newAmount,
+            'paid_at': null,
+          }).eq('student_id', sidResolved);
+        }
       } else {
         rethrow;
       }

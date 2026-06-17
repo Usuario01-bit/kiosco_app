@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'dashboard_screen.dart';
 import 'sales_screen.dart';
@@ -53,7 +54,12 @@ class _HomeScreenState
   void initState() {
     super.initState();
     _ordersSub = SupabaseService.instance.streamActiveOrdersCount().listen((active) {
-      if (mounted) setState(() => activeOrders = active);
+      if (mounted) {
+        if (active > activeOrders) {
+          HapticFeedback.heavyImpact();
+        }
+        setState(() => activeOrders = active);
+      }
     });
     ThemeProvider.instance.addListener(_refresh);
   }

@@ -5,7 +5,9 @@ import '../services/supabase_service.dart';
 import 'student_qr_detail_screen.dart';
 
 class StudentQrScannerScreen extends StatefulWidget {
-  const StudentQrScannerScreen({super.key});
+  final void Function(Map<String, dynamic> student)? onStudentFound;
+
+  const StudentQrScannerScreen({super.key, this.onStudentFound});
 
   @override
   State<StudentQrScannerScreen> createState() => _StudentQrScannerScreenState();
@@ -34,12 +36,16 @@ class _StudentQrScannerScreenState extends State<StudentQrScannerScreen> {
       if (!mounted) return;
 
       if (student != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => StudentQrDetailScreen(student: student),
-          ),
-        );
+        if (widget.onStudentFound != null) {
+          widget.onStudentFound!(student);
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StudentQrDetailScreen(student: student),
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('QR no válido'), backgroundColor: Colors.red),

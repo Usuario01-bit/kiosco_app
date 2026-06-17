@@ -10,6 +10,7 @@ import '../services/supabase_service.dart';
 import '../services/store_config.dart';
 import 'student_catalog_screen.dart';
 import 'student_qr_screen.dart';
+import 'student_qr_scanner_screen.dart';
 
 class StudentLoginScreen extends StatefulWidget {
   const StudentLoginScreen({super.key});
@@ -446,6 +447,40 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity, height: 50,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => StudentQrScannerScreen(
+                              onStudentFound: (student) async {
+                                final token = await _generateQrToken(student['name'] as String);
+                                await SupabaseService.instance.setStudentQrToken(student['id'], token);
+                                await _storage.write(key: 'student_qr_token', value: token);
+                                if (!context.mounted) return;
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => StudentCatalogScreen(student: student)),
+                                  (_) => false,
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.qr_code_scanner),
+                      label: const Text('Escanear QR para entrar'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF2563EB),
+                        side: const BorderSide(color: Color(0xFF2563EB)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextButton.icon(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back),

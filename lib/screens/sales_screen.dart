@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import '../services/date_utils.dart';
-import '../services/product_icons.dart' show productIcons, categoryIcons, resolveProductIcon;
+import '../services/product_icons.dart' show resolveProductIcon;
 import '../services/local_cache_service.dart';
 import '../services/responsive.dart';
 import '../services/store_config.dart';

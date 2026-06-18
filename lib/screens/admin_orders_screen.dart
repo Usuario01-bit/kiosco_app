@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/supabase_service.dart';
-import '../services/product_icons.dart' show productIcons, resolveProductIcon;
+import '../services/product_icons.dart' show productIcons;
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
@@ -215,7 +215,6 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     final sales = studentSales(recreo, student);
     final total = studentTotal(recreo, student);
     final allPrepared = studentIsReady(recreo, student);
-    final anyPrepared = sales.any((s) => s['prepared_at'] != null);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),

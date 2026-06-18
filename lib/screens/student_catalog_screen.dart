@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../services/supabase_service.dart';
-import '../services/product_icons.dart' show productIcons, categoryIcons, resolveProductIcon;
+import '../services/product_icons.dart' show resolveProductIcon;
 import '../services/local_cache_service.dart';
 import 'student_checkout_screen.dart';
 import 'student_history_screen.dart';
@@ -66,8 +66,6 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
   List<Map<String, dynamic>> productsInCategory(String cat) {
     return products.where((p) => (p['category'] as String? ?? 'General') == cat).toList();
   }
-
-  static const _categoryIcons = categoryIcons;
 
   @override
   Widget build(BuildContext context) {

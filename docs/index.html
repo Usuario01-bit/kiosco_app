@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kiosco App - Descargar</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #1E3A5F, #2D5F8A, #1E3A5F);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+    .card {
+      background: white;
+      border-radius: 28px;
+      padding: 40px 32px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .icon { font-size: 64px; margin-bottom: 16px; }
+    h1 { color: #1E3A5F; font-size: 24px; margin-bottom: 8px; }
+    p { color: #666; font-size: 15px; margin-bottom: 28px; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: none;
+      border-radius: 16px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .android {
+      background: #3DDC84;
+      color: #1A1A1A;
+    }
+    .ios {
+      background: #007AFF;
+      color: white;
+    }
+    .version { margin-top: 20px; font-size: 12px; color: #aaa; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📱</div>
+    <h1>Kiosco App</h1>
+    <p>Descargá la app del kiosco escolar</p>
+    
+    <a class="btn android" href="https://github.com/Usuario01-bit/kiosco_app/releases/latest/download/app-release.apk">
+      🤖 Descargar para Android
+    </a>
+    
+    <a class="btn ios" href="https://testflight.apple.com/" onclick="alert('Versión iOS próximamente'); return false;">
+      🍎 Descargar para iOS
+    </a>
+    
+    <p class="version">v1.0.0</p>
+  </div>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../services/supabase_service.dart';
 import '../services/date_utils.dart';
@@ -83,6 +84,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
         paymentMethod: paymentMethod,
         date: date,
         time: time,
+        qrToken: await const FlutterSecureStorage().read(key: 'student_qr_token'),
       );
 
       if (!mounted) return;

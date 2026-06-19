@@ -1,6 +1,5 @@
--- Fix: remove pending logic from student_checkout
--- Student portal only saves sales, admin handles pending separately
--- Run this in Supabase SQL Editor
+-- Fix: student_checkout with identity validation + no pending logic
+-- Run in Supabase SQL Editor
 
 CREATE OR REPLACE FUNCTION public.student_checkout(
   p_student_id TEXT,
@@ -8,11 +7,13 @@ CREATE OR REPLACE FUNCTION public.student_checkout(
   p_recreo TEXT,
   p_payment_method TEXT,
   p_date TEXT,
-  p_time TEXT
+  p_time TEXT,
+  p_token TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = 'public'
 AS $$
 DECLARE
   v_item JSONB;
@@ -21,7 +22,22 @@ DECLARE
   v_price NUMERIC;
   v_line_total NUMERIC;
   v_total NUMERIC := 0;
+  v_valid BOOLEAN;
 BEGIN
+  -- Validate student identity via QR token
+  IF p_token IS NOT NULL THEN
+    SELECT EXISTS(
+      SELECT 1 FROM students 
+      WHERE id = p_student_id::UUID 
+        AND qr_token = p_token 
+        AND deleted IS NOT TRUE
+    ) INTO v_valid;
+    
+    IF NOT v_valid THEN
+      RAISE EXCEPTION 'Token inválido para este estudiante';
+    END IF;
+  END IF;
+
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_cart_items)
   LOOP
     v_product_id := (v_item->>'product_id')::UUID;
@@ -45,7 +61,7 @@ BEGIN
     VALUES (p_student_id::UUID, v_product_id, v_qty, v_line_total, p_payment_method, p_date, p_time, p_recreo);
   END LOOP;
 
-  -- No tocar pending — el admin lo maneja desde su panel
+  -- Pending is handled by admin panel only
   RETURN jsonb_build_object('total', v_total, 'status', 'ok');
 END;
 $$;

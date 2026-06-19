@@ -163,7 +163,7 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>> searchStudentsByName(String query) async {
     if (query.trim().isEmpty) return [];
-    final data = await _client.from('students').select().ilike('name', '%${query.trim()}%').limit(10).order('name');
+    final data = await _client.rpc('search_student_names', params: {'p_query': query.trim()});
     return data;
   }
 
@@ -174,9 +174,9 @@ class SupabaseService {
   }
 
   Future<Map<String, dynamic>?> getStudentByQrToken(String token) async {
-    final data = await _client.from('students').select().eq('qr_token', token.trim()).limit(1);
-    if (data.isEmpty) return null;
-    return data.first;
+    final data = await _client.rpc('get_student_by_token', params: {'p_token': token.trim()});
+    if (data == null || (data is List && data.isEmpty)) return null;
+    return data is List ? data.first as Map<String, dynamic> : data as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>?> verifyStudentLogin(String name, String password) async {

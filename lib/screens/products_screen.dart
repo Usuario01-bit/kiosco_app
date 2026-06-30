@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 
@@ -649,7 +650,7 @@ class _ProductsScreenState
 
                   child: Icon(
 
-                    Icons.inventory_2,
+                    LucideIcons.package,
 
                     color: Colors.white,
 
@@ -705,7 +706,7 @@ class _ProductsScreenState
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.add, color: Colors.white, size: 28),
+                    icon: const Icon(LucideIcons.plus, color: Colors.white, size: 28),
                     onPressed: addProductDialog,
                     tooltip: 'Agregar producto',
                   ),
@@ -819,7 +820,7 @@ class _ProductsScreenState
                                     padding: const EdgeInsets.symmetric(horizontal: 6),
                                   ),
                                   onPressed: () => editProductDialog(product),
-                                  icon: const Icon(Icons.edit, size: 12),
+                                  icon: const Icon(LucideIcons.pencil, size: 12),
                                   label: const Text('Editar', style: TextStyle(fontSize: 11)),
                                 ),
                               ),
@@ -862,7 +863,7 @@ class _ProductsScreenState
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.delete, size: 12),
+                                  icon: const Icon(LucideIcons.trash2, size: 12),
                                   label: const Text('Eliminar', style: TextStyle(fontSize: 11)),
                                 ),
                               ),

@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -280,7 +281,7 @@ class _ReportsScreenState
                   title: 'Transacciones',
                   value: '$totalTransactions',
                   color: Colors.orange,
-                  icon: Icons.receipt_long,
+                  icon: LucideIcons.receipt,
                 ),
                 _miniCard(
                   title: 'Pendientes',
@@ -298,7 +299,7 @@ class _ReportsScreenState
                   title: 'Recreo 2',
                   value: '\$${recreo2Total.toStringAsFixed(2)}',
                   color: Colors.teal,
-                  icon: Icons.access_time_filled,
+                  icon: LucideIcons.clock_filled,
                 ),
               ],
             ),
@@ -659,7 +660,7 @@ class _ReportsScreenState
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                isPending ? Icons.access_time : Icons.check,
+                                isPending ? LucideIcons.clock : LucideIcons.check,
                                 color: isPending ? Colors.orange : Colors.green,
                               ),
                             ),

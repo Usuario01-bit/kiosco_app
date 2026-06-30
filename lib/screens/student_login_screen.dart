@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -226,7 +227,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                         color: (isDark ? cs.primary : Colors.white24),
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: Icon(Icons.check_circle, size: 50, color: isDark ? cs.primary : Colors.white),
+                      child: Icon(LucideLucideIcons.checkCircle, size: 50, color: isDark ? cs.primary : Colors.white),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -243,7 +244,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       width: double.infinity, height: 56,
                       child: ElevatedButton.icon(
                         onPressed: _enterCatalog,
-                        icon: const Icon(Icons.shopping_bag),
+                        icon: const Icon(LucideIcons.shoppingBag),
                         label: const Text('Ir a la tienda', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isDark ? cs.primary : Colors.white,
@@ -261,7 +262,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           context,
                           MaterialPageRoute(builder: (_) => StudentQrScreen(student: _loggedStudent!)),
                         ),
-                        icon: Icon(Icons.qr_code, color: isDark ? cs.onSurfaceVariant : Colors.white70),
+                        icon: Icon(LucideIcons.qrCode, color: isDark ? cs.onSurfaceVariant : Colors.white70),
                         label: Text('Mi QR', style: TextStyle(color: isDark ? cs.onSurfaceVariant : Colors.white70)),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: isDark ? cs.outlineVariant : Colors.white.withValues(alpha: 0.3)),
@@ -278,7 +279,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                         await _storage.delete(key: 'student_qr_token');
                         if (mounted) setState(() => _loggedStudent = null);
                       },
-                      icon: Icon(Icons.logout, color: isDark ? cs.onSurfaceVariant : Colors.white54),
+                      icon: Icon(LucideIcons.logOut, color: isDark ? cs.onSurfaceVariant : Colors.white54),
                       label: Text('Cerrar sesión', style: TextStyle(color: isDark ? cs.onSurfaceVariant : Colors.white54)),
                     ),
                   ],
@@ -316,7 +317,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       color: isDark ? cs.primary.withValues(alpha: 0.15) : Colors.white24,
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    child: Icon(Icons.school, size: 50, color: isDark ? cs.primary : Colors.white),
+                    child: Icon(LucideIcons.school, size: 50, color: isDark ? cs.primary : Colors.white),
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -352,7 +353,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: cs.error, size: 20),
+                                  Icon(LucideIcons.alertCircle, color: cs.error, size: 20),
                                   const SizedBox(width: 10),
                                   Expanded(child: Text(errorMsg!, style: TextStyle(color: cs.error))),
                                 ],
@@ -367,7 +368,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                 textCapitalization: TextCapitalization.words,
                                 decoration: InputDecoration(
                                   labelText: 'Nombre y apellido',
-                                  prefixIcon: const Icon(Icons.person),
+                                  prefixIcon: const Icon(LucideIcons.user),
                                   filled: true,
                                   fillColor: _getBgColor(Theme.of(context).brightness),
                                   border: OutlineInputBorder(
@@ -411,9 +412,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             obscureText: obscurePassword,
                             decoration: InputDecoration(
                               labelText: 'Contraseña temporal',
-                              prefixIcon: const Icon(Icons.lock),
+                              prefixIcon: const Icon(LucideIcons.lock),
                               suffixIcon: IconButton(
-                                icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                icon: Icon(obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye),
                                 onPressed: () => setState(() => obscurePassword = !obscurePassword),
                               ),
                               filled: true,
@@ -469,7 +470,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.qr_code_scanner),
+                      icon: const Icon(LucideIcons.qrCode_scanner),
                       label: const Text('Escanear QR para entrar'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF2563EB),
@@ -482,7 +483,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   const SizedBox(height: 16),
                   TextButton.icon(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back),
+                    icon: const Icon(LucideIcons.arrowLeft),
                     label: const Text('Volver'),
                   ),
                 ],

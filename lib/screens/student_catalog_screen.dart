@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -77,7 +78,7 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
         title: Text('Hola, ${widget.student['name']}'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code),
+            icon: const Icon(LucideIcons.qrCode),
             tooltip: 'Mi QR',
             onPressed: () {
               Navigator.push(
@@ -89,7 +90,7 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(LucideIcons.history),
             tooltip: 'Mis compras',
             onPressed: () {
               Navigator.push(
@@ -103,7 +104,7 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
           Stack(
             children: [
               IconButton(
-                icon: const Icon(Icons.shopping_cart),
+                icon: const Icon(LucideIcons.shoppingCart),
                 tooltip: 'Carrito',
                 onPressed: () => _goToCheckout(),
               ),
@@ -123,7 +124,7 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(LucideIcons.logOut),
             tooltip: 'Cerrar sesión',
             onPressed: _logout,
           ),
@@ -135,7 +136,7 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade400),
+                  Icon(LucideIcons.cloudOff, size: 48, color: Colors.grey.shade400),
                   const SizedBox(height: 12),
                   Text('Sin conexión', style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
                 ],
@@ -234,7 +235,7 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
                 children: [
                   if (qty > 0)
                     IconButton(
-                      icon: const Icon(Icons.remove_circle_outline),
+                      icon: const Icon(LucideIcons.minus_circle_outline),
                       onPressed: () => setState(() {
                         if (qty <= 1) {
                           cart.remove(id);
@@ -249,7 +250,7 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
                       child: Text('$qty', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   IconButton(
-                    icon: Icon(Icons.add_circle, color: cs.primary),
+                    icon: Icon(LucideIcons.plus_circle, color: cs.primary),
                     onPressed: () {
                       if (qty >= stock) {
                         ScaffoldMessenger.of(context).showSnackBar(

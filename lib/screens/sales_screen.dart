@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
@@ -344,10 +345,10 @@ class _SalesScreenState
                     hintText: 'Escribí el nombre...',
                     border: const OutlineInputBorder(),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: const Icon(LucideIcons.search),
                     suffixIcon: selectedStudent != null
                         ? IconButton(
-                            icon: const Icon(Icons.close),
+                            icon: const Icon(LucideIcons.x),
                             onPressed: () {
                               setState(() {
                                 selectedStudent = null;
@@ -372,7 +373,7 @@ class _SalesScreenState
                     padding: EdgeInsets.only(top: R.sp(context, 6)),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle, size: R.fs(context, 18), color: Colors.green),
+                        Icon(LucideLucideIcons.checkCircle, size: R.fs(context, 18), color: Colors.green),
                         SizedBox(width: R.sp(context, 6)),
                         Text(
                           selectedStudent!,
@@ -741,7 +742,7 @@ class _SalesScreenState
                                                   color: Colors.red.shade100,
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
-                                                child: const Icon(Icons.remove, size: 16, color: Colors.red),
+                                                child: const Icon(LucideIcons.minus, size: 16, color: Colors.red),
                                               ),
                                             ),
                                             SizedBox(width: R.sp(context, 10)),
@@ -767,7 +768,7 @@ class _SalesScreenState
                                                   color: Colors.green.shade100,
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
-                                                child: const Icon(Icons.add, size: 16, color: Colors.green),
+                                                child: const Icon(LucideIcons.plus, size: 16, color: Colors.green),
                                               ),
                                             ),
                                             SizedBox(width: R.sp(context, 16)),

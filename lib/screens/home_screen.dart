@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -117,7 +118,7 @@ class _HomeScreenState
               Row(
                 children: [
                   CircleAvatar(
-                    child: Icon(Icons.person, size: R.sp(context, 28)),
+                    child: Icon(LucideIcons.user, size: R.sp(context, 28)),
                   ),
                   SizedBox(width: R.sp(context, 16)),
                   Column(
@@ -147,7 +148,7 @@ class _HomeScreenState
               SizedBox(height: R.sp(context, 8)),
 
               ListTile(
-                leading: const Icon(Icons.lock_outline),
+                leading: const Icon(LucideIcons.lock_outline),
                 title: const Text('Cambiar contraseña'),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -203,7 +204,7 @@ class _HomeScreenState
               ),
 
               ListTile(
-                leading: const Icon(Icons.school, color: Color(0xFF2563EB)),
+                leading: const Icon(LucideIcons.school, color: Color(0xFF2563EB)),
                 title: const Text('Portal del Alumno'),
                 subtitle: const Text('Los estudiantes pueden comprar'),
                 shape: RoundedRectangleBorder(
@@ -219,7 +220,7 @@ class _HomeScreenState
               ),
 
               ListTile(
-                leading: const Icon(Icons.qr_code_scanner, color: Color(0xFF7C3AED)),
+                leading: const Icon(LucideIcons.qrCode_scanner, color: Color(0xFF7C3AED)),
                 title: const Text('Escanear QR'),
                 subtitle: const Text('Ver pedidos de un alumno'),
                 shape: RoundedRectangleBorder(
@@ -235,7 +236,7 @@ class _HomeScreenState
               ),
 
               ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
+                leading: const Icon(LucideIcons.logOut, color: Colors.red),
                 title: const Text('Cerrar sesión', style: TextStyle(color: Colors.red)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -421,7 +422,7 @@ class _HomeScreenState
                   bottom: 4,
                 ),
                 child: IconButton(
-                  icon: const Icon(LucideIcons.settings),
+                  icon: const Icon(LucideLucideIcons.settings),
                   onPressed: _showSettings,
                   tooltip: 'Configuración',
                 ),

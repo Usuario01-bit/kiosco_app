@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -245,7 +246,7 @@ class _DashboardScreenState
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.cloud_off,
+                  LucideIcons.cloudOff,
                   size: R.sp(context, 64),
                   color: Theme.of(context).disabledColor,
                 ),
@@ -268,7 +269,7 @@ class _DashboardScreenState
                 SizedBox(height: R.sp(context, 24)),
                 ElevatedButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.refresh),
+                  icon: const Icon(LucideIcons.refreshCw),
                   label: const Text('Reintentar'),
                 ),
               ],

@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -187,7 +188,7 @@ class _StudentsScreenState
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
-                      Icons.person_add,
+                      LucideIcons.userPlus,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
@@ -209,7 +210,7 @@ class _StudentsScreenState
                       decoration: InputDecoration(
                         labelText: 'Nombre y apellido',
                         hintText: 'Ej: Juan Pérez',
-                        prefixIcon: const Icon(Icons.person),
+                        prefixIcon: const Icon(LucideIcons.user),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -241,7 +242,7 @@ class _StudentsScreenState
                         decoration: InputDecoration(
                           labelText: 'Grado',
                           hintText: 'Ej: 5° A',
-                          prefixIcon: const Icon(Icons.school),
+                          prefixIcon: const Icon(LucideIcons.school),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -257,12 +258,12 @@ class _StudentsScreenState
                         decoration: InputDecoration(
                           labelText: 'Contraseña temporal',
                           hintText: 'Ej: aB3kF9x2',
-                          prefixIcon: const Icon(Icons.lock),
+                          prefixIcon: const Icon(LucideIcons.lock),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           suffixIcon: IconButton(
-                            icon: const Icon(Icons.refresh),
+                            icon: const Icon(LucideIcons.refreshCw),
                             tooltip: 'Generar nueva contraseña',
                             onPressed: () {
                               const _chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
@@ -288,7 +289,7 @@ class _StudentsScreenState
                     Navigator.pop(ctx);
                     await addStudent();
                   },
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(LucideIcons.plus),
                   label: const Text('Agregar'),
                 ),
               ],
@@ -326,7 +327,7 @@ class _StudentsScreenState
           ],
           decoration: InputDecoration(
             labelText: 'Nueva contraseña (máx 8 caracteres)',
-            prefixIcon: const Icon(Icons.lock),
+            prefixIcon: const Icon(LucideIcons.lock),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
@@ -429,7 +430,7 @@ class _StudentsScreenState
 
                     child: Icon(
 
-                      Icons.people,
+                      LucideIcons.users,
 
                       color: Colors.white,
 
@@ -478,7 +479,7 @@ class _StudentsScreenState
                   IconButton(
                     onPressed: importFromExcel,
                     icon: const Icon(
-                      Icons.file_upload_outlined,
+                      LucideIcons.upload_outlined,
                       color: Colors.white,
                       size: 28,
                     ),
@@ -516,7 +517,7 @@ class _StudentsScreenState
                       }
                     },
                     icon: const Icon(
-                      Icons.delete_sweep,
+                      LucideIcons.trash2_sweep,
                       color: Colors.white,
                       size: 28,
                     ),
@@ -554,7 +555,7 @@ class _StudentsScreenState
 
                 prefixIcon:
                 const Icon(
-                  Icons.search,
+                  LucideIcons.search,
                 ),
 
                 suffixIcon:
@@ -602,7 +603,7 @@ class _StudentsScreenState
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: showAddDialog,
-                icon: const Icon(Icons.person_add),
+                icon: const Icon(LucideIcons.userPlus),
                 label: Text(
                   'Agregar ${StoreConfig.instance.entityLC()}',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -687,10 +688,10 @@ class _StudentsScreenState
                           children: [
                             Icon(
                               entry.key == 'profesor'
-                                  ? Icons.school
+                                  ? LucideIcons.school
                                   : entry.key == 'otro'
-                                      ? Icons.person
-                                      : Icons.school,
+                                      ? LucideIcons.user
+                                      : LucideIcons.school,
                               size: R.fs(context, 22),
                               color: entry.key == 'profesor'
                                   ? Colors.green
@@ -788,7 +789,7 @@ class _StudentsScreenState
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
-                                  Icons.person,
+                                  LucideIcons.user,
                                   color: Theme.of(context).colorScheme.primary,
                                   size: 22,
                                 ),
@@ -985,7 +986,7 @@ sale['paid_at'] != null && (sale['paid_at'] as String).length >= 10
                                 },
 
                               icon: Icon(
-                                Icons.history,
+                                LucideIcons.history,
 
                                   color: Theme.of(context).colorScheme.primary,
 
@@ -995,7 +996,7 @@ sale['paid_at'] != null && (sale['paid_at'] as String).length >= 10
                               IconButton(
                                 onPressed: () => _showPasswordDialog(student),
                                 icon: Icon(
-                                  Icons.lock,
+                                  LucideIcons.lock,
                                   color: student['tempPassword'] != null && (student['tempPassword'] as String).isNotEmpty
                                       ? Colors.orange.shade600
                                       : Colors.grey,
@@ -1056,7 +1057,7 @@ sale['paid_at'] != null && (sale['paid_at'] as String).length >= 10
 
                                 icon: Icon(
 
-                                  Icons.delete,
+                                  LucideIcons.trash2,
 
                                   color:
                                   Colors.red,

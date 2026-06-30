@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../services/supabase_service.dart';
@@ -43,7 +44,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
 
   IconData _iconFor(String? iconName) {
     if (iconName != null && productIcons.containsKey(iconName)) return productIcons[iconName]!;
-    return Icons.shopping_bag;
+    return LucideIcons.shoppingBag;
   }
 
   void _showPaymentOptions(String student, String recreo, double total) {
@@ -69,7 +70,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () { Navigator.pop(ctx); _markAsPaid(student, recreo, 'Efectivo'); },
-                  icon: const Icon(Icons.money, size: 18),
+                  icon: const Icon(LucideIcons.banknote, size: 18),
                   label: const Text('Efectivo', style: TextStyle(fontSize: 15)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green, foregroundColor: Colors.white,
@@ -83,7 +84,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () { Navigator.pop(ctx); _markAsPaid(student, recreo, 'Yappy'); },
-                  icon: const Icon(Icons.phone_android, size: 18),
+                  icon: const Icon(LucideIcons.smartphone, size: 18),
                   label: const Text('Yappy', style: TextStyle(fontSize: 15)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF7C3AED), foregroundColor: Colors.white,
@@ -97,7 +98,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () { Navigator.pop(ctx); _markAsPreparedOnly(student, recreo); },
-                  icon: const Icon(Icons.pending, size: 18),
+                  icon: const Icon(LucideIcons.clock, size: 18),
                   label: const Text('Pendiente (fiado)', style: TextStyle(fontSize: 15)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange, foregroundColor: Colors.white,
@@ -155,7 +156,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle_outline, size: 72, color: Colors.green.withValues(alpha: 0.5)),
+                  Icon(LucideLucideIcons.checkCircle_outline, size: 72, color: Colors.green.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
                   Text('Todos los pedidos están pagos', style: styles.titleLarge?.copyWith(color: cs.onSurfaceVariant)),
                   const SizedBox(height: 8),
@@ -235,7 +236,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   radius: 18,
                   backgroundColor: allPrepared ? Colors.green.withValues(alpha: 0.2) : cs.primary.withValues(alpha: 0.12),
                   child: Icon(
-                    allPrepared ? Icons.check_circle : Icons.person,
+                    allPrepared ? LucideLucideIcons.checkCircle : LucideIcons.user,
                     color: allPrepared ? Colors.green : cs.primary,
                     size: 20,
                   ),
@@ -269,7 +270,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               width: double.infinity,
               child: FilledButton.tonalIcon(
                 onPressed: () => _showPaymentOptions(student, recreo, total),
-                icon: Icon(allPrepared ? Icons.payment : Icons.check_circle_outline, size: 18),
+                icon: Icon(allPrepared ? Icons.payment : LucideLucideIcons.checkCircle_outline, size: 18),
                 label: Text(allPrepared ? 'Cobrar / Finalizar' : 'Entregar y cobrar'),
                 style: FilledButton.styleFrom(
                   backgroundColor: allPrepared ? cs.primaryContainer : null,
@@ -343,7 +344,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
           ),
           const SizedBox(width: 8),
           Icon(
-            prepared ? Icons.check_circle : Icons.access_time,
+            prepared ? LucideLucideIcons.checkCircle : LucideIcons.clock,
             size: 18,
             color: prepared ? Colors.green : cs.onSurfaceVariant,
           ),

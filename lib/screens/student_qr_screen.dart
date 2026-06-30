@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -52,7 +53,7 @@ class _StudentQrScreenState extends State<StudentQrScreen> {
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.qr_code_2, size: 64, color: cs.onSurfaceVariant),
+                      Icon(LucideIcons.qrCode_2, size: 64, color: cs.onSurfaceVariant),
                       const SizedBox(height: 16),
                       Text('No hay QR disponible', style: TextStyle(fontSize: 18, color: cs.onSurfaceVariant)),
                       const SizedBox(height: 8),

@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -134,7 +135,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
                     children: [
                       CircleAvatar(
                         backgroundColor: cs.primary.withValues(alpha: 0.12),
-                        child: Icon(Icons.person, color: cs.primary),
+                        child: Icon(LucideIcons.user, color: cs.primary),
                       ),
                       const SizedBox(width: 12),
                       Text(widget.student['name'] as String, style: styles.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -144,7 +145,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
                     const Divider(),
                     Row(
                       children: [
-                        const Icon(Icons.warning_amber, color: Colors.orange, size: 20),
+                        const Icon(LucideIcons.triangleAlert, color: Colors.orange, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           'Debés \$${_debt.toStringAsFixed(2)}',
@@ -221,7 +222,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               String status;
 
               if (open) {
-                icon = Icons.check_circle;
+                icon = LucideLucideIcons.checkCircle;
                 iconColor = Colors.green;
                 status = 'Abierto ahora';
               } else if (locked) {
@@ -278,15 +279,15 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
                   Row(
             children: [
               Expanded(
-                child: _buildPaymentOption(Icons.money, 'Efectivo', Colors.green),
+                child: _buildPaymentOption(LucideIcons.banknote, 'Efectivo', Colors.green),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildPaymentOption(Icons.phone_android, 'Yappy', const Color(0xFF7C3AED)),
+                child: _buildPaymentOption(LucideIcons.smartphone, 'Yappy', const Color(0xFF7C3AED)),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildPaymentOption(Icons.pending, 'Pendiente', Colors.orange),
+                child: _buildPaymentOption(LucideIcons.clock, 'Pendiente', Colors.orange),
               ),
             ],
           ),
@@ -299,7 +300,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               onPressed: loading ? null : _confirm,
               icon: loading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Icon(Icons.check_circle),
+                  : const Icon(LucideLucideIcons.checkCircle),
               label: Text(loading ? 'Procesando...' : 'Confirmar pedido'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: cs.primary,

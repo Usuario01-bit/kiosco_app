@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../services/supabase_service.dart';
@@ -68,7 +69,7 @@ class _StudentQrDetailScreenState extends State<StudentQrDetailScreen> {
         title: Text(widget.student['name'] as String),
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
+            icon: const Icon(LucideIcons.qrCode_scanner),
             tooltip: 'Escanear otro',
             onPressed: () {
               Navigator.pushReplacement(
@@ -78,7 +79,7 @@ class _StudentQrDetailScreenState extends State<StudentQrDetailScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(LucideIcons.refreshCw),
             onPressed: _load,
           ),
         ],
@@ -99,7 +100,7 @@ class _StudentQrDetailScreenState extends State<StudentQrDetailScreen> {
                           CircleAvatar(
                             radius: 36,
                             backgroundColor: cs.primary.withValues(alpha: 0.12),
-                            child: Icon(Icons.person, size: 36, color: cs.primary),
+                            child: Icon(LucideIcons.user, size: 36, color: cs.primary),
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -165,7 +166,7 @@ class _StudentQrDetailScreenState extends State<StudentQrDetailScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.warning_amber, color: cs.tertiary),
+                          Icon(LucideIcons.triangleAlert, color: cs.tertiary),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -214,7 +215,7 @@ class _StudentQrDetailScreenState extends State<StudentQrDetailScreen> {
                                   radius: 16,
                                   backgroundColor: pendiente ? cs.tertiaryContainer.withValues(alpha: 0.4) : Colors.green.withValues(alpha: 0.12),
                                   child: Icon(
-                                    pendiente ? Icons.pending : Icons.check_circle,
+                                    pendiente ? LucideIcons.clock : LucideLucideIcons.checkCircle,
                                     color: pendiente ? cs.tertiary : Colors.green,
                                     size: 18,
                                   ),

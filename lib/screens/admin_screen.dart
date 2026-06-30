@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import '../services/responsive.dart';
@@ -169,7 +170,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         CircleAvatar(
                           backgroundColor: isSuper ? Colors.amber.shade100 : Colors.blue.shade100,
                           child: Icon(
-                            isSuper ? Icons.star : Icons.person,
+                            isSuper ? Icons.star : LucideIcons.user,
                             color: isSuper ? Colors.amber.shade700 : Colors.blue,
                           ),
                         ),
@@ -197,7 +198,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         ),
                         if (!isSuper)
                           IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(LucideIcons.trash2, color: Colors.red),
                             onPressed: () => _confirmDelete(user),
                           ),
                       ],
@@ -208,7 +209,7 @@ class _AdminScreenState extends State<AdminScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddUser,
-        child: const Icon(Icons.add),
+        child: const Icon(LucideIcons.plus),
       ),
     );
   }

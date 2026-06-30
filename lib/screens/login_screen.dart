@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -359,7 +360,7 @@ class _LoginScreenState
 
                             prefixIcon:
                             const Icon(
-                              Icons.person,
+                              LucideIcons.user,
                             ),
 
                             filled: true,
@@ -409,7 +410,7 @@ class _LoginScreenState
 
                             prefixIcon:
                             const Icon(
-                              Icons.lock,
+                              LucideIcons.lock,
                             ),
 
                             suffixIcon:
@@ -563,7 +564,7 @@ class _LoginScreenState
                                   MaterialPageRoute(builder: (_) => const StudentLoginScreen()),
                                 );
                               },
-                              icon: const Icon(Icons.school),
+                              icon: const Icon(LucideIcons.school),
                               label: const Text('Portal del Alumno'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: const Color(0xFF2563EB),

@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../services/supabase_service.dart';
@@ -81,7 +82,7 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                             children: [
                               CircleAvatar(
                                 backgroundColor: cs.primary.withValues(alpha: 0.12),
-                                child: Icon(Icons.person, color: cs.primary),
+                                child: Icon(LucideIcons.user, color: cs.primary),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -169,7 +170,7 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                             radius: 18,
                             backgroundColor: pendiente ? cs.tertiaryContainer.withValues(alpha: 0.4) : Colors.green.withValues(alpha: 0.12),
                             child: Icon(
-                              pendiente ? Icons.pending : Icons.check_circle,
+                              pendiente ? LucideIcons.clock : LucideLucideIcons.checkCircle,
                               color: pendiente ? cs.tertiary : Colors.green,
                               size: 20,
                             ),

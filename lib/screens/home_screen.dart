@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'dashboard_screen.dart';
 import 'sales_screen.dart';
@@ -396,7 +397,7 @@ class _HomeScreenState
                         MaterialPageRoute(builder: (_) => const AdminOrdersScreen()),
                       ),
                       tooltip: 'Pedidos del día',
-                      child: const Icon(Icons.receipt_long),
+                      child: const Icon(LucideIcons.receipt),
                     ),
                   ),
                 ),
@@ -420,9 +421,7 @@ class _HomeScreenState
                   bottom: 4,
                 ),
                 child: IconButton(
-                  icon: const Icon(
-                    Icons.settings,
-                  ),
+                  icon: const Icon(LucideIcons.settings),
                   onPressed: _showSettings,
                   tooltip: 'Configuración',
                 ),
@@ -433,14 +432,7 @@ class _HomeScreenState
                   bottom: 4,
                 ),
                 child: IconButton(
-                  icon: Icon(
-                    ThemeProvider
-                        .instance.isDark
-                        ? Icons
-                        .dark_mode
-                        : Icons
-                        .light_mode,
-                  ),
+                  icon: Icon(ThemeProvider.instance.isDark ? LucideIcons.moon : LucideIcons.sun),
                   onPressed: () {
                     ThemeProvider
                         .instance
@@ -466,51 +458,12 @@ class _HomeScreenState
 
         destinations: [
 
-          NavigationDestination(
-
-            icon: Icon(Icons.home),
-
-            label: 'Inicio',
-          ),
-
-          NavigationDestination(
-
-            icon:
-            Icon(Icons.point_of_sale),
-
-            label: 'Ventas',
-          ),
-
-          NavigationDestination(
-
-            icon: Icon(Icons.people),
-
-            label: StoreConfig.instance.entityPlural,
-          ),
-
-          NavigationDestination(
-
-            icon:
-            Icon(Icons.inventory_2),
-
-            label: 'Productos',
-          ),
-
-          NavigationDestination(
-
-            icon:
-            Icon(Icons.bar_chart),
-
-            label: 'Reportes',
-          ),
-
-          NavigationDestination(
-
-            icon:
-            Icon(Icons.pending_actions),
-
-            label: 'Pendientes',
-          ),
+          NavigationDestination(icon: Icon(LucideIcons.home), label: 'Inicio'),
+          NavigationDestination(icon: Icon(LucideIcons.shoppingBag), label: 'Ventas'),
+          NavigationDestination(icon: Icon(LucideIcons.users), label: StoreConfig.instance.entityPlural),
+          NavigationDestination(icon: Icon(LucideIcons.package), label: 'Productos'),
+          NavigationDestination(icon: Icon(LucideIcons.chartBar), label: 'Reportes'),
+          NavigationDestination(icon: Icon(LucideIcons.clock), label: 'Pendientes'),
         ],
       ),
         ],

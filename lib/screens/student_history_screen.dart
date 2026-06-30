@@ -170,7 +170,7 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                             radius: 18,
                             backgroundColor: pendiente ? cs.tertiaryContainer.withValues(alpha: 0.4) : Colors.green.withValues(alpha: 0.12),
                             child: Icon(
-                              pendiente ? LucideIcons.clock : LucideLucideIcons.checkCircle,
+                              pendiente ? LucideIcons.clock : LucideIcons.checkCircle,
                               color: pendiente ? cs.tertiary : Colors.green,
                               size: 20,
                             ),

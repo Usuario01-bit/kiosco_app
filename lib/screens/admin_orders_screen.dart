@@ -156,7 +156,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(LucideLucideIcons.checkCircle_outline, size: 72, color: Colors.green.withValues(alpha: 0.5)),
+                  Icon(LucideIcons.checkCircle, size: 72, color: Colors.green.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
                   Text('Todos los pedidos están pagos', style: styles.titleLarge?.copyWith(color: cs.onSurfaceVariant)),
                   const SizedBox(height: 8),
@@ -236,7 +236,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   radius: 18,
                   backgroundColor: allPrepared ? Colors.green.withValues(alpha: 0.2) : cs.primary.withValues(alpha: 0.12),
                   child: Icon(
-                    allPrepared ? LucideLucideIcons.checkCircle : LucideIcons.user,
+                    allPrepared ? LucideIcons.checkCircle : LucideIcons.user,
                     color: allPrepared ? Colors.green : cs.primary,
                     size: 20,
                   ),
@@ -270,7 +270,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               width: double.infinity,
               child: FilledButton.tonalIcon(
                 onPressed: () => _showPaymentOptions(student, recreo, total),
-                icon: Icon(allPrepared ? Icons.payment : LucideLucideIcons.checkCircle_outline, size: 18),
+                icon: Icon(allPrepared ? Icons.payment : LucideIcons.checkCircle, size: 18),
                 label: Text(allPrepared ? 'Cobrar / Finalizar' : 'Entregar y cobrar'),
                 style: FilledButton.styleFrom(
                   backgroundColor: allPrepared ? cs.primaryContainer : null,
@@ -344,7 +344,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
           ),
           const SizedBox(width: 8),
           Icon(
-            prepared ? LucideLucideIcons.checkCircle : LucideIcons.clock,
+            prepared ? LucideIcons.checkCircle : LucideIcons.clock,
             size: 18,
             color: prepared ? Colors.green : cs.onSurfaceVariant,
           ),

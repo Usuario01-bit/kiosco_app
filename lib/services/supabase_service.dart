@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -227,7 +227,7 @@ class SupabaseService {
       {'name': 'Agua Saborizada', 'price': 1.00, 'stock': 999, 'icon': 'water_drop', 'category': 'Bebidas'},
       {'name': 'Jugo Natural', 'price': 1.00, 'stock': 999, 'icon': 'local_drink', 'category': 'Bebidas'},
       {'name': 'Té Frío', 'price': 1.00, 'stock': 999, 'icon': 'emoji_food_beverage', 'category': 'Bebidas'},
-      {'name': 'Duro Fresa - Leche Condensada', 'price': 1.00, 'stock': 999, 'icon': 'icecream', 'category': 'Duros'},
+      {'name': 'Duro Fresa - Leche Condensada', 'price': 1.00, 'stock': 999, 'icon': 'iceCreamCone', 'category': 'Duros'},
       {'name': 'Duro Piña', 'price': 0.50, 'stock': 999, 'icon': 'apple', 'category': 'Duros'},
       {'name': 'Duro Mango', 'price': 0.50, 'stock': 999, 'icon': 'apple', 'category': 'Duros'},
       {'name': 'Duro Sandía', 'price': 0.50, 'stock': 999, 'icon': 'apple', 'category': 'Duros'},

@@ -233,7 +233,7 @@ class _PendingScreenState
 
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.download_outlined),
+            icon: const Icon(LucideIcons.download),
             tooltip: 'Exportar a Excel',
             onPressed: () => exportPendingToExcel(context),
           ),
@@ -396,7 +396,7 @@ class _PendingScreenState
 
                     Icon(
 
-                      LucideLucideIcons.checkCircle,
+                      LucideIcons.checkCircle,
 
                       size: R.sp(context, 90),
 
@@ -568,7 +568,7 @@ class _PendingScreenState
                                 padding: EdgeInsets.symmetric(horizontal: R.sp(context, 18), vertical: R.sp(context, 14)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                               ),
-                              icon: const Icon(LucideLucideIcons.checkCircle, size: 20),
+                              icon: const Icon(LucideIcons.checkCircle, size: 20),
                               label: Text('Pagar', style: TextStyle(fontSize: R.fs(context, 16), fontWeight: FontWeight.bold)),
                               onPressed: () => payPending(pending['id'], pending['student']),
                             ),

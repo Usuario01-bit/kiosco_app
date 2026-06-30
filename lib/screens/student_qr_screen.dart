@@ -53,7 +53,7 @@ class _StudentQrScreenState extends State<StudentQrScreen> {
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(LucideIcons.qrCode_2, size: 64, color: cs.onSurfaceVariant),
+                      Icon(LucideIcons.qrCode, size: 64, color: cs.onSurfaceVariant),
                       const SizedBox(height: 16),
                       Text('No hay QR disponible', style: TextStyle(fontSize: 18, color: cs.onSurfaceVariant)),
                       const SizedBox(height: 8),

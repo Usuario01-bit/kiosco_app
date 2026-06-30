@@ -148,7 +148,7 @@ class _HomeScreenState
               SizedBox(height: R.sp(context, 8)),
 
               ListTile(
-                leading: const Icon(LucideIcons.lock_outline),
+                leading: const Icon(LucideIcons.lock),
                 title: const Text('Cambiar contraseña'),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -220,7 +220,7 @@ class _HomeScreenState
               ),
 
               ListTile(
-                leading: const Icon(LucideIcons.qrCode_scanner, color: Color(0xFF7C3AED)),
+                leading: const Icon(LucideIcons.scan, color: Color(0xFF7C3AED)),
                 title: const Text('Escanear QR'),
                 subtitle: const Text('Ver pedidos de un alumno'),
                 shape: RoundedRectangleBorder(
@@ -422,7 +422,7 @@ class _HomeScreenState
                   bottom: 4,
                 ),
                 child: IconButton(
-                  icon: const Icon(LucideLucideIcons.settings),
+                  icon: const Icon(LucideIcons.settings),
                   onPressed: _showSettings,
                   tooltip: 'Configuración',
                 ),

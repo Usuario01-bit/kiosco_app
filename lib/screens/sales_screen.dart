@@ -373,7 +373,7 @@ class _SalesScreenState
                     padding: EdgeInsets.only(top: R.sp(context, 6)),
                     child: Row(
                       children: [
-                        Icon(LucideLucideIcons.checkCircle, size: R.fs(context, 18), color: Colors.green),
+                        Icon(LucideIcons.checkCircle, size: R.fs(context, 18), color: Colors.green),
                         SizedBox(width: R.sp(context, 6)),
                         Text(
                           selectedStudent!,

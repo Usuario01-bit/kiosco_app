@@ -299,7 +299,7 @@ class _ReportsScreenState
                   title: 'Recreo 2',
                   value: '\$${recreo2Total.toStringAsFixed(2)}',
                   color: Colors.teal,
-                  icon: LucideIcons.clock_filled,
+                  icon: LucideIcons.clock,
                 ),
               ],
             ),

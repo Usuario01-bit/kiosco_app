@@ -479,7 +479,7 @@ class _StudentsScreenState
                   IconButton(
                     onPressed: importFromExcel,
                     icon: const Icon(
-                      LucideIcons.upload_outlined,
+                      LucideIcons.upload,
                       color: Colors.white,
                       size: 28,
                     ),
@@ -517,7 +517,7 @@ class _StudentsScreenState
                       }
                     },
                     icon: const Icon(
-                      LucideIcons.trash2_sweep,
+                      LucideIcons.trash2,
                       color: Colors.white,
                       size: 28,
                     ),

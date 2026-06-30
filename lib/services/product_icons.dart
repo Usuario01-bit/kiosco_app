@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 const Map<String, IconData> productIcons = {
   'inventory_2': LucideIcons.package,
-  'icecream': LucideIcons.iceCream,
+  'iceCreamCone': LucideIcons.iceCreamCone,
   'local_pizza': LucideIcons.pizza,
   'lunch_dining': LucideIcons.utensils,
   'local_drink': LucideIcons.cupSoda,
@@ -29,7 +29,7 @@ const Map<String, String> categoryIcons = {
   'Especiales': 'fastfood',
   'Café': 'coffee',
   'Bebidas': 'local_drink',
-  'Duros': 'icecream',
+  'Duros': 'iceCreamCone',
   'General': 'inventory_2',
 };
 

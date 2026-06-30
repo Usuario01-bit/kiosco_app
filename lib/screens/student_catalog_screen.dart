@@ -235,7 +235,7 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
                 children: [
                   if (qty > 0)
                     IconButton(
-                      icon: const Icon(LucideIcons.minus_circle_outline),
+                      icon: const Icon(LucideIcons.minusCircle),
                       onPressed: () => setState(() {
                         if (qty <= 1) {
                           cart.remove(id);
@@ -250,7 +250,7 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
                       child: Text('$qty', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   IconButton(
-                    icon: Icon(LucideIcons.plus_circle, color: cs.primary),
+                    icon: Icon(LucideIcons.plusCircle, color: cs.primary),
                     onPressed: () {
                       if (qty >= stock) {
                         ScaffoldMessenger.of(context).showSnackBar(

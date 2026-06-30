@@ -222,7 +222,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               String status;
 
               if (open) {
-                icon = LucideLucideIcons.checkCircle;
+                icon = LucideIcons.checkCircle;
                 iconColor = Colors.green;
                 status = 'Abierto ahora';
               } else if (locked) {
@@ -300,7 +300,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               onPressed: loading ? null : _confirm,
               icon: loading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Icon(LucideLucideIcons.checkCircle),
+                  : const Icon(LucideIcons.checkCircle),
               label: Text(loading ? 'Procesando...' : 'Confirmar pedido'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: cs.primary,

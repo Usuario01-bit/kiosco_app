@@ -69,7 +69,7 @@ class _StudentQrDetailScreenState extends State<StudentQrDetailScreen> {
         title: Text(widget.student['name'] as String),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.qrCode_scanner),
+            icon: const Icon(LucideIcons.scan),
             tooltip: 'Escanear otro',
             onPressed: () {
               Navigator.pushReplacement(
@@ -215,7 +215,7 @@ class _StudentQrDetailScreenState extends State<StudentQrDetailScreen> {
                                   radius: 16,
                                   backgroundColor: pendiente ? cs.tertiaryContainer.withValues(alpha: 0.4) : Colors.green.withValues(alpha: 0.12),
                                   child: Icon(
-                                    pendiente ? LucideIcons.clock : LucideLucideIcons.checkCircle,
+                                    pendiente ? LucideIcons.clock : LucideIcons.checkCircle,
                                     color: pendiente ? cs.tertiary : Colors.green,
                                     size: 18,
                                   ),

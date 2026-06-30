@@ -227,7 +227,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                         color: (isDark ? cs.primary : Colors.white24),
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: Icon(LucideLucideIcons.checkCircle, size: 50, color: isDark ? cs.primary : Colors.white),
+                      child: Icon(LucideIcons.checkCircle, size: 50, color: isDark ? cs.primary : Colors.white),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -353,7 +353,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(LucideIcons.alertCircle, color: cs.error, size: 20),
+                                  Icon(LucideIcons.circleAlert, color: cs.error, size: 20),
                                   const SizedBox(width: 10),
                                   Expanded(child: Text(errorMsg!, style: TextStyle(color: cs.error))),
                                 ],
@@ -470,7 +470,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           ),
                         );
                       },
-                      icon: const Icon(LucideIcons.qrCode_scanner),
+                      icon: const Icon(LucideIcons.scan),
                       label: const Text('Escanear QR para entrar'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF2563EB),

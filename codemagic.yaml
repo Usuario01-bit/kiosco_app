@@ -1,0 +1,14 @@
+workflows:
+  ios-build:
+    name: iOS Build
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - flutter pub get
+      - flutter build ipa --release --dart-define=SUPABASE_URL=https://zplmmgojrocmiummiqsu.supabase.co --dart-define=SUPABASE_ANON_KEY=sb_publishable_N_aED3l_U8IbyZ8J57zcwA_JZeT21xc
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      github_releases:
+        - build/ios/ipa/*.ipa

@@ -6,7 +6,7 @@ workflows:
       xcode: latest
     scripts:
       - flutter pub get
-      - flutter build ipa --release --dart-define=SUPABASE_URL=https://zplmmgojrocmiummiqsu.supabase.co --dart-define=SUPABASE_ANON_KEY=sb_publishable_N_aED3l_U8IbyZ8J57zcwA_JZeT21xc
+      - flutter build ios --release --no-codesign --dart-define=SUPABASE_URL=https://zplmmgojrocmiummiqsu.supabase.co --dart-define=SUPABASE_ANON_KEY=sb_publishable_N_aED3l_U8IbyZ8J57zcwA_JZeT21xc
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:

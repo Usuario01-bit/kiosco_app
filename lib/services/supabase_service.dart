@@ -752,11 +752,12 @@ class SupabaseService {
     return data;
   }
 
-  Future<void> createAdminUser(String username, String password) async {
+  Future<void> createAdminUser(String username, String password, {String role = 'admin'}) async {
     if (password.length < 8) throw Exception('La contraseña debe tener al menos 8 caracteres');
     await _client.rpc('create_admin_user', params: {
       'p_username': username.trim(),
       'p_password': password,
+      'p_role': role,
     });
   }
 

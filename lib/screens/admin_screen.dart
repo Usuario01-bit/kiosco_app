@@ -31,11 +31,13 @@ class _AdminScreenState extends State<AdminScreen> {
   void _showAddUser() {
     final userCtrl = TextEditingController();
     final passCtrl = TextEditingController();
+    String selectedRole = 'admin';
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Agregar administrador'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+        title: const Text('Agregar usuario'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -54,6 +56,19 @@ class _AdminScreenState extends State<AdminScreen> {
                 labelText: 'Contraseña',
                 border: OutlineInputBorder(),
               ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: selectedRole,
+              decoration: const InputDecoration(
+                labelText: 'Rol',
+                border: OutlineInputBorder(),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'admin', child: Text('Administrador')),
+                DropdownMenuItem(value: 'vendedor', child: Text('Vendedor')),
+              ],
+              onChanged: (v) => setDialogState(() => selectedRole = v ?? 'admin'),
             ),
           ],
         ),
@@ -77,7 +92,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 return;
               }
               try {
-                await SupabaseService.instance.createAdminUser(userCtrl.text.trim(), passCtrl.text);
+                await SupabaseService.instance.createAdminUser(userCtrl.text.trim(), passCtrl.text, role: selectedRole);
                 if (!ctx.mounted) return;
                 Navigator.pop(ctx);
                 await loadUsers();
@@ -97,6 +112,7 @@ class _AdminScreenState extends State<AdminScreen> {
             child: const Text('Agregar'),
           ),
         ],
+      ),
       ),
     );
   }

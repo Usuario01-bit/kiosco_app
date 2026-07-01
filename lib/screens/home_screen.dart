@@ -159,21 +159,20 @@ class _HomeScreenState
                 },
               ),
 
-              if (isSuperAdmin)
-                ListTile(
-                  leading: const Icon(Icons.admin_panel_settings),
-                  title: const Text('Gestionar administradores'),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AdminScreen()),
-                    );
-                  },
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings),
+                title: const Text('Gestionar administradores'),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AdminScreen()),
+                  );
+                },
+              ),
 
               if (isSuperAdmin)
                 ListTile(

@@ -28,6 +28,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   bool loggingIn = false;
   bool obscurePassword = true;
   String? errorMsg;
+  String? _nameStatus;
   Map<String, dynamic>? _loggedStudent;
 
   @override
@@ -128,9 +129,13 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   Future<List<String>> _searchStudentNames(String query) async {
     try {
       final results = await SupabaseService.instance.searchStudentsByName(query);
+      if (!mounted) return const [];
+      setState(() => _nameStatus = '${results.length} coincidencia(s)');
       return results.map((s) => s['name'] as String).toList();
-    } catch (_) {
-      return const <String>[];
+    } catch (e) {
+      if (!mounted) return const [];
+      setState(() => _nameStatus = 'Error buscando: $e');
+      return const [];
     }
   }
 
@@ -386,6 +391,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                               ),
                             ],
                           ),
+                          if (_nameStatus != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6, left: 4),
+                              child: Text(
+                                _nameStatus!,
+                                style: TextStyle(fontSize: 12, color: cs.outline),
+                              ),
+                            ),
                           const SizedBox(height: 18),
                           TextField(
                             controller: passwordCtrl,

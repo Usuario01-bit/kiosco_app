@@ -166,7 +166,8 @@ class SupabaseService {
   Future<List<Map<String, dynamic>>> searchStudentsByName(String query) async {
     if (query.trim().isEmpty) return [];
     final data = await _client.rpc('search_student_names', params: {'p_query': query.trim()});
-    return data;
+    if (data is! List) return [];
+    return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
   Future<Map<String, dynamic>?> getStudentByCode(String code) async {

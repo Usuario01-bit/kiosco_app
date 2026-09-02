@@ -43,6 +43,10 @@ class _SalesScreenState
 
   final studentSearchController = TextEditingController();
 
+  String? _plusOneId;
+  Timer? _plusOneTimer;
+  bool _plusOneCheck = false;
+
   IconData _productIcon(Map<String, dynamic> product) =>
       resolveProductIcon(product);
 
@@ -112,6 +116,7 @@ class _SalesScreenState
   void dispose() {
     _studentsSub?.cancel();
     _productsSub?.cancel();
+    _plusOneTimer?.cancel();
     studentSearchController.dispose();
     super.dispose();
   }
@@ -175,6 +180,22 @@ class _SalesScreenState
       }
 
       calculateTotal();
+    });
+
+    _plusOneTimer?.cancel();
+    setState(() {
+      _plusOneId = product['id'];
+      _plusOneCheck = false;
+    });
+    _plusOneTimer = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      setState(() => _plusOneCheck = true);
+      _plusOneTimer = Timer(const Duration(milliseconds: 400), () {
+        if (mounted) setState(() {
+          _plusOneId = null;
+          _plusOneCheck = false;
+        });
+      });
     });
   }
 
@@ -512,18 +533,26 @@ class _SalesScreenState
                           ? products
                           : products.where((p) => (p['category'] as String? ?? 'General') == selectedCategory).toList();
                       final product = filtered[index];
+                      final stock = (product['stock'] as num?)?.toInt() ?? 0;
+                      final outOfStock = stock <= 0;
+                      final lowStock = stock > 0 && stock <= 5;
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
                       return GestureDetector(
                         onTap: () => addToCart(product),
-                        child: AnimatedContainer(
+                        child: Stack(
+                          children: [
+                            AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).cardColor,
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Theme.of(context).cardColor
-                                    : const Color(0xFFF8FBFF),
-                              ],
+                              colors: outOfStock
+                                  ? (isDark
+                                      ? const [Color(0xFF3A3A3A), Color(0xFF2E2E2E)]
+                                      : const [Color(0xFFE9E9E9), Color(0xFFDDDDDD)])
+                                  : [
+                                      Theme.of(context).cardColor,
+                                      isDark ? Theme.of(context).cardColor : const Color(0xFFF8FBFF),
+                                    ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -535,7 +564,10 @@ class _SalesScreenState
                                 offset: const Offset(0, 8),
                               ),
                             ],
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(
+                              color: outOfStock ? Colors.grey.shade400 : Colors.white,
+                              width: 2,
+                            ),
                           ),
                           child: Padding(
                             padding: EdgeInsets.all(R.sp(context, 12)),
@@ -545,13 +577,15 @@ class _SalesScreenState
                                 Container(
                                   padding: EdgeInsets.all(R.sp(context, 12)),
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                                    color: outOfStock
+                                        ? Colors.grey.withValues(alpha: 0.15)
+                                        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
                                     _productIcon(product),
                                     size: R.sp(context, 36),
-                                    color: Colors.blue,
+                                    color: outOfStock ? Colors.grey : Colors.blue,
                                   ),
                                 ),
                                 Text(
@@ -562,9 +596,11 @@ class _SalesScreenState
                                   style: TextStyle(
                                     fontSize: R.fs(context, isWide ? 18 : 16),
                                     fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).brightness == Brightness.dark
-                                        ? Colors.white
-                                        : Colors.black87,
+                                    color: outOfStock
+                                        ? Colors.grey
+                                        : isDark
+                                            ? Colors.white
+                                            : Colors.black87,
                                   ),
                                 ),
                                 Text(
@@ -572,7 +608,7 @@ class _SalesScreenState
                                   style: TextStyle(
                                     fontSize: R.fs(context, isWide ? 20 : 18),
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.green.shade600,
+                                    color: outOfStock ? Colors.grey : Colors.green.shade600,
                                   ),
                                 ),
                                 Container(
@@ -581,16 +617,26 @@ class _SalesScreenState
                                     vertical: R.sp(context, 6),
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).dividerColor.withValues(alpha: 0.08),
+                                    color: outOfStock
+                                        ? Colors.grey.withValues(alpha: 0.15)
+                                        : lowStock
+                                            ? Colors.orange.withValues(alpha: 0.18)
+                                            : Theme.of(context).dividerColor.withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(R.sp(context, 14)),
                                   ),
                                   child: Text(
-                                    product['stock'] <= 0
-                                        ? 'AGOTADO'
-                                        : 'Stock: ${product['stock']}',
+                                    outOfStock
+                                        ? 'Agotado'
+                                        : lowStock
+                                            ? 'Quedan $stock'
+                                            : 'Stock: $stock',
                                     style: TextStyle(
                                       fontSize: R.fs(context, 13),
-                                      color: product['stock'] <= 0 ? Colors.red : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                      color: outOfStock
+                                          ? Colors.grey.shade600
+                                          : lowStock
+                                              ? Colors.orange.shade800
+                                              : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -599,7 +645,47 @@ class _SalesScreenState
                             ),
                           ),
                         ),
-                      );
+                        if (!outOfStock)
+                        Positioned(
+                          top: R.sp(context, 6),
+                          right: R.sp(context, 6),
+                          child: IgnorePointer(
+                            child: AnimatedScale(
+                              scale: _plusOneId == product['id'] ? 1 : 0.5,
+                              duration: const Duration(milliseconds: 150),
+                              child: AnimatedOpacity(
+                                opacity: _plusOneId == product['id'] ? 1 : 0,
+                                duration: const Duration(milliseconds: 250),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: R.sp(context, 8),
+                                    vertical: R.sp(context, 4),
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(R.sp(context, 12)),
+                                  ),
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 150),
+                                    transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                                    child: Text(
+                                      _plusOneCheck ? '✓' : '+1',
+                                      key: ValueKey(_plusOneCheck),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: R.fs(context, 14),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                     },
                   ),
                 ),
@@ -629,25 +715,31 @@ class _SalesScreenState
           padding: EdgeInsets.symmetric(horizontal: R.sp(context, 20)),
           child: Row(
             children: [
+              Badge(
+                isLabelVisible: cart.isNotEmpty,
+                label: Text('${cart.length}'),
+                backgroundColor: Colors.blue,
+                textColor: Colors.white,
+                child: IconButton(
+                  icon: Icon(
+                    LucideIcons.shoppingCart,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 28,
+                  ),
+                  onPressed: _showCartSheet,
+                  tooltip: 'Ver carrito',
+                ),
+              ),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '🛒 Carrito (${cart.length})',
+                      '${cart.length} ${cart.length == 1 ? 'producto' : 'productos'} · \$${total.toStringAsFixed(2)}',
                       style: TextStyle(
-                        fontSize: R.fs(context, 16),
+                        fontSize: R.fs(context, 18),
                         fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: R.sp(context, 4)),
-                    Text(
-                      'Total: \$${total.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: R.fs(context, 22),
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
                       ),
                     ),
                   ],
@@ -657,15 +749,45 @@ class _SalesScreenState
                 width: 130,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (selectedStudent == null || cart.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Seleccioná ${StoreConfig.instance.entityLC()} y productos')),
-                      );
-                      return;
-                    }
-                    showModalBottomSheet(
-                      context: context,
+                  onPressed: cart.isEmpty
+                      ? null
+                      : () {
+                          if (selectedStudent == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Seleccioná ${StoreConfig.instance.entityLC()} y productos')),
+                            );
+                            return;
+                          }
+                          _showCartSheet();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    disabledBackgroundColor: Colors.grey.shade400,
+                    disabledForegroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Pagar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCartSheet() {
+    showModalBottomSheet(
+      context: context,
                       isScrollControlled: true,
                       shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -737,12 +859,13 @@ class _SalesScreenState
                                                 setSheetState(() {});
                                               },
                                               child: Container(
-                                                padding: EdgeInsets.all(4),
+                                                width: 44,
+                                                height: 44,
                                                 decoration: BoxDecoration(
                                                   color: Colors.red.shade100,
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  shape: BoxShape.circle,
                                                 ),
-                                                child: const Icon(LucideIcons.minus, size: 16, color: Colors.red),
+                                                child: const Icon(LucideIcons.minus, size: 20, color: Colors.red),
                                               ),
                                             ),
                                             SizedBox(width: R.sp(context, 10)),
@@ -754,22 +877,14 @@ class _SalesScreenState
                                               ),
                                             ),
                                             SizedBox(width: R.sp(context, 10)),
-                                            GestureDetector(
-                                              onTap: () {
+                                            _CartPlusButton(
+                                              onAdd: () {
                                                 setState(() {
                                                   item['quantity']++;
                                                   calculateTotal();
                                                 });
                                                 setSheetState(() {});
                                               },
-                                              child: Container(
-                                                padding: EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.green.shade100,
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: const Icon(LucideIcons.plus, size: 16, color: Colors.green),
-                                              ),
                                             ),
                                             SizedBox(width: R.sp(context, 16)),
                                             Text(
@@ -837,25 +952,54 @@ class _SalesScreenState
                         );
                       },
                     );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'Pagar',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+  }
+}
+
+class _CartPlusButton extends StatefulWidget {
+  final VoidCallback onAdd;
+
+  const _CartPlusButton({required this.onAdd});
+
+  @override
+  State<_CartPlusButton> createState() => _CartPlusButtonState();
+}
+
+class _CartPlusButtonState extends State<_CartPlusButton> {
+  bool _showCheck = false;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _tap() {
+    widget.onAdd();
+    _timer?.cancel();
+    setState(() => _showCheck = true);
+    _timer = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) setState(() => _showCheck = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _tap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.green.shade100,
+          shape: BoxShape.circle,
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 150),
+          transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+          child: _showCheck
+              ? const Icon(LucideIcons.check, key: ValueKey('check'), size: 20, color: Colors.green)
+              : const Icon(LucideIcons.plus, key: ValueKey('plus'), size: 20, color: Colors.green),
         ),
       ),
     );

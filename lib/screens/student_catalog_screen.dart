@@ -10,6 +10,7 @@ import 'student_checkout_screen.dart';
 import 'student_history_screen.dart';
 import 'student_login_screen.dart';
 import 'student_qr_screen.dart';
+import 'student_payment_chat_screen.dart';
 
 class StudentCatalogScreen extends StatefulWidget {
   final Map<String, dynamic> student;
@@ -97,6 +98,18 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => StudentHistoryScreen(student: widget.student),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.wallet),
+            tooltip: 'Enviar pago',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => StudentPaymentChatScreen(student: widget.student),
                 ),
               );
             },

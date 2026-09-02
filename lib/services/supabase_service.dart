@@ -1,10 +1,12 @@
 ﻿import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'date_utils.dart';
 import 'local_cache_service.dart';
+import '../core/env.dart';
 
 class SupabaseService {
 
@@ -765,5 +767,54 @@ class SupabaseService {
     await _client.rpc('delete_admin_user', params: {
       'p_user_id': id.toString(),
     });
+  }
+
+  // =====================================================
+  // PAYMENT CAPTURES
+  // =====================================================
+
+  Future<String> uploadPaymentCapture(String studentId, String fileName, Uint8List bytes) async {
+    final safeName = '$studentId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    await _client.storage.from('payment-captures').uploadBinary(safeName, bytes, fileOptions: const FileOptions(upsert: false));
+    return safeName;
+  }
+
+  Future<void> submitPaymentCapture({
+    required String studentId,
+    required String imagePath,
+    String? message,
+  }) async {
+    await _client.rpc('submit_payment_capture', params: {
+      'p_student_id': studentId,
+      'p_message': message ?? '',
+      'p_image_path': imagePath,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getStudentCaptures(String studentId) async {
+    final res = await _client.rpc('get_student_captures', params: {'p_student_id': studentId});
+    if (res == null) return [];
+    return (res as List).cast<Map<String, dynamic>>();
+  }
+
+  String getPaymentCaptureUrl(String imagePath) {
+    return '${Env.supabaseUrl}/storage/v1/object/public/payment-captures/$imagePath';
+  }
+
+  Stream<List<Map<String, dynamic>>> streamPaymentCaptures() {
+    _ensureCache();
+    return _client.from('payment_captures').stream(primaryKey: ['id']).order('created_at', ascending: false).map((data) {
+      for (final row in data) {
+        row['student'] = _studentNames[row['student_id']?.toString()] ?? 'Desconocido';
+      }
+      return data;
+    });
+  }
+
+  Future<void> markPaymentCaptureReviewed(dynamic id) async {
+    await _client.from('payment_captures').update({
+      'status': 'revisado',
+      'reviewed_at': DateTime.now().toIso8601String(),
+    }).eq('id', id.toString());
   }
 }

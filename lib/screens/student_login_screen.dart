@@ -29,10 +29,6 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   bool obscurePassword = true;
   String? errorMsg;
   Map<String, dynamic>? _loggedStudent;
-  List<String> _suggestions = [];
-  bool _showSuggestions = false;
-  bool _searching = false;
-  Timer? _debounce;
 
   @override
   void initState() {
@@ -129,43 +125,17 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     );
   }
 
-  void _onNameChanged(String value) {
-    _debounce?.cancel();
-    if (value.trim().isEmpty) {
-      setState(() {
-        _showSuggestions = false;
-        _suggestions = [];
-        _searching = false;
-      });
-      return;
+  Future<List<String>> _searchStudentNames(String query) async {
+    try {
+      final results = await SupabaseService.instance.searchStudentsByName(query);
+      return results.map((s) => s['name'] as String).toList();
+    } catch (_) {
+      return const <String>[];
     }
-    setState(() => _searching = true);
-    _debounce = Timer(const Duration(milliseconds: 300), () async {
-      try {
-        final results = await SupabaseService.instance.searchStudentsByName(value.trim());
-        if (!mounted) return;
-        setState(() {
-          _suggestions = results.map((s) => s['name'] as String).toList();
-          _showSuggestions = _suggestions.isNotEmpty;
-          _searching = false;
-        });
-      } catch (_) {
-        if (mounted) setState(() => _searching = false);
-      }
-    });
-  }
-
-  void _selectSuggestion(String name) {
-    nameCtrl.text = name;
-    setState(() {
-      _showSuggestions = false;
-      _suggestions = [];
-    });
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
     nameCtrl.dispose();
     passwordCtrl.dispose();
     super.dispose();
@@ -362,48 +332,58 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              TextField(
-                                controller: nameCtrl,
-                                onChanged: _onNameChanged,
-                                textCapitalization: TextCapitalization.words,
-                                decoration: InputDecoration(
-                                  labelText: 'Nombre y apellido',
-                                  prefixIcon: const Icon(LucideIcons.user),
-                                  filled: true,
-                                  fillColor: _getBgColor(Theme.of(context).brightness),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                ),
-                              ),
-                              if (_showSuggestions || _searching)
-                                Container(
-                                  constraints: const BoxConstraints(maxHeight: 180),
-                                  margin: const EdgeInsets.only(top: 4),
-                                  decoration: BoxDecoration(
-                                    color: cs.surface,
-                                    borderRadius: BorderRadius.circular(14),
-                                    boxShadow: [
-                                      BoxShadow(color: cs.shadow.withValues(alpha: 0.15), blurRadius: 12, offset: const Offset(0, 4)),
-                                    ],
-                                  ),
-                                  child: _searching
-                                      ? const Center(child: Padding(
-                                          padding: EdgeInsets.all(16),
-                                          child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5)),
-                                        ))
-                                      : ListView.builder(
+                              RawAutocomplete<String>(
+                                textEditingController: nameCtrl,
+                                optionsBuilder: (textEditingValue) {
+                                  final query = textEditingValue.text.trim();
+                                  if (query.isEmpty) return const Iterable<String>.empty();
+                                  return _searchStudentNames(query);
+                                },
+                                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                                  return TextField(
+                                    controller: controller,
+                                    focusNode: focusNode,
+                                    textCapitalization: TextCapitalization.words,
+                                    decoration: InputDecoration(
+                                      labelText: 'Nombre y apellido',
+                                      prefixIcon: const Icon(LucideIcons.user),
+                                      filled: true,
+                                      fillColor: _getBgColor(Theme.of(context).brightness),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                optionsViewBuilder: (context, onSelected, options) {
+                                  return Align(
+                                    alignment: Alignment.topLeft,
+                                    child: Material(
+                                      elevation: 8,
+                                      borderRadius: BorderRadius.circular(14),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(maxWidth: 320, maxHeight: 220),
+                                        child: ListView.builder(
                                           padding: EdgeInsets.zero,
                                           shrinkWrap: true,
-                                          itemCount: _suggestions.length,
-                                          itemBuilder: (_, i) => ListTile(
-                                            dense: true,
-                                            title: Text(_suggestions[i]),
-                                            onTap: () => _selectSuggestion(_suggestions[i]),
-                                          ),
+                                          itemCount: options.length,
+                                          itemBuilder: (_, i) {
+                                            final option = options.elementAt(i);
+                                            return ListTile(
+                                              dense: true,
+                                              leading: const Icon(LucideIcons.userRound, size: 18),
+                                              title: Text(option),
+                                              onTap: () => onSelected(option),
+                                            );
+                                          },
                                         ),
-                                ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ],
                           ),
                           const SizedBox(height: 18),

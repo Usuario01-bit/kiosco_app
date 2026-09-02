@@ -8,6 +8,7 @@ import 'students_screen.dart';
 import 'products_screen.dart';
 import 'reports_screen.dart';
 import 'pending_screen.dart';
+import 'payment_captures_screen.dart';
 import 'admin_screen.dart';
 import 'login_screen.dart';
 import 'config_screen.dart';
@@ -360,6 +361,7 @@ class _HomeScreenState
       const ReportsScreen(),
 
       const PendingScreen(),
+      const PaymentCapturesScreen(),
 
     ];
 
@@ -446,6 +448,8 @@ class _HomeScreenState
 
         selectedIndex: selectedIndex,
 
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+
         onDestinationSelected:
             (index) {
 
@@ -463,6 +467,7 @@ class _HomeScreenState
           NavigationDestination(icon: Icon(LucideIcons.package), label: 'Productos'),
           NavigationDestination(icon: Icon(LucideIcons.chartBar), label: 'Reportes'),
           NavigationDestination(icon: Icon(LucideIcons.clock), label: 'Pendientes'),
+          NavigationDestination(icon: Icon(LucideIcons.wallet), label: 'Pagos'),
         ],
       ),
         ],

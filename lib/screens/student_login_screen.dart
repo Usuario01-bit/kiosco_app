@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/supabase_service.dart';
 import '../services/store_config.dart';
+import '../core/env.dart';
 import 'student_catalog_screen.dart';
 import 'student_qr_screen.dart';
 import 'student_qr_scanner_screen.dart';
@@ -46,6 +47,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   void _onNameChanged(String value) {
     _setupDebounce?.cancel();
     if (_initialCode != null) setState(() => _initialCode = null);
+    if (_nameStatus != null) setState(() => _nameStatus = null);
     final query = value.trim();
     if (query.isEmpty) return;
     _setupDebounce = Timer(const Duration(milliseconds: 400), () async {
@@ -378,6 +380,11 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   Text(
                     'Portal del Alumno',
                     style: TextStyle(color: isDark ? cs.onSurfaceVariant : Colors.white.withValues(alpha: 0.7), fontSize: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'v${Env.appVersion}',
+                    style: TextStyle(color: isDark ? cs.onSurfaceVariant : Colors.white.withValues(alpha: 0.45), fontSize: 12),
                   ),
                   const SizedBox(height: 48),
                   Card(

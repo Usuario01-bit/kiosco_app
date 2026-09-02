@@ -820,6 +820,23 @@ class _StudentsScreenState
                                           color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                                         ),
                                       ),
+                                    if (student['must_change_password'] == true)
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 6),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.withValues(alpha: 0.18),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          'Sin configurar',
+                                          style: TextStyle(
+                                            fontSize: R.fs(context, 13),
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.orange.shade800,
+                                          ),
+                                        ),
+                                      ),
 
                                   ],
                                 ),

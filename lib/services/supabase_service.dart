@@ -106,6 +106,8 @@ class SupabaseService {
           'grade': row['grado'].toString().trim(),
         'role': row['role'] ?? 'alumno',
         'temp_password': _generateTempPassword(),
+        'initial_code': _generateInitialCode(),
+        'must_change_password': true,
       };
     }).toList();
     await _client.from('students').insert(rows);
@@ -116,6 +118,11 @@ class SupabaseService {
     final rng = Random.secure();
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     return List.generate(8, (_) => chars[rng.nextInt(chars.length)]).join();
+  }
+
+  String _generateInitialCode() {
+    final rng = Random.secure();
+    return rng.nextInt(1000000).toString().padLeft(6, '0');
   }
 
   Future<List<Map<String, dynamic>>> getStudents() async {
@@ -198,6 +205,33 @@ class SupabaseService {
 
   Future<void> setStudentTempPassword(dynamic studentId, String password) async {
     await _client.from('students').update({'temp_password': password.trim()}).eq('id', studentId.toString());
+  }
+
+  Future<String?> getStudentInitialCode(String name) async {
+    final res = await _client.rpc('get_student_initial_code', params: {'p_name': name.trim()});
+    if (res == null) return null;
+    if (res is String && res.isEmpty) return null;
+    return res as String;
+  }
+
+  Future<Map<String, dynamic>?> firstLoginSetPassword({
+    required String name,
+    required String initialCode,
+    required String newPassword,
+  }) async {
+    try {
+      final res = await _client.rpc('set_student_password', params: {
+        'p_name': name.trim(),
+        'p_initial_code': initialCode,
+        'p_new_password': newPassword,
+      });
+      if (res == null) return null;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      debugPrint('set_student_password RPC error: $e');
+      return null;
+    }
   }
 
   Future<void> setStudentQrToken(dynamic studentId, String token) async {

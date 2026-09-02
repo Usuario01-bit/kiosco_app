@@ -31,10 +31,33 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   String? _nameStatus;
   Map<String, dynamic>? _loggedStudent;
 
+  final _newPwCtrl = TextEditingController();
+  final _confirmPwCtrl = TextEditingController();
+  bool _obscureNewPw = true;
+  String? _initialCode;
+  Timer? _setupDebounce;
+
   @override
   void initState() {
     super.initState();
     _checkSavedSession();
+  }
+
+  void _onNameChanged(String value) {
+    _setupDebounce?.cancel();
+    if (_initialCode != null) setState(() => _initialCode = null);
+    final query = value.trim();
+    if (query.isEmpty) return;
+    _setupDebounce = Timer(const Duration(milliseconds: 400), () async {
+      final code = await SupabaseService.instance.getStudentInitialCode(query);
+      if (!mounted) return;
+      if (code != null && nameCtrl.text.trim().toLowerCase() == query.toLowerCase()) {
+        setState(() {
+          _initialCode = code;
+          errorMsg = null;
+        });
+      }
+    });
   }
 
   Future<void> _checkSavedSession() async {
@@ -59,6 +82,57 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     return '${name.toLowerCase().replaceAll(RegExp(r'\s+'), '_')}_${hash.substring(0, 16)}';
   }
 
+  Future<void> _completeStudentLogin(Map<String, dynamic> student) async {
+    final name = student['name'] as String;
+    final token = await _generateQrToken(name);
+    await SupabaseService.instance.setStudentQrToken(student['id'], token);
+    await _storage.write(key: 'student_qr_token', value: token);
+    _loggedStudent = student;
+    setState(() => loggingIn = false);
+    _enterCatalog();
+  }
+
+  Future<void> _firstLogin() async {
+    final name = nameCtrl.text.trim();
+    final newPw = _newPwCtrl.text;
+    final confirmPw = _confirmPwCtrl.text;
+
+    if (_initialCode == null) {
+      setState(() => errorMsg = 'Código inicial no disponible');
+      return;
+    }
+    if (newPw.length < 8) {
+      setState(() => errorMsg = 'La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+    if (newPw != confirmPw) {
+      setState(() => errorMsg = 'Las contraseñas no coinciden');
+      return;
+    }
+
+    setState(() {
+      loggingIn = true;
+      errorMsg = null;
+    });
+
+    final student = await SupabaseService.instance.firstLoginSetPassword(
+      name: name,
+      initialCode: _initialCode!,
+      newPassword: newPw,
+    );
+
+    if (!mounted) return;
+
+    if (student != null) {
+      await _completeStudentLogin(student);
+    } else {
+      setState(() {
+        errorMsg = 'No se pudo crear la contraseña. Verificá el nombre e intentá de nuevo.';
+        loggingIn = false;
+      });
+    }
+  }
+
   Future<void> _login() async {
     final name = nameCtrl.text.trim();
     final password = passwordCtrl.text.trim();
@@ -78,14 +152,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       if (!mounted) return;
 
       if (student != null) {
-        final token = await _generateQrToken(name);
-        await SupabaseService.instance.setStudentQrToken(student['id'], token);
-
-        await _storage.write(key: 'student_qr_token', value: token);
-
-        _loggedStudent = student;
-        setState(() => loggingIn = false);
-        _enterCatalog();
+        await _completeStudentLogin(student);
       } else {
         setState(() {
           errorMsg = 'Nombre o contraseña incorrectos';
@@ -141,8 +208,11 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
   @override
   void dispose() {
+    _setupDebounce?.cancel();
     nameCtrl.dispose();
     passwordCtrl.dispose();
+    _newPwCtrl.dispose();
+    _confirmPwCtrl.dispose();
     super.dispose();
   }
 
@@ -348,6 +418,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                   return TextField(
                                     controller: controller,
                                     focusNode: focusNode,
+                                    onChanged: _onNameChanged,
                                     textCapitalization: TextCapitalization.words,
                                     decoration: InputDecoration(
                                       labelText: 'Nombre y apellido',
@@ -400,41 +471,115 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                               ),
                             ),
                           const SizedBox(height: 18),
-                          TextField(
-                            controller: passwordCtrl,
-                            obscureText: obscurePassword,
-                            decoration: InputDecoration(
-                              labelText: 'Contraseña temporal',
-                              prefixIcon: const Icon(LucideIcons.lock),
-                              suffixIcon: IconButton(
-                                icon: Icon(obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye),
-                                onPressed: () => setState(() => obscurePassword = !obscurePassword),
+                          if (_initialCode != null) ...[
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              filled: true,
-                              fillColor: _getBgColor(Theme.of(context).brightness),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(18),
-                                borderSide: BorderSide.none,
+                              child: Row(
+                                children: [
+                                  const Icon(LucideIcons.sparkles, color: Colors.green, size: 20),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      '¡Primer ingreso! Creá tu contraseña para entrar.',
+                                      style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            onSubmitted: (_) => _login(),
-                          ),
-                          const SizedBox(height: 28),
-                          SizedBox(
-                            width: double.infinity, height: 60,
-                            child: ElevatedButton(
-                              onPressed: loggingIn ? null : _login,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: cs.primary,
-                                foregroundColor: cs.onPrimary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                elevation: 0,
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: _newPwCtrl,
+                              obscureText: _obscureNewPw,
+                              decoration: InputDecoration(
+                                labelText: 'Nueva contraseña',
+                                prefixIcon: const Icon(LucideIcons.lock),
+                                suffixIcon: IconButton(
+                                  icon: Icon(_obscureNewPw ? LucideIcons.eyeOff : LucideIcons.eye),
+                                  onPressed: () => setState(() => _obscureNewPw = !_obscureNewPw),
+                                ),
+                                filled: true,
+                                fillColor: _getBgColor(Theme.of(context).brightness),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: BorderSide.none,
+                                ),
                               ),
-                              child: loggingIn
-                                  ? const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.5))
-                                  : const Text('Ingresar', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                             ),
-                          ),
+                            const SizedBox(height: 14),
+                            TextField(
+                              controller: _confirmPwCtrl,
+                              obscureText: _obscureNewPw,
+                              decoration: InputDecoration(
+                                labelText: 'Confirmar contraseña',
+                                prefixIcon: const Icon(LucideIcons.lockKeyhole),
+                                filled: true,
+                                fillColor: _getBgColor(Theme.of(context).brightness),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                              onSubmitted: (_) => _firstLogin(),
+                            ),
+                            const SizedBox(height: 28),
+                            SizedBox(
+                              width: double.infinity, height: 60,
+                              child: ElevatedButton(
+                                onPressed: loggingIn ? null : _firstLogin,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green.shade600,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  elevation: 0,
+                                ),
+                                child: loggingIn
+                                    ? const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.5))
+                                    : const Text('Crear contraseña y entrar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ] else ...[
+                            TextField(
+                              controller: passwordCtrl,
+                              obscureText: obscurePassword,
+                              decoration: InputDecoration(
+                                labelText: 'Contraseña',
+                                prefixIcon: const Icon(LucideIcons.lock),
+                                suffixIcon: IconButton(
+                                  icon: Icon(obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye),
+                                  onPressed: () => setState(() => obscurePassword = !obscurePassword),
+                                ),
+                                filled: true,
+                                fillColor: _getBgColor(Theme.of(context).brightness),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                              onSubmitted: (_) => _login(),
+                            ),
+                            const SizedBox(height: 28),
+                            SizedBox(
+                              width: double.infinity, height: 60,
+                              child: ElevatedButton(
+                                onPressed: loggingIn ? null : _login,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: cs.primary,
+                                  foregroundColor: cs.onPrimary,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  elevation: 0,
+                                ),
+                                child: loggingIn
+                                    ? const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.5))
+                                    : const Text('Ingresar', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

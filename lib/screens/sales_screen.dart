@@ -353,6 +353,9 @@ class _SalesScreenState
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 600;
+          final filtered = selectedCategory == null
+              ? products
+              : products.where((p) => (p['category'] as String? ?? 'General') == selectedCategory).toList();
 
           final headerWidget = Padding(
             padding: EdgeInsets.fromLTRB(R.sp(context, 20), R.sp(context, 20), R.sp(context, 20), 0),
@@ -517,175 +520,189 @@ class _SalesScreenState
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async {},
-                  child: GridView.builder(
+                  child: ListView.builder(
                     padding: EdgeInsets.all(R.sp(context, isWide ? 20 : 16)),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: isWide ? 3 : 2,
-                      crossAxisSpacing: isWide ? 16 : 12,
-                      mainAxisSpacing: isWide ? 16 : 12,
-                      childAspectRatio: isWide ? 0.85 : 0.72,
-                    ),
-                    itemCount: selectedCategory == null
-                        ? products.length
-                        : products.where((p) => (p['category'] as String? ?? 'General') == selectedCategory).length,
+                    itemCount: filtered.length,
                     itemBuilder: (context, index) {
-                      final filtered = selectedCategory == null
-                          ? products
-                          : products.where((p) => (p['category'] as String? ?? 'General') == selectedCategory).toList();
                       final product = filtered[index];
                       final stock = (product['stock'] as num?)?.toInt() ?? 0;
                       final outOfStock = stock <= 0;
                       final lowStock = stock > 0 && stock <= 5;
                       final isDark = Theme.of(context).brightness == Brightness.dark;
+                      final imageUrl = product['image_url'] as String?;
+                      final hasImage = imageUrl != null && imageUrl.isNotEmpty;
                       return GestureDetector(
                         onTap: () => addToCart(product),
                         child: Stack(
                           children: [
-                            AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: outOfStock
-                                  ? (isDark
-                                      ? const [Color(0xFF3A3A3A), Color(0xFF2E2E2E)]
-                                      : const [Color(0xFFE9E9E9), Color(0xFFDDDDDD)])
-                                  : [
-                                      Theme.of(context).cardColor,
-                                      isDark ? Theme.of(context).cardColor : const Color(0xFFF8FBFF),
-                                    ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(R.sp(context, 28)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 18,
-                                offset: const Offset(0, 8),
+                            Container(
+                              margin: EdgeInsets.only(bottom: R.sp(context, 10)),
+                              padding: EdgeInsets.all(R.sp(context, 12)),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: outOfStock
+                                      ? (isDark
+                                          ? const [Color(0xFF3A3A3A), Color(0xFF2E2E2E)]
+                                          : const [Color(0xFFE9E9E9), Color(0xFFDDDDDD)])
+                                      : [
+                                          Theme.of(context).cardColor,
+                                          isDark ? Theme.of(context).cardColor : const Color(0xFFF8FBFF),
+                                        ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(R.sp(context, 20)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: outOfStock ? Colors.grey.shade400 : Colors.white,
+                                  width: 2,
+                                ),
                               ),
-                            ],
-                            border: Border.all(
-                              color: outOfStock ? Colors.grey.shade400 : Colors.white,
-                              width: 2,
-                            ),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(R.sp(context, 12)),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(R.sp(context, 12)),
-                                  decoration: BoxDecoration(
-                                    color: outOfStock
-                                        ? Colors.grey.withValues(alpha: 0.15)
-                                        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    _productIcon(product),
-                                    size: R.sp(context, 36),
-                                    color: outOfStock ? Colors.grey : Colors.blue,
-                                  ),
-                                ),
-                                Text(
-                                  product['name'],
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: R.fs(context, isWide ? 18 : 16),
-                                    fontWeight: FontWeight.bold,
-                                    color: outOfStock
-                                        ? Colors.grey
-                                        : isDark
-                                            ? Colors.white
-                                            : Colors.black87,
-                                  ),
-                                ),
-                                Text(
-                                  '\$${(product['price'] as num).toDouble().toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    fontSize: R.fs(context, isWide ? 20 : 18),
-                                    fontWeight: FontWeight.bold,
-                                    color: outOfStock ? Colors.grey : Colors.green.shade600,
-                                  ),
-                                ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: R.sp(context, 14),
-                                    vertical: R.sp(context, 6),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: outOfStock
-                                        ? Colors.grey.withValues(alpha: 0.15)
-                                        : lowStock
-                                            ? Colors.orange.withValues(alpha: 0.18)
-                                            : Theme.of(context).dividerColor.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(R.sp(context, 14)),
-                                  ),
-                                  child: Text(
-                                    outOfStock
-                                        ? 'Agotado'
-                                        : lowStock
-                                            ? 'Quedan $stock'
-                                            : 'Stock: $stock',
-                                    style: TextStyle(
-                                      fontSize: R.fs(context, 13),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: R.sp(context, 64),
+                                    height: R.sp(context, 64),
+                                    decoration: BoxDecoration(
                                       color: outOfStock
-                                          ? Colors.grey.shade600
-                                          : lowStock
-                                              ? Colors.orange.shade800
-                                              : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-                                      fontWeight: FontWeight.w600,
+                                          ? Colors.grey.withValues(alpha: 0.15)
+                                          : Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(R.sp(context, 16)),
+                                    ),
+                                    child: hasImage
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(R.sp(context, 16)),
+                                            child: Image.network(
+                                              imageUrl,
+                                              width: R.sp(context, 64),
+                                              height: R.sp(context, 64),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, _, _) => Icon(
+                                                _productIcon(product),
+                                                size: R.sp(context, 30),
+                                                color: outOfStock ? Colors.grey : Colors.blue,
+                                              ),
+                                            ),
+                                          )
+                                        : Icon(
+                                            _productIcon(product),
+                                            size: R.sp(context, 30),
+                                            color: outOfStock ? Colors.grey : Colors.blue,
+                                          ),
+                                  ),
+                                  SizedBox(width: R.sp(context, 14)),
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          product['name'],
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: R.fs(context, 17),
+                                            fontWeight: FontWeight.bold,
+                                            color: outOfStock
+                                                ? Colors.grey
+                                                : isDark
+                                                    ? Colors.white
+                                                    : Colors.black87,
+                                          ),
+                                        ),
+                                        SizedBox(height: R.sp(context, 4)),
+                                        Text(
+                                          '\$${(product['price'] as num).toDouble().toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            fontSize: R.fs(context, 16),
+                                            fontWeight: FontWeight.bold,
+                                            color: outOfStock ? Colors.grey : Colors.green.shade600,
+                                          ),
+                                        ),
+                                        SizedBox(height: R.sp(context, 8)),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: R.sp(context, 12),
+                                            vertical: R.sp(context, 5),
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: outOfStock
+                                                ? Colors.grey.withValues(alpha: 0.15)
+                                                : lowStock
+                                                    ? Colors.orange.withValues(alpha: 0.18)
+                                                    : Theme.of(context).dividerColor.withValues(alpha: 0.08),
+                                            borderRadius: BorderRadius.circular(R.sp(context, 12)),
+                                          ),
+                                          child: Text(
+                                            outOfStock
+                                                ? 'Agotado'
+                                                : lowStock
+                                                    ? 'Quedan $stock'
+                                                    : 'Stock: $stock',
+                                            style: TextStyle(
+                                              fontSize: R.fs(context, 12),
+                                              color: outOfStock
+                                                  ? Colors.grey.shade600
+                                                  : lowStock
+                                                      ? Colors.orange.shade800
+                                                      : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
-                        if (!outOfStock)
-                        Positioned(
-                          top: R.sp(context, 6),
-                          right: R.sp(context, 6),
-                          child: IgnorePointer(
-                            child: AnimatedScale(
-                              scale: _plusOneId == product['id'] ? 1 : 0.5,
-                              duration: const Duration(milliseconds: 150),
-                              child: AnimatedOpacity(
-                                opacity: _plusOneId == product['id'] ? 1 : 0,
-                                duration: const Duration(milliseconds: 250),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: R.sp(context, 8),
-                                    vertical: R.sp(context, 4),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    borderRadius: BorderRadius.circular(R.sp(context, 12)),
-                                  ),
-                                  child: AnimatedSwitcher(
+                            if (!outOfStock)
+                              Positioned(
+                                top: R.sp(context, 8),
+                                right: R.sp(context, 8),
+                                child: IgnorePointer(
+                                  child: AnimatedScale(
+                                    scale: _plusOneId == product['id'] ? 1 : 0.5,
                                     duration: const Duration(milliseconds: 150),
-                                    transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-                                    child: Text(
-                                      _plusOneCheck ? '✓' : '+1',
-                                      key: ValueKey(_plusOneCheck),
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: R.fs(context, 14),
+                                    child: AnimatedOpacity(
+                                      opacity: _plusOneId == product['id'] ? 1 : 0,
+                                      duration: const Duration(milliseconds: 250),
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: R.sp(context, 10),
+                                          vertical: R.sp(context, 5),
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green,
+                                          borderRadius: BorderRadius.circular(R.sp(context, 14)),
+                                        ),
+                                        child: AnimatedSwitcher(
+                                          duration: const Duration(milliseconds: 150),
+                                          transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                                          child: Text(
+                                            _plusOneCheck ? '✓' : '+1',
+                                            key: ValueKey(_plusOneCheck),
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: R.fs(context, 15),
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
+                      );
                     },
                   ),
                 ),

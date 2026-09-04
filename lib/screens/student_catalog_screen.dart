@@ -195,90 +195,197 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
     final stock = (product['stock'] as num?)?.toInt() ?? 0;
     final price = (product['price'] as num).toDouble();
     final outOfStock = stock <= 0;
+    final lowStock = stock > 0 && stock <= 5;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final imageUrl = product['image_url'] as String?;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return GestureDetector(
+      onTap: () {
+        if (outOfStock) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Producto agotado'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+        if (qty >= stock) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Stock máximo disponible: $stock'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+        setState(() => cart[id] = qty + 1);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: outOfStock
+                ? (isDark
+                    ? const [Color(0xFF3A3A3A), Color(0xFF2E2E2E)]
+                    : const [Color(0xFFE9E9E9), Color(0xFFDDDDDD)])
+                : [
+                    Theme.of(context).cardColor,
+                    isDark ? Theme.of(context).cardColor : const Color(0xFFF8FBFF),
+                  ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
+          border: Border.all(
+            color: outOfStock ? Colors.grey.shade400 : Colors.white,
+            width: 2,
+          ),
+        ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+                color: outOfStock
+                    ? Colors.grey.withValues(alpha: 0.15)
+                    : cs.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(resolveProductIcon(product), size: 28, color: cs.primary),
+              child: imageUrl != null && imageUrl.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        imageUrl,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Icon(
+                          resolveProductIcon(product),
+                          size: 30,
+                          color: outOfStock ? Colors.grey : cs.primary,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      resolveProductIcon(product),
+                      size: 30,
+                      color: outOfStock ? Colors.grey : cs.primary,
+                    ),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     product['name'] as String,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    outOfStock ? 'AGOTADO' : '\$${price.toStringAsFixed(2)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 17,
                       fontWeight: FontWeight.bold,
-                      color: outOfStock ? cs.error : Colors.green,
+                      color: outOfStock
+                          ? Colors.grey
+                          : isDark
+                              ? Colors.white
+                              : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '\$${price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: outOfStock ? Colors.grey : Colors.green.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: outOfStock
+                          ? Colors.grey.withValues(alpha: 0.15)
+                          : lowStock
+                              ? Colors.orange.withValues(alpha: 0.18)
+                              : Theme.of(context).dividerColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      outOfStock
+                          ? 'Agotado'
+                          : lowStock
+                              ? 'Quedan $stock'
+                              : 'Stock: $stock',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: outOfStock
+                            ? Colors.grey.shade600
+                            : lowStock
+                                ? Colors.orange.shade800
+                                : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            if (outOfStock)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: cs.errorContainer.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text('AGOTADO', style: TextStyle(color: cs.error, fontSize: 11, fontWeight: FontWeight.bold)),
-              )
-            else
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (qty > 0)
-                    IconButton(
-                      icon: const Icon(LucideIcons.minusCircle),
-                      onPressed: () => setState(() {
-                        if (qty <= 1) {
-                          cart.remove(id);
-                        } else {
-                          cart[id] = qty - 1;
-                        }
-                      }),
+            if (!outOfStock) ...[
+              if (qty > 0)
+                GestureDetector(
+                  onTap: () => setState(() {
+                    if (qty <= 1) {
+                      cart.remove(id);
+                    } else {
+                      cart[id] = qty - 1;
+                    }
+                  }),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade100,
+                      shape: BoxShape.circle,
                     ),
-                  if (qty > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('$qty', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    ),
-                  IconButton(
-                    icon: Icon(LucideIcons.plusCircle, color: cs.primary),
-                    onPressed: () {
-                      if (qty >= stock) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(stock <= 0 ? 'Producto agotado' : 'Stock máximo disponible: $stock'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                        return;
-                      }
-                      setState(() => cart[id] = (cart[id] ?? 0) + 1);
-                    },
+                    child: const Icon(LucideIcons.minus, size: 18, color: Colors.red),
                   ),
-                ],
+                ),
+              if (qty > 0)
+                SizedBox(
+                  width: 28,
+                  child: Text(
+                    '$qty',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              _CatalogPlusButton(
+                onAdd: () {
+                  if (qty >= stock) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Stock máximo disponible: $stock'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+                  setState(() => cart[id] = (cart[id] ?? 0) + 1);
+                },
               ),
+            ],
           ],
         ),
       ),
@@ -286,10 +393,13 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
   }
 
   void _logout() async {
+    final savedToken = await _storage.read(key: 'student_qr_token');
+    if (savedToken != null && savedToken.isNotEmpty) {
+      try {
+        await SupabaseService.instance.clearStudentQrToken(savedToken);
+      } catch (_) {}
+    }
     await _storage.delete(key: 'student_qr_token');
-    try {
-      await SupabaseService.instance.setStudentQrToken(widget.student['id'], '');
-    } catch (_) {}
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
@@ -324,5 +434,56 @@ class _StudentCatalogScreenState extends State<StudentCatalogScreen> {
     ).then((_) {
       setState(() => cart.clear());
     });
+  }
+}
+
+class _CatalogPlusButton extends StatefulWidget {
+  final VoidCallback onAdd;
+
+  const _CatalogPlusButton({required this.onAdd});
+
+  @override
+  State<_CatalogPlusButton> createState() => _CatalogPlusButtonState();
+}
+
+class _CatalogPlusButtonState extends State<_CatalogPlusButton> {
+  bool _showCheck = false;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _tap() {
+    widget.onAdd();
+    _timer?.cancel();
+    setState(() => _showCheck = true);
+    _timer = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) setState(() => _showCheck = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _tap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.green.shade100,
+          shape: BoxShape.circle,
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 150),
+          transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+          child: _showCheck
+              ? const Icon(LucideIcons.check, key: ValueKey('check'), size: 18, color: Colors.green)
+              : const Icon(LucideIcons.plus, key: ValueKey('plus'), size: 18, color: Colors.green),
+        ),
+      ),
+    );
   }
 }

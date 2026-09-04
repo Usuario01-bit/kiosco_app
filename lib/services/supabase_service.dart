@@ -234,8 +234,20 @@ class SupabaseService {
     }
   }
 
-  Future<void> setStudentQrToken(dynamic studentId, String token) async {
-    await _client.from('students').update({'qr_token': token.trim()}).eq('id', studentId.toString());
+  Future<void> setStudentQrToken({
+    required dynamic studentId,
+    required String token,
+    required String password,
+  }) async {
+    await _client.rpc('set_student_qr_token', params: {
+      'p_student_id': studentId.toString(),
+      'p_token': token.trim(),
+      'p_password': password,
+    });
+  }
+
+  Future<void> clearStudentQrToken(String token) async {
+    await _client.rpc('clear_student_qr_token', params: {'p_token': token});
   }
 
   Future<void> setStudentCode(dynamic studentId, String code) async {
@@ -834,6 +846,17 @@ class SupabaseService {
 
   String getPaymentCaptureUrl(String imagePath) {
     return '${Env.supabaseUrl}/storage/v1/object/public/payment-captures/$imagePath';
+  }
+
+  Future<String> uploadProductImage(String fileName, Uint8List bytes) async {
+    final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final path = '${DateTime.now().millisecondsSinceEpoch}_$safeName';
+    await _client.storage.from('product-images').uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: false));
+    return path;
+  }
+
+  String getProductImageUrl(String imagePath) {
+    return '${Env.supabaseUrl}/storage/v1/object/public/product-images/$imagePath';
   }
 
   Stream<List<Map<String, dynamic>>> streamPaymentCaptures() {

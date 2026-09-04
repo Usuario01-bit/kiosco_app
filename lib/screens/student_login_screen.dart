@@ -84,10 +84,16 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     return '${name.toLowerCase().replaceAll(RegExp(r'\s+'), '_')}_${hash.substring(0, 16)}';
   }
 
-  Future<void> _completeStudentLogin(Map<String, dynamic> student) async {
+  Future<void> _completeStudentLogin(Map<String, dynamic> student, String password) async {
     final name = student['name'] as String;
     final token = await _generateQrToken(name);
-    await SupabaseService.instance.setStudentQrToken(student['id'], token);
+    try {
+      await SupabaseService.instance.setStudentQrToken(
+        studentId: student['id'],
+        token: token,
+        password: password,
+      );
+    } catch (_) {}
     await _storage.write(key: 'student_qr_token', value: token);
     _loggedStudent = student;
     setState(() => loggingIn = false);
@@ -126,7 +132,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     if (!mounted) return;
 
     if (student != null) {
-      await _completeStudentLogin(student);
+      await _completeStudentLogin(student, newPw);
     } else {
       setState(() {
         errorMsg = 'No se pudo crear la contraseña. Verificá el nombre e intentá de nuevo.';
@@ -154,7 +160,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       if (!mounted) return;
 
       if (student != null) {
-        await _completeStudentLogin(student);
+        await _completeStudentLogin(student, password);
       } else {
         setState(() {
           errorMsg = 'Nombre o contraseña incorrectos';
@@ -320,8 +326,11 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     const SizedBox(height: 24),
                     TextButton.icon(
                       onPressed: () async {
-                        if (_loggedStudent != null && _loggedStudent!['id'] != null) {
-                          await SupabaseService.instance.setStudentQrToken(_loggedStudent!['id'], '');
+                        final savedToken = await _storage.read(key: 'student_qr_token');
+                        if (savedToken != null && savedToken.isNotEmpty) {
+                          try {
+                            await SupabaseService.instance.clearStudentQrToken(savedToken);
+                          } catch (_) {}
                         }
                         await _storage.delete(key: 'student_qr_token');
                         if (mounted) setState(() => _loggedStudent = null);
@@ -416,6 +425,16 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             children: [
                               RawAutocomplete<String>(
                                 textEditingController: nameCtrl,
+                                onSelected: (option) async {
+                                  final code = await SupabaseService.instance.getStudentInitialCode(option);
+                                  if (!mounted) return;
+                                  if (nameCtrl.text.trim().toLowerCase() == option.toLowerCase()) {
+                                    setState(() {
+                                      _initialCode = code;
+                                      errorMsg = null;
+                                    });
+                                  }
+                                },
                                 optionsBuilder: (textEditingValue) {
                                   final query = textEditingValue.text.trim();
                                   if (query.isEmpty) return const Iterable<String>.empty();
@@ -600,10 +619,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => StudentQrScannerScreen(
-                              onStudentFound: (student) async {
-                                final token = await _generateQrToken(student['name'] as String);
-                                await SupabaseService.instance.setStudentQrToken(student['id'], token);
-                                await _storage.write(key: 'student_qr_token', value: token);
+                              onStudentFound: (student, scannedToken) async {
+                                await _storage.write(key: 'student_qr_token', value: scannedToken);
                                 if (!context.mounted) return;
                                 Navigator.pushAndRemoveUntil(
                                   context,

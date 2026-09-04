@@ -5,7 +5,7 @@ import '../services/supabase_service.dart';
 import 'student_qr_detail_screen.dart';
 
 class StudentQrScannerScreen extends StatefulWidget {
-  final void Function(Map<String, dynamic> student)? onStudentFound;
+  final void Function(Map<String, dynamic> student, String token)? onStudentFound;
 
   const StudentQrScannerScreen({super.key, this.onStudentFound});
 
@@ -37,7 +37,7 @@ class _StudentQrScannerScreenState extends State<StudentQrScannerScreen> {
 
       if (student != null) {
         if (widget.onStudentFound != null) {
-          widget.onStudentFound!(student);
+          widget.onStudentFound!(student, barcode.rawValue!);
         } else {
           Navigator.pushReplacement(
             context,

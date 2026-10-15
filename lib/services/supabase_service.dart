@@ -178,9 +178,9 @@ class SupabaseService {
   }
 
   Future<Map<String, dynamic>?> getStudentByCode(String code) async {
-    final data = await _client.from('students').select().eq('code', code.trim()).limit(1);
-    if (data.isEmpty) return null;
-    return data.first;
+    final data = await _client.rpc('get_student_by_code', params: {'p_code': code.trim()});
+    if (data == null || (data is List && data.isEmpty)) return null;
+    return data is Map ? Map<String, dynamic>.from(data) : (data as List).first as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>?> getStudentByQrToken(String token) async {
@@ -521,12 +521,13 @@ class SupabaseService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getSalesByStudent(String studentName) async {
-    final studentData = await _client.from('students').select('id').eq('name', studentName).limit(1);
-    if (studentData.isEmpty) return [];
-    final studentId = studentData.first['id'].toString();
-    final data = await _client.from('sales').select('*, students!inner(name), products!inner(name)').eq('student_id', studentId);
-    return _sortSalesByDateTime(_flattenStudents(data));
+  Future<List<Map<String, dynamic>>> getSalesByStudent(String studentName, {String? qrToken}) async {
+    final res = await _client.rpc('get_student_sales', params: {
+      'p_name': studentName.trim(),
+      'p_token': qrToken ?? '',
+    });
+    if (res == null) return [];
+    return (res as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
   Future<List<Map<String, dynamic>>> getSalesByStudentId(String studentId) async {
@@ -593,18 +594,13 @@ class SupabaseService {
     return sorted.take(limit).map((e) => {'product': e.key, 'total': e.value}).toList();
   }
 
-  Future<double> getStudentDebt(String studentName) async {
-    final studentData = await _client.from('students').select('id').eq('name', studentName).limit(1);
-    if (studentData.isEmpty) return 0;
-    final studentId = studentData.first['id'].toString();
-    final pendingSnap = await _client.from('pending').select('amount,paid').eq('student_id', studentId).limit(1);
-    if (pendingSnap.isNotEmpty) {
-      final data = pendingSnap.first;
-      final amount = (data['amount'] as num?)?.toDouble() ?? 0;
-      final paid = (data['paid'] as num?)?.toDouble() ?? 0;
-      return amount - paid;
-    }
-    return 0;
+  Future<double> getStudentDebt(String studentName, {String? qrToken}) async {
+    final res = await _client.rpc('get_student_debt', params: {
+      'p_name': studentName.trim(),
+      'p_token': qrToken ?? '',
+    });
+    if (res == null) return 0;
+    return (res as num).toDouble();
   }
 
   Future<List<Map<String, dynamic>>> getTodaySalesByStudent(String studentName) async {
@@ -829,19 +825,24 @@ class SupabaseService {
   Future<void> submitPaymentCapture({
     required String studentId,
     required String imagePath,
+    required String token,
     String? message,
   }) async {
     await _client.rpc('submit_payment_capture', params: {
       'p_student_id': studentId,
+      'p_token': token,
       'p_message': message ?? '',
       'p_image_path': imagePath,
     });
   }
 
-  Future<List<Map<String, dynamic>>> getStudentCaptures(String studentId) async {
-    final res = await _client.rpc('get_student_captures', params: {'p_student_id': studentId});
+  Future<List<Map<String, dynamic>>> getStudentCaptures(String studentId, {String? qrToken}) async {
+    final res = await _client.rpc('get_student_captures', params: {
+      'p_student_id': studentId,
+      'p_token': qrToken ?? '',
+    });
     if (res == null) return [];
-    return (res as List).cast<Map<String, dynamic>>();
+    return (res as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
   String getPaymentCaptureUrl(String imagePath) {

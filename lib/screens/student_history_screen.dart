@@ -1,5 +1,6 @@
 ﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../services/supabase_service.dart';
 import '../services/date_utils.dart';
@@ -28,9 +29,10 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
   Future<void> _load() async {
     setState(() => loading = true);
     try {
+      final token = await const FlutterSecureStorage().read(key: 'student_qr_token') ?? '';
       final results = await Future.wait([
-        _supabase.getSalesByStudent(widget.student['name'] as String),
-        _supabase.getStudentDebt(widget.student['name'] as String),
+        _supabase.getSalesByStudent(widget.student['name'] as String, qrToken: token),
+        _supabase.getStudentDebt(widget.student['name'] as String, qrToken: token),
       ]);
       if (!mounted) return;
       setState(() {
@@ -61,7 +63,7 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
       return s['date'] == today;
     }).toList();
     final todayTotal = todaySales.fold<double>(0, (sum, s) => sum + ((s['total'] as num?)?.toDouble() ?? 0));
-    final isPendiente = (s) => (s['paymentMethod'] as String? ?? '').toLowerCase().contains('pendiente');
+    final isPendiente = (s) => (s['payment_method'] as String? ?? '').toLowerCase().contains('pendiente');
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mis compras')),
@@ -204,7 +206,7 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  sale['paymentMethod'] as String? ?? '',
+                                  sale['payment_method'] as String? ?? '',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,

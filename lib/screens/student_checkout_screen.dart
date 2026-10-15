@@ -35,7 +35,8 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
   }
 
   Future<void> _loadDebt() async {
-    final debt = await _supabase.getStudentDebt(widget.student['name'] as String);
+    final token = await const FlutterSecureStorage().read(key: 'student_qr_token') ?? '';
+    final debt = await _supabase.getStudentDebt(widget.student['name'] as String, qrToken: token);
     if (mounted) setState(() => _debt = debt);
   }
 

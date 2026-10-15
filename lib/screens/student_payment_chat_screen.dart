@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../services/supabase_service.dart';
@@ -42,6 +43,7 @@ class _StudentPaymentChatScreenState extends State<StudentPaymentChatScreen> {
     setState(() => _uploading = true);
     try {
       final studentId = widget.student['id'].toString();
+      final token = await const FlutterSecureStorage().read(key: 'student_qr_token') ?? '';
       final path = await _supabase.uploadPaymentCapture(
         studentId,
         _selectedName ?? 'captura.png',
@@ -50,6 +52,7 @@ class _StudentPaymentChatScreenState extends State<StudentPaymentChatScreen> {
       await _supabase.submitPaymentCapture(
         studentId: studentId,
         imagePath: path,
+        token: token,
         message: _messageCtrl.text.trim(),
       );
       _messageCtrl.clear();
@@ -79,7 +82,11 @@ class _StudentPaymentChatScreenState extends State<StudentPaymentChatScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final data = await _supabase.getStudentCaptures(widget.student['id'].toString());
+      final token = await const FlutterSecureStorage().read(key: 'student_qr_token') ?? '';
+      final data = await _supabase.getStudentCaptures(
+        widget.student['id'].toString(),
+        qrToken: token,
+      );
       if (!mounted) return;
       setState(() {
         _captures = data;

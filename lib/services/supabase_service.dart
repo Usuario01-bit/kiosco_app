@@ -8,6 +8,15 @@ import 'date_utils.dart';
 import 'local_cache_service.dart';
 import '../core/env.dart';
 
+/// Error de activacion con un mensaje apto para mostrar al usuario.
+class ActivationException implements Exception {
+  final String message;
+  const ActivationException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class SupabaseService {
 
   static final SupabaseService instance = SupabaseService._();
@@ -106,7 +115,6 @@ class SupabaseService {
           'grade': row['grado'].toString().trim(),
         'role': row['role'] ?? 'alumno',
         'temp_password': _generateTempPassword(),
-        'initial_code': _generateInitialCode(),
         'must_change_password': true,
       };
     }).toList();
@@ -118,11 +126,6 @@ class SupabaseService {
     final rng = Random.secure();
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     return List.generate(8, (_) => chars[rng.nextInt(chars.length)]).join();
-  }
-
-  String _generateInitialCode() {
-    final rng = Random.secure();
-    return rng.nextInt(1000000).toString().padLeft(6, '0');
   }
 
   Future<List<Map<String, dynamic>>> getStudents() async {
@@ -207,30 +210,42 @@ class SupabaseService {
     await _client.from('students').update({'temp_password': password.trim()}).eq('id', studentId.toString());
   }
 
-  Future<String?> getStudentInitialCode(String name) async {
-    final res = await _client.rpc('get_student_initial_code', params: {'p_name': name.trim()});
-    if (res == null) return null;
-    if (res is String && res.isEmpty) return null;
-    return res as String;
-  }
-
-  Future<Map<String, dynamic>?> firstLoginSetPassword({
+  /// Canjea el codigo de activacion que entrega el kiosco y crea
+  /// la contrasena del alumno. Es el unico camino de primer ingreso.
+  Future<Map<String, dynamic>?> activateStudent({
     required String name,
-    required String initialCode,
+    required String code,
     required String newPassword,
   }) async {
     try {
-      final res = await _client.rpc('set_student_password', params: {
+      final res = await _client.rpc('activate_student', params: {
         'p_name': name.trim(),
-        'p_initial_code': initialCode,
+        'p_code': code.trim(),
         'p_new_password': newPassword,
       });
       if (res == null) return null;
+      if (res is! Map) return null;
+      final map = Map<String, dynamic>.from(res);
+      if (map['status'] == 'error') {
+        throw ActivationException((map['message'] ?? '').toString());
+      }
+      return map;
+    } on PostgrestException catch (e) {
+      throw ActivationException(e.message);
+    }
+  }
+
+  /// Genera un codigo de activacion de 6 digitos para un alumno.
+  /// Solo funciona con sesion de admin. El codigo vence a los 15 minutos.
+  Future<Map<String, dynamic>?> adminGenerateActivation(dynamic studentId) async {
+    try {
+      final res = await _client.rpc('admin_generate_activation', params: {
+        'p_student_id': studentId.toString(),
+      });
       if (res is Map) return Map<String, dynamic>.from(res);
       return null;
-    } catch (e) {
-      debugPrint('set_student_password RPC error: $e');
-      return null;
+    } on PostgrestException catch (e) {
+      throw ActivationException(e.message);
     }
   }
 

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../services/excel_import.dart';
 import '../services/supabase_service.dart';
@@ -357,6 +358,82 @@ class _StudentsScreenState
         }
       }
     }
+  }
+
+  Future<void> _showActivationDialog(Map<String, dynamic> student) async {
+    Map<String, dynamic>? res;
+    try {
+      res = await SupabaseService.instance.adminGenerateActivation(student['id']);
+    } on ActivationException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+      return;
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error generando el código: $e'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final code = res?['code'] as String?;
+    if (code == null || !mounted) return;
+
+    String expiresLabel = '';
+    final expiresRaw = res?['expires_at'];
+    if (expiresRaw != null) {
+      final dt = DateTime.tryParse(expiresRaw.toString())?.toLocal();
+      if (dt != null) {
+        expiresLabel = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      }
+    }
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Activar a ${student['name']}'),
+        content: SizedBox(
+          width: 320,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Decile este código al alumno. Vence en 15 minutos.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              SelectableText(
+                code,
+                style: const TextStyle(
+                  fontSize: 44,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 8,
+                ),
+              ),
+              const SizedBox(height: 16),
+              QrImageView(
+                data: code,
+                size: 180,
+                backgroundColor: Colors.white,
+              ),
+              if (expiresLabel.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Vence a las $expiresLabel',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Listo')),
+        ],
+      ),
+    );
   }
 
   // =====================================================
@@ -1009,6 +1086,15 @@ sale['paid_at'] != null && (sale['paid_at'] as String).length >= 10
 
                                   size: R.sp(context, 26),
                                 ),
+                              ),
+                              IconButton(
+                                onPressed: () => _showActivationDialog(student),
+                                icon: Icon(
+                                  LucideIcons.shieldCheck,
+                                  color: Colors.green.shade600,
+                                  size: R.sp(context, 26),
+                                ),
+                                tooltip: 'Generar código de activación',
                               ),
                               IconButton(
                                 onPressed: () => _showPasswordDialog(student),

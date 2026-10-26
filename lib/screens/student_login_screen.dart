@@ -34,9 +34,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
   final _newPwCtrl = TextEditingController();
   final _confirmPwCtrl = TextEditingController();
+  final _codeCtrl = TextEditingController();
   bool _obscureNewPw = true;
-  String? _initialCode;
-  Timer? _setupDebounce;
+  bool _showFirstLogin = false;
 
   @override
   void initState() {
@@ -45,21 +45,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   }
 
   void _onNameChanged(String value) {
-    _setupDebounce?.cancel();
-    if (_initialCode != null) setState(() => _initialCode = null);
     if (_nameStatus != null) setState(() => _nameStatus = null);
-    final query = value.trim();
-    if (query.isEmpty) return;
-    _setupDebounce = Timer(const Duration(milliseconds: 400), () async {
-      final code = await SupabaseService.instance.getStudentInitialCode(query);
-      if (!mounted) return;
-      if (code != null && nameCtrl.text.trim().toLowerCase() == query.toLowerCase()) {
-        setState(() {
-          _initialCode = code;
-          errorMsg = null;
-        });
-      }
-    });
   }
 
   Future<void> _checkSavedSession() async {
@@ -100,13 +86,30 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     _enterCatalog();
   }
 
+  String _activationMessage(String raw) {
+    final m = raw.toLowerCase();
+    if (m.contains('codigo invalido')) {
+      return 'Código inválido o vencido. Pedile uno nuevo al kiosco.';
+    }
+    if (m.contains('al menos 8')) {
+      return 'La contraseña debe tener al menos 8 caracteres';
+    }
+    if (m.contains('no autorizado')) return 'No autorizado';
+    return 'No se pudo activar la cuenta. Intentá de nuevo.';
+  }
+
   Future<void> _firstLogin() async {
     final name = nameCtrl.text.trim();
+    final code = _codeCtrl.text.trim();
     final newPw = _newPwCtrl.text;
     final confirmPw = _confirmPwCtrl.text;
 
-    if (_initialCode == null) {
-      setState(() => errorMsg = 'Código inicial no disponible');
+    if (name.isEmpty) {
+      setState(() => errorMsg = 'Escribí tu nombre y apellido');
+      return;
+    }
+    if (code.isEmpty) {
+      setState(() => errorMsg = 'Pedile el código de activación al kiosco');
       return;
     }
     if (newPw.length < 8) {
@@ -123,19 +126,40 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       errorMsg = null;
     });
 
-    final student = await SupabaseService.instance.firstLoginSetPassword(
-      name: name,
-      initialCode: _initialCode!,
-      newPassword: newPw,
-    );
+    try {
+      final student = await SupabaseService.instance.activateStudent(
+        name: name,
+        code: code,
+        newPassword: newPw,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (student != null) {
-      await _completeStudentLogin(student, newPw);
-    } else {
+      if (student != null) {
+        await _completeStudentLogin(student, newPw);
+      } else {
+        setState(() {
+          errorMsg = 'No se pudo activar la cuenta. Intentá de nuevo.';
+          loggingIn = false;
+        });
+      }
+    } on ActivationException catch (e) {
+      if (!mounted) return;
       setState(() {
-        errorMsg = 'No se pudo crear la contraseña. Verificá el nombre e intentá de nuevo.';
+        errorMsg = _activationMessage(e.message);
+        loggingIn = false;
+      });
+    } on SocketException {
+      if (!mounted) return;
+      setState(() {
+        errorMsg = 'Sin conexión. Verificá tu conexión a internet.';
+        loggingIn = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('Activation error: $e');
+      setState(() {
+        errorMsg = 'Ocurrió un error inesperado. Intentá de nuevo.';
         loggingIn = false;
       });
     }
@@ -216,11 +240,11 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
   @override
   void dispose() {
-    _setupDebounce?.cancel();
     nameCtrl.dispose();
     passwordCtrl.dispose();
     _newPwCtrl.dispose();
     _confirmPwCtrl.dispose();
+    _codeCtrl.dispose();
     super.dispose();
   }
 
@@ -425,14 +449,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             children: [
                               RawAutocomplete<String>(
                                 textEditingController: nameCtrl,
-                                onSelected: (option) async {
-                                  final code = await SupabaseService.instance.getStudentInitialCode(option);
-                                  if (!mounted) return;
-                                  if (nameCtrl.text.trim().toLowerCase() == option.toLowerCase()) {
-                                    setState(() {
-                                      _initialCode = code;
-                                      errorMsg = null;
-                                    });
+                                onSelected: (option) {
+                                  if (_nameStatus != null) {
+                                    setState(() => _nameStatus = null);
                                   }
                                 },
                                 optionsBuilder: (textEditingValue) {
@@ -497,7 +516,18 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                               ),
                             ),
                           const SizedBox(height: 18),
-                          if (_initialCode != null) ...[
+                          if (!_showFirstLogin)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () => setState(() {
+                                  _showFirstLogin = true;
+                                  errorMsg = null;
+                                }),
+                                child: const Text('¿Primer ingreso? Pedí el código en el kiosco'),
+                              ),
+                            ),
+                          if (_showFirstLogin) ...[
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(14),
@@ -519,6 +549,23 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
+                            TextField(
+                              controller: _codeCtrl,
+                              keyboardType: TextInputType.number,
+                              maxLength: 6,
+                              decoration: InputDecoration(
+                                labelText: 'Código de activación (lo da el kiosco)',
+                                counterText: '',
+                                prefixIcon: const Icon(LucideIcons.lockKeyhole),
+                                filled: true,
+                                fillColor: _getBgColor(Theme.of(context).brightness),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
                             TextField(
                               controller: _newPwCtrl,
                               obscureText: _obscureNewPw,
@@ -567,6 +614,15 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                 child: loggingIn
                                     ? const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.5))
                                     : const Text('Crear contraseña y entrar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                            Center(
+                              child: TextButton(
+                                onPressed: () => setState(() {
+                                  _showFirstLogin = false;
+                                  errorMsg = null;
+                                }),
+                                child: const Text('Ya tengo contraseña'),
                               ),
                             ),
                           ] else ...[

@@ -145,7 +145,7 @@ BEGIN
   END IF;
 
   IF v_s.temp_password IS NOT NULL
-     AND v_s.temp_password = crypt(p_password, v_s.temp_password) THEN
+     AND v_s.temp_password = public.crypt(p_password, v_s.temp_password) THEN
     PERFORM public._login_ok(v_s.id);
     RETURN jsonb_build_object(
       'id', v_s.id::text,
@@ -215,7 +215,7 @@ BEGIN
     RETURN jsonb_build_object('status', 'error', 'message', 'Contrasena no configurada');
   END IF;
 
-  IF v_s.temp_password IS DISTINCT FROM crypt(p_password, v_s.temp_password) THEN
+  IF v_s.temp_password IS DISTINCT FROM public.crypt(p_password, v_s.temp_password) THEN
     PERFORM public._login_fail(v_s.id);
     RETURN jsonb_build_object('status', 'error', 'message', 'Contrasena incorrecta');
   END IF;

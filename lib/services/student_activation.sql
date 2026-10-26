@@ -65,7 +65,7 @@ BEGIN
   v_expires := now() + interval '15 minutes';
 
   UPDATE public.students
-  SET activation_code_hash  = crypt(v_code, gen_salt('bf')),
+  SET activation_code_hash  = public.crypt(v_code, public.gen_salt('bf')),
       activation_expires_at = v_expires,
       activation_attempts   = 0,
       must_change_password  = true
@@ -143,7 +143,7 @@ BEGIN
     RETURN v_error;
   END IF;
 
-  IF v_s.activation_code_hash IS DISTINCT FROM crypt(btrim(p_code), v_s.activation_code_hash) THEN
+  IF v_s.activation_code_hash IS DISTINCT FROM public.crypt(btrim(p_code), v_s.activation_code_hash) THEN
     UPDATE public.students
     SET activation_attempts = activation_attempts + 1,
         activation_code_hash = CASE

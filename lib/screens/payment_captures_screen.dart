@@ -15,6 +15,7 @@ class PaymentCapturesScreen extends StatefulWidget {
 class _PaymentCapturesScreenState extends State<PaymentCapturesScreen> {
   final _supabase = SupabaseService.instance;
   List<Map<String, dynamic>> _captures = [];
+  final Map<String, String> _signedUrls = {};
   StreamSubscription? _sub;
   bool _loading = true;
 
@@ -27,9 +28,64 @@ class _PaymentCapturesScreenState extends State<PaymentCapturesScreen> {
         _captures = data;
         _loading = false;
       });
+      _loadSignedUrls(data);
     }, onError: (_) {
       if (mounted) setState(() => _loading = false);
     });
+  }
+
+  /// El bucket es privado: cada comprobante necesita un link temporal.
+  /// Se piden en paralelo y se cachean por path.
+  Future<void> _loadSignedUrls(List<Map<String, dynamic>> captures) async {
+    final pending = <String>[];
+    for (final cap in captures) {
+      final path = cap['image_url'] as String?;
+      if (path == null || path.isEmpty) continue;
+      if (_signedUrls.containsKey(path)) continue;
+      if (!pending.contains(path)) pending.add(path);
+    }
+    if (pending.isEmpty) return;
+
+    final results = await Future.wait(pending.map((path) async {
+      final url = await _supabase.getPaymentCaptureSignedUrl(path);
+      return url == null ? null : MapEntry(path, url);
+    }));
+
+    if (!mounted) return;
+    setState(() {
+      for (final entry in results) {
+        if (entry != null) _signedUrls[entry.key] = entry.value;
+      }
+    });
+  }
+
+  Widget _captureImage(String path, {double? height, BoxFit fit = BoxFit.cover}) {
+    final url = _signedUrls[path];
+    if (url == null) {
+      return Container(
+        height: height,
+        width: double.infinity,
+        alignment: Alignment.center,
+        constraints: const BoxConstraints(minHeight: 80),
+        child: const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+    return Image.network(
+      url,
+      height: height,
+      width: double.infinity,
+      fit: fit,
+      errorBuilder: (_, __, ___) => Container(
+        height: height,
+        width: double.infinity,
+        alignment: Alignment.center,
+        child: const Icon(LucideIcons.imageOff),
+      ),
+    );
   }
 
   @override
@@ -71,13 +127,9 @@ class _PaymentCapturesScreenState extends State<PaymentCapturesScreen> {
             ),
             ClipRRect(
               child: InteractiveViewer(
-                child: Image.network(
-                  _supabase.getPaymentCaptureUrl(capture['image_url'] as String),
+                child: _captureImage(
+                  capture['image_url'] as String,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Icon(Icons.broken_image, size: 48),
-                  ),
                 ),
               ),
             ),
@@ -172,16 +224,9 @@ class _PaymentCapturesScreenState extends State<PaymentCapturesScreen> {
                               const SizedBox(height: 8),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: Image.network(
-                                  _supabase.getPaymentCaptureUrl(cap['image_url'] as String),
+                                child: _captureImage(
+                                  cap['image_url'] as String,
                                   height: 120,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    height: 120,
-                                    color: cs.surfaceContainerHighest,
-                                    child: const Center(child: Icon(LucideIcons.imageOff)),
-                                  ),
                                 ),
                               ),
                               if ((cap['message'] as String?)?.isNotEmpty ?? false) ...[

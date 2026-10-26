@@ -185,19 +185,15 @@ class _StudentPaymentChatScreenState extends State<StudentPaymentChatScreen> {
                                     Text(cap['message'] as String),
                                   ],
                                   const SizedBox(height: 8),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.network(
-                                      _supabase.getPaymentCaptureUrl(cap['image_url'] as String),
-                                      height: 140,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Container(
-                                        height: 140,
-                                        color: cs.surfaceContainerHighest,
-                                        child: const Center(child: Icon(LucideIcons.imageOff)),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.receipt_long, size: 14, color: cs.outline),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Comprobante enviado',
+                                        style: TextStyle(fontSize: 12, color: cs.outline),
                                       ),
-                                    ),
+                                    ],
                                   ),
                                 ],
                               ),

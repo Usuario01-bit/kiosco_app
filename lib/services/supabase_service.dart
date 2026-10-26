@@ -860,8 +860,18 @@ class SupabaseService {
     return (res as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
-  String getPaymentCaptureUrl(String imagePath) {
-    return '${Env.supabaseUrl}/storage/v1/object/public/payment-captures/$imagePath';
+  /// Link temporal para un comprobante. Requiere sesion de admin:
+  /// el bucket es privado y la policy de storage solo autoriza a
+  /// quien pasa is_admin().
+  Future<String?> getPaymentCaptureSignedUrl(String imagePath, {int expiresIn = 300}) async {
+    try {
+      return await _client.storage
+          .from('payment-captures')
+          .createSignedUrl(imagePath, expiresIn);
+    } catch (e) {
+      debugPrint('payment capture signed url error: $e');
+      return null;
+    }
   }
 
   Future<String> uploadProductImage(String fileName, Uint8List bytes) async {

@@ -50,7 +50,7 @@ CREATE OR REPLACE FUNCTION public.admin_generate_activation(p_student_id UUID)
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = 'public, extensions'
+SET search_path = 'public'
 AS $$
 DECLARE
   v_code    TEXT;
@@ -101,7 +101,7 @@ CREATE OR REPLACE FUNCTION public.activate_student(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = 'public, extensions'
+SET search_path = 'public'
 AS $$
 DECLARE
   v_s RECORD;

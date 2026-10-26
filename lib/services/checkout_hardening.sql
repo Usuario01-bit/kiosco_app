@@ -30,7 +30,7 @@ CREATE OR REPLACE FUNCTION public.student_checkout(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = 'public, extensions'
+SET search_path = 'public'
 AS $$
 DECLARE
   v_item JSONB;

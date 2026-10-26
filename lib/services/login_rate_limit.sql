@@ -121,7 +121,7 @@ CREATE OR REPLACE FUNCTION public.verify_student(p_name TEXT, p_password TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = 'public, extensions'
+SET search_path = 'public'
 AS $$
 DECLARE
   v_s      RECORD;
@@ -185,7 +185,7 @@ CREATE OR REPLACE FUNCTION public.set_student_qr_token(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = 'public, extensions'
+SET search_path = 'public'
 AS $$
 DECLARE
   v_s      RECORD;

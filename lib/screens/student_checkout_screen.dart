@@ -79,6 +79,20 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
       final date = toISODate(now);
       final time = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
+      final token = await const FlutterSecureStorage().read(key: 'student_qr_token');
+      if (token == null || token.isEmpty) {
+        if (mounted) {
+          setState(() => loading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tu sesión expiró. Volvé a entrar.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
       await _supabase.checkoutStudentOrder(
         student: widget.student,
         cartItems: widget.cartItems,
@@ -86,7 +100,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
         paymentMethod: paymentMethod,
         date: date,
         time: time,
-        qrToken: await const FlutterSecureStorage().read(key: 'student_qr_token'),
+        qrToken: token,
       );
 
       if (!mounted) return;

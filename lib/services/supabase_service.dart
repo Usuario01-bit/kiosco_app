@@ -386,7 +386,7 @@ class SupabaseService {
     required String paymentMethod,
     required String date,
     required String time,
-    String? qrToken,
+    required String qrToken,
   }) async {
     final studentId = student['id']?.toString();
     if (studentId == null || studentId.isEmpty) return;
@@ -406,7 +406,7 @@ class SupabaseService {
       'p_payment_method': paymentMethod,
       'p_date': date,
       'p_time': time,
-      if (qrToken != null && qrToken.isNotEmpty) 'p_token': qrToken,
+      'p_token': qrToken,
     });
   }
 

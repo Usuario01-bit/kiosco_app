@@ -29,3 +29,26 @@ Objetivo: que el primer ingreso pruebe identidad sin romper el flujo de compras,
 - **L2** (usuario): "ok y si el estudiante recien descarga la app ejemplo Senastian antonio le sale primer ingeso crea tu contraseña para entrar el crea su propia contraseña"
 - **L3** (usuario): "me parece mejor" — se elige activación única en el kiosco, código de 6 dígitos + QR, vencimiento 15 min.
 - **L4** (orquestador): se descarta el auto-fetch del código porque cualquier secreto entregado por un canal anónimo no es secreto. El flujo de auto-registro por nombre deja la cuenta al primero que llega.
+- **L5** (2026-10-26, producción): se aplicaron `student_activation.sql`, `checkout_hardening.sql`, `payment_captures_private.sql` y `login_rate_limit.sql`. Verificado por RPC: `activate_student` consume el código, hashea la contraseña, baja `must_change_password` y registra `activation_claimed_at`. Rate limit bloquea a los 5 intentos.
+- **L6** (2026-10-26, bug propio): `SET search_path = 'public, extensions'` se interpreta como un único esquema literal, así que `crypt`/`gen_salt` no resolvían y dejaron login y activación rotos. Corregido a `'public'` y además calificado como `public.crypt` / `public.gen_salt`.
+- **L7** (2026-10-26, abierto): en la app 1.4.4 el usuario reporta que el login no lo deja llegar al formulario de primer ingreso ("Nombre o contraseña incorrectos" en vez de los campos de código). El backend está validado por RPC, así que el problema está en la navegación de `student_login_screen`. Sin confirmar si el botón "¿Primer ingreso?" renderiza.
+
+## Estado al 2026-10-26
+
+Cerrado y verificado en producción:
+
+| Hallazgo | Estado |
+|---|---|
+| Toma de cuenta por código en texto plano | cerrado, RPC verificado |
+| `student_checkout` sin token | cerrado |
+| Cantidades negativas en checkout | cerrado |
+| `upsert_pending` expuesto a anon | revocado |
+| Bucket de comprobantes público | privado + URLs firmadas |
+| Fuerza bruta en login y en QR | rate limit activo |
+
+Pendiente:
+
+- **UI de primer ingreso** (bloqueante para el despliegue: ningún alumno puede activarse desde la app).
+- Probar compra con QR, badge de comprobantes y carga de imágenes firmadas.
+- Decisión de negocio: `p_payment_method` y `p_date` los manda el alumno.
+

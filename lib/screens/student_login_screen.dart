@@ -191,6 +191,12 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
           loggingIn = false;
         });
       }
+    } on LoginLockedException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        errorMsg = 'Demasiados intentos fallidos. Esperá ${e.retryAfterMinutes} minuto(s) e intentá de nuevo.';
+        loggingIn = false;
+      });
     } on SocketException {
       setState(() {
         errorMsg = 'Sin conexión. Verificá tu conexión a internet.';

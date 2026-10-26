@@ -17,6 +17,17 @@ class ActivationException implements Exception {
   String toString() => message;
 }
 
+/// Cuenta bloqueada por demasiados intentos fallidos.
+class LoginLockedException implements Exception {
+  final int retryAfterSeconds;
+  const LoginLockedException(this.retryAfterSeconds);
+
+  int get retryAfterMinutes => (retryAfterSeconds / 60).ceil();
+
+  @override
+  String toString() => 'Demasiados intentos. Esperá $retryAfterMinutes minuto(s).';
+}
+
 class SupabaseService {
 
   static final SupabaseService instance = SupabaseService._();
@@ -199,7 +210,13 @@ class SupabaseService {
         'p_password': password.trim(),
       });
       if (result == null) return null;
-      return result as Map<String, dynamic>;
+      final map = Map<String, dynamic>.from(result as Map);
+      if (map['status'] == 'locked') {
+        throw LoginLockedException((map['retry_after'] as num?)?.toInt() ?? 300);
+      }
+      return map;
+    } on LoginLockedException {
+      rethrow;
     } catch (e) {
       debugPrint('verify_student RPC error: $e');
       return null;
@@ -254,11 +271,20 @@ class SupabaseService {
     required String token,
     required String password,
   }) async {
-    await _client.rpc('set_student_qr_token', params: {
+    final res = await _client.rpc('set_student_qr_token', params: {
       'p_student_id': studentId.toString(),
       'p_token': token.trim(),
       'p_password': password,
     });
+    if (res is Map) {
+      final map = Map<String, dynamic>.from(res);
+      if (map['status'] == 'locked') {
+        throw LoginLockedException((map['retry_after'] as num?)?.toInt() ?? 300);
+      }
+      if (map['status'] == 'error') {
+        throw ActivationException((map['message'] ?? '').toString());
+      }
+    }
   }
 
   Future<void> clearStudentQrToken(String token) async {

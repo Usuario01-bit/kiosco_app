@@ -45,7 +45,11 @@ class _HomeScreenState
 
   int selectedIndex = 0;
   int activeOrders = 0;
+  int pendingCaptures = 0;
+  Set<String> _knownCaptureIds = {};
+  bool _capturesReady = false;
   StreamSubscription? _ordersSub;
+  StreamSubscription? _capturesSub;
   double _fabX = 0;
   double _fabY = 0;
   bool _fabInit = false;
@@ -63,12 +67,60 @@ class _HomeScreenState
         setState(() => activeOrders = active);
       }
     });
+
+    // Badge de comprobantes + aviso cuando llega uno nuevo.
+    // El primer load no notifica: solo marca lo que ya existia.
+    _capturesSub = SupabaseService.instance.streamPaymentCaptures().listen((data) {
+      if (!mounted) return;
+
+      final pending = data.where((c) => c['status'] == 'pendiente').length;
+      final ids = data
+          .map((c) => c['id']?.toString() ?? '')
+          .where((e) => e.isNotEmpty)
+          .toSet();
+
+      if (_capturesReady) {
+        final fresh = data.where((c) {
+          final id = c['id']?.toString();
+          return id != null && !_knownCaptureIds.contains(id);
+        }).toList();
+
+        if (fresh.isNotEmpty) {
+          final names = fresh
+              .map((c) => (c['student'] ?? '').toString())
+              .where((n) => n.isNotEmpty && n != 'Desconocido')
+              .toSet()
+              .toList();
+
+          final text = names.isEmpty
+              ? 'Llegó un nuevo comprobante de pago'
+              : names.length == 1
+                  ? '${names.first} subió un comprobante de pago'
+                  : '${names.length} alumnos subieron comprobantes de pago';
+
+          HapticFeedback.heavyImpact();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(text),
+              backgroundColor: Colors.green.shade700,
+              duration: const Duration(seconds: 6),
+            ),
+          );
+        }
+      }
+
+      _knownCaptureIds = ids;
+      _capturesReady = true;
+      setState(() => pendingCaptures = pending);
+    });
+
     ThemeProvider.instance.addListener(_refresh);
   }
 
   @override
   void dispose() {
     _ordersSub?.cancel();
+    _capturesSub?.cancel();
     ThemeProvider.instance.removeListener(_refresh);
     super.dispose();
   }
@@ -467,7 +519,19 @@ class _HomeScreenState
           NavigationDestination(icon: Icon(LucideIcons.package), label: 'Productos'),
           NavigationDestination(icon: Icon(LucideIcons.chartBar), label: 'Reportes'),
           NavigationDestination(icon: Icon(LucideIcons.clock), label: 'Pendientes'),
-          NavigationDestination(icon: Icon(LucideIcons.wallet), label: 'Pagos'),
+          NavigationDestination(
+            icon: Badge(
+              isLabelVisible: pendingCaptures > 0,
+              label: Text(
+                '$pendingCaptures',
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
+              textStyle: const TextStyle(color: Colors.white),
+              child: Icon(LucideIcons.wallet),
+            ),
+            label: 'Pagos',
+          ),
         ],
       ),
         ],

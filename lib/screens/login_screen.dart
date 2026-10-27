@@ -246,7 +246,7 @@ class _LoginScreenState
 
                     decoration: BoxDecoration(
 
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
 
                       borderRadius:
                       BorderRadius.circular(
@@ -366,9 +366,9 @@ class _LoginScreenState
                             filled: true,
 
                             fillColor:
-                            const Color(
-                              0xFFF5F5F5,
-                            ),
+                            Theme.of(context)
+                                .inputDecorationTheme
+                                .fillColor,
 
                             border:
                             OutlineInputBorder(
@@ -438,9 +438,9 @@ class _LoginScreenState
                             filled: true,
 
                             fillColor:
-                            const Color(
-                              0xFFF5F5F5,
-                            ),
+                            Theme.of(context)
+                                .inputDecorationTheme
+                                .fillColor,
 
                             border:
                             OutlineInputBorder(

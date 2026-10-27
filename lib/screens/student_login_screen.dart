@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../services/store_config.dart';
 import '../core/env.dart';
+import 'login_screen.dart';
 import 'student_catalog_screen.dart';
 import 'student_qr_screen.dart';
 import 'student_qr_scanner_screen.dart';
@@ -37,6 +38,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   final _codeCtrl = TextEditingController();
   bool _obscureNewPw = true;
   bool _showFirstLogin = false;
+  String? _activationHint;
 
   @override
   void initState() {
@@ -191,6 +193,17 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
           loggingIn = false;
         });
       }
+    } on NeedsActivationException {
+      // El nombre existe pero nunca creo contrasena: lo llevamos
+      // directo al formulario de activacion en vez de mostrarle
+      // "contrasena incorrecta" por una clave que no existe.
+      if (!mounted) return;
+      setState(() {
+        loggingIn = false;
+        _showFirstLogin = true;
+        _activationHint = 'Este nombre todavía no tiene contraseña. Pedile el código de 6 dígitos al kiosco.';
+        errorMsg = null;
+      });
     } on LoginLockedException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -528,6 +541,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                               child: TextButton(
                                 onPressed: () => setState(() {
                                   _showFirstLogin = true;
+                                  _activationHint = null;
                                   errorMsg = null;
                                 }),
                                 child: const Text('¿Primer ingreso? Pedí el código en el kiosco'),
@@ -546,9 +560,21 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                   const Icon(LucideIcons.sparkles, color: Colors.green, size: 20),
                                   const SizedBox(width: 10),
                                   Expanded(
-                                    child: Text(
-                                      '¡Primer ingreso! Creá tu contraseña para entrar.',
-                                      style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.w600),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '¡Primer ingreso! Creá tu contraseña para entrar.',
+                                          style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.w600),
+                                        ),
+                                        if (_activationHint != null) ...[
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            _activationHint!,
+                                            style: TextStyle(color: Colors.green.shade900, fontSize: 12.5),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -626,6 +652,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                               child: TextButton(
                                 onPressed: () => setState(() {
                                   _showFirstLogin = false;
+                                  _activationHint = null;
                                   errorMsg = null;
                                 }),
                                 child: const Text('Ya tengo contraseña'),
@@ -706,7 +733,20 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextButton.icon(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      // Al "Cerrar sesion" desde el portal la pila queda
+                      // vacia: Navigator.pop sobre la unica ruta deja la
+                      // pantalla en negro. Sin ruta abajo, volvemos al
+                      // login del kiosco.
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        );
+                      }
+                    },
                     icon: const Icon(LucideIcons.arrowLeft),
                     label: const Text('Volver'),
                   ),

@@ -32,6 +32,7 @@ Objetivo: que el primer ingreso pruebe identidad sin romper el flujo de compras,
 - **L5** (2026-10-26, producción): se aplicaron `student_activation.sql`, `checkout_hardening.sql`, `payment_captures_private.sql` y `login_rate_limit.sql`. Verificado por RPC: `activate_student` consume el código, hashea la contraseña, baja `must_change_password` y registra `activation_claimed_at`. Rate limit bloquea a los 5 intentos.
 - **L6** (2026-10-26, bug propio): `SET search_path = 'public, extensions'` se interpreta como un único esquema literal, así que `crypt`/`gen_salt` no resolvían y dejaron login y activación rotos. Corregido a `'public'` y además calificado como `public.crypt` / `public.gen_salt`.
 - **L7** (2026-10-26, abierto): en la app 1.4.4 el usuario reporta que el login no lo deja llegar al formulario de primer ingreso ("Nombre o contraseña incorrectos" en vez de los campos de código). El backend está validado por RPC, así que el problema está en la navegación de `student_login_screen`. Sin confirmar si el botón "¿Primer ingreso?" renderiza.
+- **L8** (2026-10-26): L7 diagnosticado. El link azul sí renderiza y sí está en el APK 1.4.4 (verificado leyendo los strings del `libapp.so` del release), así que el alumno simplemente aprieta "Ingresar" y cae en el error genérico. Fix: `verify_student` devuelve `{"status":"needs_activation"}` y la app cambia sola al formulario de activación. La señal correcta NO es `temp_password IS NULL` (toda alta escribe un `temp_password` aleatorio que nadie conoce) sino `must_change_password IS TRUE`, el mismo flag que usa el badge "Sin configurar" del panel. Pendiente: aplicar `login_rate_limit.sql` en Supabase y reinstalar el APK.
 
 ## Estado al 2026-10-26
 
@@ -48,7 +49,8 @@ Cerrado y verificado en producción:
 
 Pendiente:
 
-- **UI de primer ingreso** (bloqueante para el despliegue: ningún alumno puede activarse desde la app).
+- Aplicar `login_rate_limit.sql` en Supabase (el `verify_student` con `needs_activation`) y reinstalar el APK: hasta entonces el alumno nuevo sigue viendo "Nombre o contraseña incorrectos".
+- **UI de primer ingreso**: el auto-switch está en código pero sin probar en dispositivo.
 - Probar compra con QR, badge de comprobantes y carga de imágenes firmadas.
 - Decisión de negocio: `p_payment_method` y `p_date` los manda el alumno.
 

@@ -17,6 +17,12 @@ class ActivationException implements Exception {
   String toString() => message;
 }
 
+/// El alumno existe pero nunca creo su contrasena: el unico camino
+/// es activarse con el codigo de 6 digitos que entrega el kiosco.
+class NeedsActivationException implements Exception {
+  const NeedsActivationException();
+}
+
 /// Cuenta bloqueada por demasiados intentos fallidos.
 class LoginLockedException implements Exception {
   final int retryAfterSeconds;
@@ -214,8 +220,13 @@ class SupabaseService {
       if (map['status'] == 'locked') {
         throw LoginLockedException((map['retry_after'] as num?)?.toInt() ?? 300);
       }
+      if (map['status'] == 'needs_activation') {
+        throw const NeedsActivationException();
+      }
       return map;
     } on LoginLockedException {
+      rethrow;
+    } on NeedsActivationException {
       rethrow;
     } catch (e) {
       debugPrint('verify_student RPC error: $e');

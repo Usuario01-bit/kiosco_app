@@ -114,6 +114,7 @@ REVOKE ALL ON FUNCTION public._login_ok(UUID) FROM PUBLIC, anon, authenticated;
 -- Devuelve:
 --   NULL                                    -> credenciales incorrectas
 --   {"status":"locked","retry_after":<seg>} -> cuenta bloqueada
+--   {"status":"needs_activation"}           -> existe y nunca creo contrasena
 --   {...student...}                         -> login ok
 -- =====================================================
 
@@ -128,7 +129,7 @@ DECLARE
   v_locked INT;
   v_fail   JSONB;
 BEGIN
-  SELECT id, name, role, grade, code, temp_password
+  SELECT id, name, role, grade, code, temp_password, must_change_password
   INTO v_s
   FROM public.students
   WHERE name = p_name
@@ -154,6 +155,19 @@ BEGIN
       'grado', v_s.grade,
       'code', v_s.code
     );
+  END IF;
+
+  -- La cuenta existe pero todavia no tiene contrasena propia: toda
+  -- alta (manual o import) escribe un temp_password aleatorio que
+  -- nadie conoce y deja must_change_password = true. Esa es la
+  -- senal real de "sin configurar" que ya usa el panel de admin.
+  --
+  -- Va despues del chequeo de password para que una contrasena
+  -- valida gane siempre, y antes de _login_fail porque no hay
+  -- credencial conocida que adivinar: el alumno no puede
+  -- bloquearse a si mismo antes de activar.
+  IF v_s.must_change_password IS TRUE THEN
+    RETURN jsonb_build_object('status', 'needs_activation');
   END IF;
 
   v_fail := public._login_fail(v_s.id);

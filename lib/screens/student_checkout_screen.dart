@@ -26,7 +26,6 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
   bool loading = false;
   String? selectedRecreo;
   double _debt = 0;
-  String paymentMethod = 'Pendiente';
 
   @override
   void initState() {
@@ -97,7 +96,9 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
         student: widget.student,
         cartItems: widget.cartItems,
         recreo: selectedRecreo!,
-        paymentMethod: paymentMethod,
+        // El alumno no declara el pago: el kiosco lo registra al
+        // entregar. El servidor ademas lo fuerza a 'Pendiente'.
+        paymentMethod: 'Pendiente',
         date: date,
         time: time,
         qrToken: token,
@@ -289,23 +290,25 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('¿Cómo vas a pagar?', style: styles.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Row(
-            children: [
-              Expanded(
-                child: _buildPaymentOption(LucideIcons.banknote, 'Efectivo', Colors.green),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildPaymentOption(LucideIcons.smartphone, 'Yappy', const Color(0xFF7C3AED)),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildPaymentOption(LucideIcons.clock, 'Pendiente', Colors.orange),
-              ),
-            ],
-          ),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.info, size: 20, color: cs.onSurfaceVariant),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'El pago se registra en el kiosco al entregar el pedido.',
+                            style: styles.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
           const SizedBox(height: 32),
           SizedBox(
@@ -330,38 +333,6 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentOption(IconData icon, String label, Color color) {
-    final selected = paymentMethod == label;
-    return GestureDetector(
-      onTap: () => setState(() => paymentMethod = label),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.12) : null,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? color : Theme.of(context).colorScheme.outlineVariant,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: selected ? color : null, size: 24),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                color: selected ? color : null,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 -- =====================================================
 -- HARDENING DEL CHECKOUT - kiosco_app
--- Correr DESPUES de student_activation.sql
+-- Correr en el orden de SQL_APPLY_ORDER.md (despues de
+-- hardening_security.sql).
 --
 -- Cierra dos agujeros de student_checkout:
 --
@@ -16,6 +17,11 @@
 -- La app del alumno siempre tiene el qr_token en
 -- FlutterSecureStorage, asi que exigirlo no cambia el flujo
 -- real de compra.
+--
+-- 3. p_date y p_payment_method los mandaba el cliente. Ahora la
+--    fecha tiene que ser el dia local del kiosco y el metodo se
+--    ignora: la venta nace 'Pendiente' y el kiosco la marca como
+--    pagada al entregar.
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION public.student_checkout(
@@ -63,12 +69,20 @@ BEGIN
     RAISE EXCEPTION 'Carrito vacio';
   END IF;
 
+  -- 2. El alumno no puede fechar la venta: se compara contra el dia
+  -- local del kiosco (UTC-5). No sirve current_date porque el
+  -- servidor corre en UTC: despues de las 19:00 locales el dia del
+  -- servidor ya es el siguiente.
+  IF p_date IS DISTINCT FROM to_char((now() AT TIME ZONE 'America/Bogota')::date, 'YYYY-MM-DD') THEN
+    RAISE EXCEPTION 'Fecha invalida';
+  END IF;
+
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_cart_items)
   LOOP
     v_product_id := (v_item->>'product_id')::UUID;
     v_qty := (v_item->>'quantity')::INT;
 
-    -- 2. Cantidad positiva y acotada
+    -- 3. Cantidad positiva y acotada
     IF v_qty IS NULL OR v_qty <= 0 THEN
       RAISE EXCEPTION 'Cantidad invalida';
     END IF;
@@ -90,8 +104,11 @@ BEGIN
     v_line_total := v_price * v_qty;
     v_total := v_total + v_line_total;
 
+    -- p_payment_method se ignora a proposito: el alumno no declara
+    -- como paga. La venta nace como 'Pendiente' y el kiosco la marca
+    -- como pagada (con su metodo real) al entregar el pedido.
     INSERT INTO public.sales (student_id, product_id, quantity, total, payment_method, date, time, recreo)
-    VALUES (p_student_id::UUID, v_product_id, v_qty, v_line_total, p_payment_method, p_date, p_time, p_recreo);
+    VALUES (p_student_id::UUID, v_product_id, v_qty, v_line_total, 'Pendiente', p_date, p_time, p_recreo);
   END LOOP;
 
   RETURN jsonb_build_object('total', v_total, 'status', 'ok');

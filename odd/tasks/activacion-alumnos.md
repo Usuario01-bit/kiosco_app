@@ -35,6 +35,8 @@ Objetivo: que el primer ingreso pruebe identidad sin romper el flujo de compras,
 - **L8** (2026-10-26): L7 diagnosticado. El link azul sí renderiza y sí está en el APK 1.4.4 (verificado leyendo los strings del `libapp.so` del release), así que el alumno simplemente aprieta "Ingresar" y cae en el error genérico. Fix: `verify_student` devuelve `{"status":"needs_activation"}` y la app cambia sola al formulario de activación. La señal correcta NO es `temp_password IS NULL` (toda alta escribe un `temp_password` aleatorio que nadie conoce) sino `must_change_password IS TRUE`, el mismo flag que usa el badge "Sin configurar" del panel.
 - **L9** (2026-10-26, producción): `login_rate_limit.sql` aplicado y release v1.4.6 publicado con el APK. Verificado en dispositivo con los dos casos: Arminda (sin contraseña) cae en el formulario de activación; Carlos Viveros (ya activo) entra normal. Incluye además el fix del botón "Volver" del portal (quedaba en negro tras Cerrar sesión) y el modo oscuro del login de admin.
 - **L10** (2026-10-28, trampas del repo): las migraciones SQL del repo podían revertir el hardening en silencio. `first_login.sql` todavía creaba `get_student_initial_code` (devolvía el código de activación por nombre, sin secreto) y `set_student_password`, más un `UPDATE` que volvía a poner `must_change_password = true` en todas las cuentas sin `initial_code` — o sea, reabría la toma de cuenta y además mandaba a todo el mundo al formulario de activación. `supabase_security.sql` redefinía `verify_student` sin rate limit, sin `needs_activation` y sin `SET search_path` siendo SECURITY DEFINER. Corregido: `first_login.sql` queda como registro histórico (mantiene columnas, dropea los RPC), se elimina la versión vieja de `verify_student`, se agregan avisos en los 5 archivos superseded y se documenta el orden en `lib/services/SQL_APPLY_ORDER.md`.
+- **L11** (2026-10-28, política de pago): el alumno deja de declarar cómo paga. `student_checkout` ignora `p_payment_method` (la venta nace `'Pendiente'`) y exige que `p_date` sea el día local del kiosco (`America/Bogota`, UTC-5; el servidor corre en UTC, así que `current_date` sirve mal después de las 19:00). La UI del alumno pierde el selector Efectivo/Yappy/Pendiente. El kiosco decide al entregar: "Pagó con…" o "Pendiente (fiado)", y esa última rama ya crea/acumula la deuda en `pending` vía `insertPending`. Además el POS del admin ahora setea `paid_at` en las ventas cobradas (antes quedaban como impagas en el export).
+- **L12** (2026-10-28, hallazgo del QR): `get_student_by_token` no filtraba token vacío, así que `p_token = ''` devolvía el perfil del alumno con `qr_token = ''` (un caso real en la base). `_student_token_ok` ya lo rechazaba, por eso checkout/historial/deuda estaban a salvo. Corregido con guard + `set_student_qr_token` rechaza token vacío.
 
 ## Estado al 2026-10-26
 
@@ -51,8 +53,9 @@ Cerrado y verificado en producción:
 
 Pendiente:
 
-- Probar compra con QR, badge de comprobantes y carga de imágenes firmadas.
-- Decisión de negocio: `p_payment_method` y `p_date` los manda el alumno.
+- **Prueba de compra con QR**: verificada en dispositivo (pedido registrado con token válido). Falta probar el escaneo real desde un segundo Android (el build de Windows no soporta `mobile_scanner`) y la carga de comprobantes con URL firmada.
 - Contraste del botón "Portal del Alumno" sobre la tarjeta oscura (`Color(0xFF2563EB)` fijo; candidato a `colorScheme.primary`).
 - Operativo: redeploy de la Edge Function `cleanup-payment-captures` (la versión viva no devuelve `deletedPaths`).
+- Menor: la suma de `markStudentRecreoAsPrepared` no filtra `paid_at IS NULL` (el update sí). Hoy no se puede disparar porque nada escribe `paid_at` sin `prepared_at`, pero es inconsistencia latente.
+- Menor: `insertSale` (camelCase) es código muerto; si se usara, insertaría todo en NULL.
 

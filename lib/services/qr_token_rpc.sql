@@ -1,3 +1,8 @@
+-- CUIDADO (2026-10-28): set_student_qr_token vive ahora en
+-- login_rate_limit.sql, que comparte el contador de intentos con el
+-- login. Correr este archivo lo revierte a una version sin limite.
+-- clear_student_qr_token SI sigue siendo la vigente aca.
+-- Ver SQL_APPLY_ORDER.md.
 CREATE OR REPLACE FUNCTION public.set_student_qr_token(
   p_student_id TEXT,
   p_token TEXT,

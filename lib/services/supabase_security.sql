@@ -1,6 +1,15 @@
 -- =====================================================
 -- SECURITY MIGRATION — kiosco_app
 -- Run this in Supabase SQL Editor
+--
+-- CUIDADO (2026-10-28): este archivo NO es la fuente vigente de
+-- varias funciones. Correrlo completo revierte hardening posterior:
+--   is_admin          -> student_activation.sql (solo admin_profiles)
+--   verify_student    -> login_rate_limit.sql (rate limit + needs_activation)
+--   student_checkout  -> checkout_hardening.sql (token + cantidades)
+--   create_admin_user -> fix_admin_roles.sql (roles estrictos)
+-- Lo unico que sigue siendo la fuente vigente aca es
+-- hash_student_password_trigger(). Ver SQL_APPLY_ORDER.md.
 -- =====================================================
 
 -- 1. ENABLE EXTENSIONS
@@ -107,38 +116,13 @@ CREATE TRIGGER trg_hash_student_password
 
 -- =====================================================
 -- 5. RPC: verify_student
+--
+-- MOVIDA (2026-10-28): la definicion vive en login_rate_limit.sql.
+-- Esta version no tenia limite de intentos y, al ser SECURITY
+-- DEFINER sin SET search_path, quedaba expuesta a hijacking de
+-- search_path. Se elimina para que correr este archivo no la
+-- revierta.
 -- =====================================================
-
-CREATE OR REPLACE FUNCTION public.verify_student(p_name TEXT, p_password TEXT)
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_student RECORD;
-BEGIN
-  SELECT id, name, role, grade, code, temp_password INTO v_student
-  FROM students
-  WHERE name = p_name AND deleted IS NOT TRUE
-  LIMIT 1;
-
-  IF NOT FOUND THEN
-    RETURN NULL;
-  END IF;
-
-  IF v_student.temp_password = crypt(p_password, v_student.temp_password) THEN
-    RETURN jsonb_build_object(
-      'id', v_student.id::text,
-      'name', v_student.name,
-      'role', v_student.role,
-      'grado', v_student.grade,
-      'code', v_student.code
-    );
-  END IF;
-
-  RETURN NULL;
-END;
-$$;
 
 -- =====================================================
 -- 6. RPC: student_checkout (atomic)

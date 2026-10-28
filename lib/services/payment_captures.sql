@@ -1,6 +1,10 @@
 -- =====================================================
 -- PAYMENT CAPTURES - student payment screenshots
 -- Run in Supabase SQL Editor
+--
+-- CUIDADO (2026-10-28): submit_payment_capture y get_student_captures
+-- viven ahora en hardening_security.sql (validan identidad con
+-- qr_token). Correr este archivo los revierte. Ver SQL_APPLY_ORDER.md.
 -- =====================================================
 
 -- 1. TABLE

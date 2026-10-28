@@ -1,5 +1,9 @@
 -- Fix: student_checkout with identity validation + no pending logic
 -- Run in Supabase SQL Editor
+--
+-- CUIDADO (2026-10-28): la version vigente de student_checkout vive
+-- en checkout_hardening.sql (exige qr_token y rechaza cantidades
+-- invalidas). Correr este archivo la revierte. Ver SQL_APPLY_ORDER.md.
 
 CREATE OR REPLACE FUNCTION public.student_checkout(
   p_student_id TEXT,

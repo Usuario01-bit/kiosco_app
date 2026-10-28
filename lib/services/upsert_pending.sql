@@ -1,5 +1,9 @@
 -- Run this in Supabase SQL Editor
 -- Creates a function that handles pending inserts safely (bypassing RLS)
+--
+-- CUIDADO (2026-10-28): upsert_pending esta REVOCADO para anon y
+-- authenticated en student_activation.sql. Correr este archivo lo
+-- vuelve a exponer. Ver SQL_APPLY_ORDER.md.
 
 CREATE OR REPLACE FUNCTION public.upsert_pending(
   p_student_id TEXT,

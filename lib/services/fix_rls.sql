@@ -1,6 +1,10 @@
 -- =====================================================
 -- FIX: RLS — make is_admin() work for existing admins
 -- Run this in Supabase SQL Editor (AFTER security migration)
+--
+-- CUIDADO (2026-10-28): is_admin() vive ahora en
+-- student_activation.sql (version estricta, solo admin_profiles).
+-- Correr este archivo la revierte. Ver SQL_APPLY_ORDER.md.
 -- =====================================================
 
 -- 1. Drop ALL existing RLS policies

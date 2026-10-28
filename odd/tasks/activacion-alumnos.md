@@ -34,6 +34,7 @@ Objetivo: que el primer ingreso pruebe identidad sin romper el flujo de compras,
 - **L7** (2026-10-26, abierto): en la app 1.4.4 el usuario reporta que el login no lo deja llegar al formulario de primer ingreso ("Nombre o contraseña incorrectos" en vez de los campos de código). El backend está validado por RPC, así que el problema está en la navegación de `student_login_screen`. Sin confirmar si el botón "¿Primer ingreso?" renderiza.
 - **L8** (2026-10-26): L7 diagnosticado. El link azul sí renderiza y sí está en el APK 1.4.4 (verificado leyendo los strings del `libapp.so` del release), así que el alumno simplemente aprieta "Ingresar" y cae en el error genérico. Fix: `verify_student` devuelve `{"status":"needs_activation"}` y la app cambia sola al formulario de activación. La señal correcta NO es `temp_password IS NULL` (toda alta escribe un `temp_password` aleatorio que nadie conoce) sino `must_change_password IS TRUE`, el mismo flag que usa el badge "Sin configurar" del panel.
 - **L9** (2026-10-26, producción): `login_rate_limit.sql` aplicado y release v1.4.6 publicado con el APK. Verificado en dispositivo con los dos casos: Arminda (sin contraseña) cae en el formulario de activación; Carlos Viveros (ya activo) entra normal. Incluye además el fix del botón "Volver" del portal (quedaba en negro tras Cerrar sesión) y el modo oscuro del login de admin.
+- **L10** (2026-10-28, trampas del repo): las migraciones SQL del repo podían revertir el hardening en silencio. `first_login.sql` todavía creaba `get_student_initial_code` (devolvía el código de activación por nombre, sin secreto) y `set_student_password`, más un `UPDATE` que volvía a poner `must_change_password = true` en todas las cuentas sin `initial_code` — o sea, reabría la toma de cuenta y además mandaba a todo el mundo al formulario de activación. `supabase_security.sql` redefinía `verify_student` sin rate limit, sin `needs_activation` y sin `SET search_path` siendo SECURITY DEFINER. Corregido: `first_login.sql` queda como registro histórico (mantiene columnas, dropea los RPC), se elimina la versión vieja de `verify_student`, se agregan avisos en los 5 archivos superseded y se documenta el orden en `lib/services/SQL_APPLY_ORDER.md`.
 
 ## Estado al 2026-10-26
 
@@ -50,8 +51,8 @@ Cerrado y verificado en producción:
 
 Pendiente:
 
-- **UI de primer ingreso**: verificada en dispositivo (Arminda) y regresión de login normal (Carlos Viveros) OK.
 - Probar compra con QR, badge de comprobantes y carga de imágenes firmadas.
 - Decisión de negocio: `p_payment_method` y `p_date` los manda el alumno.
 - Contraste del botón "Portal del Alumno" sobre la tarjeta oscura (`Color(0xFF2563EB)` fijo; candidato a `colorScheme.primary`).
+- Operativo: redeploy de la Edge Function `cleanup-payment-captures` (la versión viva no devuelve `deletedPaths`).
 

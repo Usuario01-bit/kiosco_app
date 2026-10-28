@@ -46,7 +46,7 @@ flutter test
 
 - Supabase PostgreSQL. Sin migraciones locales — el schema se maneja en la consola de Supabase.
 - `SupabaseService.instance` singleton para toda interacción con BD.
-- Fecha en formato `dd/mm/yyyy` (no ISO) en sales/pending.
+- Fecha en formato ISO `yyyy-MM-dd` en `sales`/`pending` (helper `toISODate()`). La `dd/mm/yyyy` es solo de presentación.
 - Admin por defecto: `admin` / `admin123`.
 
 ## Gotchas

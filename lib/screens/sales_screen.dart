@@ -263,6 +263,12 @@ class _SalesScreenState
         recreo = 'Salida';
       }
 
+      // Un cobro en el mostrador ya esta pago: paid_at se setea salvo
+      // que la venta sea fiado. Sin esto, una venta en efectivo queda
+      // con paid_at NULL y los reportes la muestran como impaga.
+      final isFiado = currentPaymentMethod.toLowerCase().trim() == 'pendiente';
+      final soldAt = DateTime.now().toIso8601String();
+
       final saleRows = cartSnapshot.map((item) {
         return {
           'student_id': currentStudentId ?? '',
@@ -270,7 +276,8 @@ class _SalesScreenState
           'quantity': item['quantity'],
           'total': (item['price'] as num).toDouble() * item['quantity'],
           'payment_method': currentPaymentMethod,
-          'prepared_at': DateTime.now().toIso8601String(),
+          'paid_at': isFiado ? null : soldAt,
+          'prepared_at': soldAt,
           'date': toISODate(now),
           'time': '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
           'recreo': recreo,
@@ -288,15 +295,13 @@ class _SalesScreenState
         );
       }
 
-      if (currentPaymentMethod
-          .toLowerCase()
-          .trim() == 'pendiente') {
+      if (isFiado) {
         await SupabaseService.instance
             .insertPending({
           'student_id': currentStudentId,
           'student': currentStudent,
           'amount': currentTotal,
-          'created_at': now.toIso8601String(),
+          'created_at': soldAt,
         });
       }
 

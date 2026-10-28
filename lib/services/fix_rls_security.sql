@@ -41,7 +41,13 @@ SECURITY DEFINER
 SET search_path = 'public'
 AS $$
   SELECT id, name, role, grade, code FROM students
-  WHERE qr_token = p_token AND deleted IS NOT TRUE
+  WHERE qr_token = p_token
+    AND deleted IS NOT TRUE
+    -- Sin este guard, un qr_token vacio (string '') matchea con
+    -- p_token = '' y devuelve el perfil a cualquiera.
+    AND COALESCE(btrim(p_token), '') <> ''
+    AND qr_token IS NOT NULL
+    AND qr_token <> ''
   LIMIT 1;
 $$;
 

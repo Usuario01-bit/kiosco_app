@@ -236,6 +236,12 @@ BEGIN
 
   PERFORM public._login_ok(v_s.id);
 
+  -- Un token vacio queda igual al de cualquier alumno sin token y
+  -- habilita get_student_by_token(''). No se acepta nunca.
+  IF p_token IS NULL OR btrim(p_token) = '' THEN
+    RETURN jsonb_build_object('status', 'error', 'message', 'Token invalido');
+  END IF;
+
   UPDATE public.students SET qr_token = p_token WHERE id = v_s.id;
 
   RETURN jsonb_build_object('status', 'ok');

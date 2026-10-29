@@ -198,6 +198,13 @@ BEGIN
     RAISE EXCEPTION 'Token invalido';
   END IF;
 
+  -- El archivo tiene que estar en la carpeta del alumno que lo envia
+  -- (<student_id>/...). Sin esto, con un token valido se podia
+  -- registrar un comprobante apuntando a la carpeta de otro alumno.
+  IF split_part(p_image_path, '/', 1) IS DISTINCT FROM v_s.id::text THEN
+    RAISE EXCEPTION 'Ruta de captura invalida';
+  END IF;
+
   INSERT INTO payment_captures (student_id, message, image_url, status)
   VALUES (v_s.id, p_message, p_image_path, 'pendiente')
   RETURNING id INTO v_id;
@@ -248,6 +255,14 @@ $$;
 -- =====================================================
 -- 10. BUCKET payment-captures: subida SOLO para alumnos registrados
 --     El path debe ser <student_id>/... y ese id debe existir en students
+--
+-- LIMITACION CONOCIDA: el alumno no tiene JWT, asi que el INSERT de
+-- storage no puede saber quien sube. La policy solo puede verificar
+-- que la carpeta sea de *algun* alumno existente, no que sea la
+-- propia. Consecuencia: un anonimo puede escribir archivos en la
+-- carpeta de otro alumno (no leerlos: el bucket es privado y el
+-- SELECT queda solo para admin). Acotado por el TTL de 15 dias.
+-- Cerrarlo del todo requiere auth real de alumnos (JWT), no token QR.
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION public._payment_capture_path_owner(p_path TEXT)

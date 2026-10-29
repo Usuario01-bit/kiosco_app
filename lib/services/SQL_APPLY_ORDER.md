@@ -23,6 +23,7 @@ sin aviso.
 | 9 | `payment_captures_private.sql` | Bucket privado + URLs firmadas |
 | 10 | `login_rate_limit.sql` | `verify_student` con rate limit y `needs_activation`, `set_student_qr_token` con el mismo contador |
 | 11 | `student_activation.sql` | `admin_generate_activation`, `activate_student`, `is_admin` estricta, drop de los RPC viejos, revoke de `upsert_pending` |
+| 12 | `drop_legacy_overloads.sql` | Borra las sobrecargas viejas sin `p_token` de `student_checkout`, `submit_payment_capture` y `get_student_captures`. Idempotente |
 | — | `first_login.sql` | Nada: retirado. Correrlo ya no recrea el flujo viejo |
 | — | `upsert_pending.sql` | Nada: función revocada |
 
@@ -43,3 +44,26 @@ sin aviso.
 
 Verificado por RPC el 2026-10-26: cada función vigente responde con el
 comportamiento endurecido. Este documento es sobre el repo, no sobre la base.
+
+## Trampa de las sobrecargas
+
+`CREATE OR REPLACE FUNCTION` **no cambia la firma**. Si la versión nueva agrega
+un parámetro, Postgres crea una función nueva y la vieja sigue viva con sus
+grants. PostgREST elige según los nombres de argumentos del cliente, así que la
+vieja es invocable y no valida nada.
+
+Pasó con `student_checkout` (6 args sin `p_token`), `submit_payment_capture`
+(3 args) y `get_student_captures` (1 arg). Los `DROP` de los archivos de
+hardening apuntaban a la firma nueva, no a la vieja.
+
+Regla: **antes de cambiar la firma de una función, dropeá la firma vieja
+explícitamente**. Después de aplicar cualquier migración, correr:
+
+```sql
+SELECT proname, count(*)
+FROM pg_proc
+WHERE pronamespace = 'public'::regnamespace
+GROUP BY 1 HAVING count(*) > 1;
+```
+
+Cualquier fila que aparezca es una sobrecarga olvidada.

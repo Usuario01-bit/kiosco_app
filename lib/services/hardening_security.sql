@@ -167,6 +167,9 @@ $$;
 
 -- 8. submit_payment_capture — ahora valida identidad con qr_token
 DROP FUNCTION IF EXISTS public.submit_payment_capture(TEXT, TEXT, TEXT, TEXT);
+-- La version original tenia 3 argumentos (sin token). Hay que
+-- dropearla explicitamente: CREATE OR REPLACE no la pisa.
+DROP FUNCTION IF EXISTS public.submit_payment_capture(TEXT, TEXT, TEXT);
 CREATE OR REPLACE FUNCTION public.submit_payment_capture(
   p_student_id TEXT,
   p_token TEXT,
@@ -215,6 +218,8 @@ $$;
 
 -- 9. get_student_captures — solo las propias y con qr_token
 DROP FUNCTION IF EXISTS public.get_student_captures(TEXT, TEXT);
+-- La version original tenia 1 argumento (sin token).
+DROP FUNCTION IF EXISTS public.get_student_captures(TEXT);
 CREATE OR REPLACE FUNCTION public.get_student_captures(p_student_id TEXT, p_token TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql

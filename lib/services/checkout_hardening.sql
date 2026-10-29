@@ -3,6 +3,14 @@
 -- Correr en el orden de SQL_APPLY_ORDER.md (despues de
 -- hardening_security.sql).
 --
+-- La version original de student_checkout tenia 6 argumentos (sin
+-- p_token). CREATE OR REPLACE no la pisa: hay que borrarla o queda
+-- viva como sobrecarga sin token, invocable desde PostgREST.
+-- =====================================================
+
+DROP FUNCTION IF EXISTS public.student_checkout(TEXT, JSONB, TEXT, TEXT, TEXT, TEXT);
+
+-- =====================================================
 -- Cierra dos agujeros de student_checkout:
 --
 -- 1. p_token era OPCIONAL. El cuerpo hacia

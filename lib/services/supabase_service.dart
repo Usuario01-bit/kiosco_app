@@ -1,5 +1,4 @@
 ﻿import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -401,21 +400,6 @@ class SupabaseService {
   // SALES
   // =====================================================
 
-  Future<void> insertSale(Map<String, dynamic> sale) async {
-    await _client.from('sales').insert({
-      'student_id': sale['studentId'],
-      'product_id': sale['productId'],
-      'quantity': (sale['quantity'] as num).toInt(),
-      'total': (sale['total'] as num).toDouble(),
-      'payment_method': sale['paymentMethod'],
-      'date': sale['date'],
-      'time': sale['time'],
-      'recreo': sale['recreo'] ?? '',
-      'paid_at': sale['paidAt'],
-      'prepared_at': sale['preparedAt'],
-    });
-  }
-
   Future<void> checkoutStudentOrder({
     required Map<String, dynamic> student,
     required List<Map<String, dynamic>> cartItems,
@@ -455,7 +439,17 @@ class SupabaseService {
     if (studentData.isEmpty) return;
     final studentId = studentData.first['id'].toString();
 
-    final snap = await _client.from('sales').select('total').eq('student_id', studentId).eq('date', today).eq('recreo', recreo).isFilter('prepared_at', null);
+    // Solo cuentan las ventas impagas y sin preparar: el update de
+    // abajo usa los mismos filtros. Si no, una venta ya cobrada pero
+    // sin preparar inflaba la deuda.
+    final snap = await _client
+        .from('sales')
+        .select('total')
+        .eq('student_id', studentId)
+        .eq('date', today)
+        .eq('recreo', recreo)
+        .isFilter('prepared_at', null)
+        .isFilter('paid_at', null);
 
     double total = 0;
     for (final doc in snap) {

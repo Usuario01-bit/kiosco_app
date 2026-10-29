@@ -59,7 +59,7 @@ flutter test
 - **`ListenableBuilder`** en main.dart — **no usar** `Consumer`/`Provider`/`context.watch` para el theme.
 - **Sin `build_runner`**, sin generación de código, sin inyección de dependencias.
 - **`toISODate()`**: helper en `services/date_utils.dart`. Usar para fechas ISO (`yyyy-MM-dd`) en queries a Supabase.
-- **`streamActiveOrdersCount`**: filtra solo por `paid_at.isNull`, NO por `prepared_at`. Una orden "Pendiente" (fiado) no tiene `prepared_at` pero debe contar como activa.
+- **`streamActiveOrdersCount`**: filtra por `prepared_at.isNull`, NO por `paid_at`. Una orden "Pendiente" (fiado) queda con `prepared_at` seteado solo cuando el kiosco la marca como preparada.
 - **`store_config`**: tabla en Supabase con config del kiosco. Leída por `StoreConfig.instance`.
 
 ## Recordatorio post-sesión

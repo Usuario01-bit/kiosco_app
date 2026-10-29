@@ -567,8 +567,8 @@ class _LoginScreenState
                               icon: const Icon(LucideIcons.school),
                               label: const Text('Portal del Alumno'),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF2563EB),
-                                side: const BorderSide(color: Color(0xFF2563EB)),
+                                foregroundColor: Theme.of(context).colorScheme.primary,
+                                side: BorderSide(color: Theme.of(context).colorScheme.primary),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),

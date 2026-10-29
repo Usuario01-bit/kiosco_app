@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -49,7 +49,8 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
     return t;
   }
 
-  bool get allLocked => RecreoSchedule.windows.every((w) => w.isLocked(DateTime.now()));
+  bool get allUnavailable =>
+      RecreoSchedule.windows.every((w) => !w.isAvailable(DateTime.now()));
 
   Future<void> _confirm() async {
     if (loading) return;
@@ -225,13 +226,15 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
           Text('¿Cuándo lo retirás?', style: styles.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
 
-          if (allLocked)
+          if (allUnavailable)
             _buildAllLocked(cs, styles)
           else
             ...RecreoSchedule.windows.map((w) {
               final isSelected = selectedRecreo == w.name;
-              final locked = w.isLocked(now);
               final open = w.isOpen(now);
+              final ended = w.hasEnded(now);
+              final locked = w.isLocked(now);
+              final disabled = !w.isAvailable(now);
 
               IconData icon;
               Color iconColor;
@@ -240,7 +243,11 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
               if (open) {
                 icon = LucideIcons.checkCircle;
                 iconColor = Colors.green;
-                status = 'Abierto ahora';
+                status = 'En curso — no se reciben pedidos';
+              } else if (ended) {
+                icon = Icons.event_busy;
+                iconColor = cs.onSurfaceVariant;
+                status = 'Ya pasó';
               } else if (locked) {
                 icon = Icons.timer_off;
                 iconColor = cs.onSurfaceVariant;
@@ -269,7 +276,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
                   ),
                   value: w.name,
                   groupValue: selectedRecreo,
-                  onChanged: locked ? null : (v) => setState(() => selectedRecreo = v),
+                  onChanged: disabled ? null : (v) => setState(() => selectedRecreo = v),
                 ),
               );
             }),

@@ -29,6 +29,14 @@ class RecreoWindow {
     return !now.isBefore(lock) && now.isBefore(end);
   }
 
+  /// La ventana ya cerro: pedir para ella no tiene sentido porque el
+  /// kiosco no llega a prepararlo.
+  bool hasEnded(DateTime now) => !now.isBefore(getEndToday(now));
+
+  /// Se puede pedir para esta ventana: no cerro todavia y no se
+  /// bloquearon los pedidos (el bloqueo arranca 20 min antes).
+  bool isAvailable(DateTime now) => !hasEnded(now) && !isLocked(now);
+
   Duration timeUntilOpen(DateTime now) {
     final start = getStartToday(now);
     return start.difference(now);
@@ -63,32 +71,19 @@ class RecreoSchedule {
 
   static RecreoWindow? getNextAvailable(DateTime now) {
     for (final w in windows) {
-      final lock = w.getLockTimeToday(now);
-      if (!now.isAfter(lock)) return w;
-      if (w.isOpen(now) || w.isLocked(now)) continue;
-      return w;
+      if (w.isAvailable(now)) return w;
     }
     return null;
   }
 
+  /// Verdadero si queda al menos una ventana para la que se pueda
+  /// pedir. Una ventana que ya paso no cuenta.
   static bool canOrderNow(DateTime now) {
-    for (final w in windows) {
-      if (w.isOpen(now)) return true;
-      if (w.isLocked(now)) return false;
-    }
-    return true;
+    return windows.any((w) => w.isAvailable(now));
   }
 
   static List<RecreoWindow> getAvailableWindows(DateTime now) {
-    final available = <RecreoWindow>[];
-    for (final w in windows) {
-      if (w.isOpen(now)) {
-        available.add(w);
-      } else if (!w.isLocked(now)) {
-        available.add(w);
-      }
-    }
-    return available;
+    return windows.where((w) => w.isAvailable(now)).toList();
   }
 
   static List<RecreoWindow> getOpenWindows(DateTime now) {

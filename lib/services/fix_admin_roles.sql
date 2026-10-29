@@ -5,6 +5,7 @@
 ALTER TABLE admin_profiles ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'admin';
 
 -- 2. Update create_admin_user function to accept role
+DROP FUNCTION IF EXISTS public.create_admin_user(TEXT, TEXT);
 CREATE OR REPLACE FUNCTION public.create_admin_user(p_username TEXT, p_password TEXT, p_role TEXT DEFAULT 'admin')
 RETURNS JSONB
 LANGUAGE plpgsql

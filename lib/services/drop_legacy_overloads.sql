@@ -22,20 +22,22 @@
 DROP FUNCTION IF EXISTS public.student_checkout(TEXT, JSONB, TEXT, TEXT, TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.submit_payment_capture(TEXT, TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.get_student_captures(TEXT);
+-- Administracion: la vieja (2 args) no escribe el rol en los metadatos.
+-- No es un agujero (las dos validan is_admin), pero es una sobrecarga
+-- muerta que confunde.
+DROP FUNCTION IF EXISTS public.create_admin_user(TEXT, TEXT);
 
 -- =====================================================
 -- VERIFICACION (correr a mano)
 -- =====================================================
 --
--- No debe quedar ninguna funcion duplicada en public:
+-- Quedan duplicados de pgcrypto (armor, digest, gen_salt, hmac,
+-- pgp_*): esos son overloads legitimos de la extension, ignorar.
+-- En public solo tiene que quedar una version de cada RPC propio:
 --
 -- SELECT proname, count(*)
 -- FROM pg_proc
 -- WHERE pronamespace = 'public'::regnamespace
+--   AND proname IN ('student_checkout', 'submit_payment_capture',
+--                   'get_student_captures', 'create_admin_user')
 -- GROUP BY 1 HAVING count(*) > 1;
---
--- Y estas dos tienen que devolver 1 sola fila cada una:
---
--- SELECT oid::regprocedure FROM pg_proc
--- WHERE proname IN ('student_checkout', 'submit_payment_capture',
---                   'get_student_captures');

@@ -863,7 +863,8 @@ class SupabaseService {
   // =====================================================
 
   Future<String> uploadPaymentCapture(String studentId, String fileName, Uint8List bytes) async {
-    final safeName = '$studentId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    final safeFileName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final safeName = '$studentId/${DateTime.now().millisecondsSinceEpoch}_$safeFileName';
     await _client.storage.from('payment-captures').uploadBinary(safeName, bytes, fileOptions: const FileOptions(upsert: false));
     return safeName;
   }

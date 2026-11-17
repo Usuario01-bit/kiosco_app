@@ -63,6 +63,15 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
 
     final now = DateTime.now();
     final selected = RecreoSchedule.windows.firstWhere((w) => w.name == selectedRecreo);
+    if (selected.hasEnded(now)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$selectedRecreo ya pasó, no se pueden recibir más pedidos'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
     if (selected.isLocked(now)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -322,7 +331,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton.icon(
-              onPressed: loading ? null : _confirm,
+              onPressed: (loading || allUnavailable) ? null : _confirm,
               icon: loading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Icon(LucideIcons.checkCircle),
@@ -358,13 +367,14 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
           Icon(Icons.restaurant_menu, size: 64, color: cs.primary.withValues(alpha: 0.5)),
           const SizedBox(height: 20),
           Text(
-            '¡Ya estamos preparando los pedidos!',
+            'No hay pedidos abiertos ahora',
             style: styles.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
-            'El kiosco está ultimando los pedidos del día. Volvé más tarde para hacer tu compra.',
+            'Los pedidos se toman de ${RecreoWindow.orderHoursLabel}, '
+            'y cierran 20 minutos antes de cada recreo.',
             style: styles.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),

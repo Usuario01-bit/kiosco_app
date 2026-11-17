@@ -121,4 +121,46 @@ void main() {
       expect(RecreoSchedule.canOrderNow(at(10, 5)), isTrue);
     });
   });
+
+  group('horario global de pedidos (06:00 a 13:40)', () {
+    final r1 = RecreoSchedule.windows[0];
+    final salida = RecreoSchedule.windows[2];
+
+    test('la franja respeta apertura y cierre', () {
+      expect(RecreoWindow.isWithinOrderHours(at(5, 59)), isFalse);
+      expect(RecreoWindow.isWithinOrderHours(at(6, 0)), isTrue);
+      expect(RecreoWindow.isWithinOrderHours(at(13, 39)), isTrue);
+      expect(RecreoWindow.isWithinOrderHours(at(13, 40)), isFalse);
+      expect(RecreoWindow.isWithinOrderHours(at(14, 30)), isFalse);
+    });
+
+    test('no disponible de madrugada', () {
+      expect(r1.isAvailable(at(3, 0)), isFalse);
+    });
+
+    test('no disponible un minuto antes de la apertura', () {
+      expect(r1.isAvailable(at(5, 59)), isFalse);
+    });
+
+    test('disponible exactamente a las 06:00', () {
+      expect(r1.isAvailable(at(6, 0)), isTrue);
+    });
+
+    test('no disponible a la hora de cierre', () {
+      expect(salida.isAvailable(at(13, 40)), isFalse);
+      expect(r1.isAvailable(at(13, 40)), isFalse);
+    });
+
+    test('disponible un minuto antes del cierre', () {
+      expect(salida.isAvailable(at(13, 39)), isTrue);
+    });
+
+    test('canOrderNow falso de madrugada', () {
+      expect(RecreoSchedule.canOrderNow(at(3, 0)), isFalse);
+    });
+
+    test('getNextAvailable no ofrece ventanas de madrugada', () {
+      expect(RecreoSchedule.getNextAvailable(at(3, 0)), isNull);
+    });
+  });
 }

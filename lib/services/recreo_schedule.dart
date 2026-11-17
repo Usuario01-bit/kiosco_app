@@ -17,6 +17,24 @@ class RecreoWindow {
   DateTime getEndToday(DateTime now) => DateTime(now.year, now.month, now.day, endHour, endMinute);
   DateTime getLockTimeToday(DateTime now) => getStartToday(now).subtract(const Duration(minutes: 20));
 
+  /// Franja general en la que el kiosco recibe pedidos. Es un limite
+  /// externo: fuera de estas horas no se toma ningun pedido, aunque la
+  /// ventana todavia no haya empezado.
+  static const int orderOpenHour = 6;
+  static const int orderOpenMinute = 0;
+  static const int orderCloseHour = 13;
+  static const int orderCloseMinute = 40;
+
+  static String get orderHoursLabel =>
+      '$orderOpenHour:${orderOpenMinute.toString().padLeft(2, '0')} a '
+      '$orderCloseHour:${orderCloseMinute.toString().padLeft(2, '0')}';
+
+  static bool isWithinOrderHours(DateTime now) {
+    final open = DateTime(now.year, now.month, now.day, orderOpenHour, orderOpenMinute);
+    final close = DateTime(now.year, now.month, now.day, orderCloseHour, orderCloseMinute);
+    return !now.isBefore(open) && now.isBefore(close);
+  }
+
   bool isOpen(DateTime now) {
     final start = getStartToday(now);
     final end = getEndToday(now);
@@ -33,9 +51,11 @@ class RecreoWindow {
   /// kiosco no llega a prepararlo.
   bool hasEnded(DateTime now) => !now.isBefore(getEndToday(now));
 
-  /// Se puede pedir para esta ventana: no cerro todavia y no se
-  /// bloquearon los pedidos (el bloqueo arranca 20 min antes).
-  bool isAvailable(DateTime now) => !hasEnded(now) && !isLocked(now);
+  /// Se puede pedir para esta ventana: estamos dentro del horario general
+  /// de pedidos, no cerro todavia y no se bloquearon los pedidos
+  /// (el bloqueo arranca 20 min antes).
+  bool isAvailable(DateTime now) =>
+      isWithinOrderHours(now) && !hasEnded(now) && !isLocked(now);
 
   Duration timeUntilOpen(DateTime now) {
     final start = getStartToday(now);

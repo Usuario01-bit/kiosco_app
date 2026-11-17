@@ -10,6 +10,7 @@ Last updated: 2026-10-15
 - C:\Users\axion\.config\opencode\skills
 - C:\Users\axion\.claude\skills
 - C:\Users\axion\.codex\skills
+- C:\Users\axion\.hermes\skills
 
 ## Contract
 
@@ -28,15 +29,11 @@ Last updated: 2026-10-15
 | `expo-security-review` | Trigger: security review, auditoría, revisar seguridad, vulnerabilidades, secrets, check security. Audit Expo/React Native projects for exposed secrets, vulnerable dependencies, insecure configs. | user | `C:\Users\axion\.config\opencode\skills\expo-security-review\SKILL.md` |
 | `gepeto` | Guide for building 1-click launchers and building apps with launchers built-in using Pinokio | user | `C:\Users\axion\.agents\skills\gepeto\SKILL.md` |
 | `go-testing` | Trigger: Go tests, go test coverage, Bubbletea teatest, golden files. Apply focused Go testing patterns. | user | `C:\Users\axion\.agents\skills\go-testing\SKILL.md` |
-| `imagegen` | Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. | user | `C:\Users\axion\.codex\skills\.system\imagegen\SKILL.md` |
 | `issue-creation` | Create Gentle AI issues with issue-first checks. Trigger: creating GitHub issues, bug reports, or feature requests. | user | `C:\Users\axion\.config\opencode\skills\issue-creation\SKILL.md` |
 | `judgment-day` | Trigger: judgment day, dual review, adversarial review, juzgar. Run explicit blind dual review with at most two scoped fix/re-judgment rounds. | user | `C:\Users\axion\.agents\skills\judgment-day\SKILL.md` |
-| `openai-docs` | Use for Codex models/pricing, scheduled tasks, skills, settings, setup, troubleshooting, customization, automations, and self-knowledge—including 'you,' 'your,' 'this app,' or 'this coding agent' when they refer to Codex—and for OpenAI APIs/products and ChatGPT Work. Also use for model choice/migration, prompting, SDKs, Responses, Realtime, agents, evals, and Chat/Work/Codex comparisons. Do not use for generic app/software tasks that merely mention Codex. | user | `C:\Users\axion\.codex\skills\.system\openai-docs\SKILL.md` |
 | `pinokio` | Discover, launch, and use apps and tools for the current task. | user | `C:\Users\axion\.agents\skills\pinokio\SKILL.md` |
-| `review-agent` | Perform a read-only, defect-first review of a specified code change and return every actionable finding. Use when another agent delegates review of uncommitted changes, a base-branch diff, a commit, or custom review instructions. | user | `C:\Users\axion\.codex\skills\.system\review-agent\SKILL.md` |
 | `skill-creator` | Trigger: new skills, agent instructions, documenting AI usage patterns. Create LLM-first skills with valid frontmatter. | user | `C:\Users\axion\.agents\skills\skill-creator\SKILL.md` |
 | `skill-improver` | Trigger: improve skills, audit skills, refactor skills, skill quality. Audit and upgrade existing LLM-first skills. | user | `C:\Users\axion\.agents\skills\skill-improver\SKILL.md` |
-| `skill-installer` | Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). | user | `C:\Users\axion\.codex\skills\.system\skill-installer\SKILL.md` |
 | `work-unit-commits` | Plan commits as reviewable work units. Trigger: implementation, commit splitting, chained PRs, or keeping tests and docs with code. | user | `C:\Users\axion\.agents\skills\work-unit-commits\SKILL.md` |
 
 ## Loading protocol

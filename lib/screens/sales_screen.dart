@@ -1,5 +1,6 @@
 ﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import '../services/date_utils.dart';
@@ -7,6 +8,7 @@ import '../services/product_icons.dart' show resolveProductIcon;
 import '../services/local_cache_service.dart';
 import '../services/responsive.dart';
 import '../services/store_config.dart';
+import 'student_qr_scanner_screen.dart';
 
 class SalesScreen extends StatefulWidget {
 
@@ -50,29 +52,105 @@ class _SalesScreenState
   IconData _productIcon(Map<String, dynamic> product) =>
       resolveProductIcon(product);
 
+  // =====================================================
+  // ESCALADO LOCAL
+  // =====================================================
+
+  /// `R.sp`/`R.fs` escalan lineal con el ancho de la ventana, asi que en un
+  /// monitor se vuelven gigantes. En esta pantalla el factor se limita a 1.5x:
+  /// en celular y tablet escala igual que el resto de la app, y en desktop
+  /// queda compacto en lugar de desbordarse.
+  double get _scale => (MediaQuery.sizeOf(context).width / 430).clamp(1.0, 1.5);
+
+  double _s(double value) => value * _scale;
+
+  double _f(double value) => value * _scale;
+
+  // =====================================================
+  // HELPERS DE PRESENTACION
+  // =====================================================
+
+  /// Registro completo del alumno seleccionado, para mostrar grado y datos
+  /// sin depender de que el nombre sea unico.
+  Map<String, dynamic>? get _selectedStudentRecord {
+    final id = selectedStudentId;
+    if (id == null) return null;
+    for (final s in students) {
+      if (s['id']?.toString() == id) return s;
+    }
+    return null;
+  }
+
+  String _initialsOf(String? name) {
+    final clean = (name ?? '').trim();
+    if (clean.isEmpty) return '?';
+    final parts = clean.split(RegExp(r'\s+'));
+    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
+    return (parts.first.characters.first + parts.last.characters.first)
+        .toUpperCase();
+  }
+
+  String _studentSubtitle(Map<String, dynamic>? student) {
+    if (student == null) return '';
+    final grade = (student['grade'] ?? student['grado'])?.toString().trim();
+    return (grade == null || grade.isEmpty) ? '' : grade;
+  }
+
+  void _selectStudent(Map<String, dynamic> student) {
+    setState(() {
+      selectedStudent = student['name'] as String?;
+      selectedStudentId = student['id']?.toString();
+      studentSearchController.clear();
+    });
+  }
+
+  void _clearStudent() {
+    setState(() {
+      selectedStudent = null;
+      selectedStudentId = null;
+      studentSearchController.clear();
+    });
+  }
+
   Widget _filterChip(String label, bool selected, VoidCallback onTap) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(horizontal: _s(16), vertical: _s(8)),
         decoration: BoxDecoration(
-          color: selected ? Colors.blue.shade100 : Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(20),
+          color: selected
+              ? cs.primary
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : const Color(0xFFEFF1F5)),
+          borderRadius: BorderRadius.circular(_s(20)),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-            color: selected ? Colors.blue.shade800 : Colors.grey.shade700,
+            fontSize: _f(14),
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color: selected
+                ? cs.onPrimary
+                : (isDark ? Colors.white70 : Colors.black87),
           ),
         ),
       ),
     );
   }
 
-  StreamSubscription? _studentsSub;
-  StreamSubscription? _productsSub;
+  /// Color del semaforo de stock. El verde queda reservado para
+  /// disponibilidad: precio va en el color primario, nunca en verde.
+  Color _stockColor(int stock, bool isDark) {
+    if (stock <= 0) return Colors.grey;
+    if (stock <= 5) {
+      return isDark ? Colors.orange.shade300 : Colors.orange.shade800;
+    }
+    return isDark ? Colors.green.shade400 : Colors.green.shade600;
+  }
 
   List<Map<String, dynamic>> get _filteredStudents {
     final query = studentSearchController.text.toLowerCase().trim();
@@ -81,6 +159,46 @@ class _SalesScreenState
       final name = (s['name'] as String? ?? '').toLowerCase();
       return name.contains(query);
     }).toList();
+  }
+
+  // =====================================================
+  // QR
+  // =====================================================
+
+  Future<void> _openQrScanner() async {
+    // mobile_scanner no soporta Windows/Linux: se avisa en vez de abrir una
+    // pantalla que va a fallar al inicializar la camara.
+    if (!kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.linux)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El escaner QR solo esta disponible en Android e iOS'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StudentQrScannerScreen(
+          onStudentFound: (student, token) {
+            setState(() {
+              final id = student['id']?.toString();
+              if (id != null && !students.any((s) => s['id']?.toString() == id)) {
+                students = [...students, student];
+              }
+              selectedStudent = student['name'] as String?;
+              selectedStudentId = id;
+              studentSearchController.clear();
+            });
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
   }
 
   // =====================================================
@@ -331,477 +449,641 @@ class _SalesScreenState
     }
   }
 
+  StreamSubscription? _studentsSub;
+  StreamSubscription? _productsSub;
+
   // =====================================================
   // BUILD
   // =====================================================
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-
-      backgroundColor:
-      Theme.of(context).scaffoldBackgroundColor,
-
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-
-        title:
-        const Text('Ventas'),
-
-        backgroundColor:
-        Colors.blue,
-
-        foregroundColor:
-        Colors.white,
+        title: const Text('Ventas'),
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
       ),
-
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 600;
+          final width = constraints.maxWidth;
+          final columns = width >= 1300
+              ? 5
+              : width >= 900
+                  ? 4
+                  : width >= 600
+                      ? 3
+                      : 2;
+
           final filtered = selectedCategory == null
               ? products
-              : products.where((p) => (p['category'] as String? ?? 'General') == selectedCategory).toList();
+              : products
+                  .where((p) =>
+                      (p['category'] as String? ?? 'General') ==
+                      selectedCategory)
+                  .toList();
 
-          final headerWidget = Padding(
-            padding: EdgeInsets.fromLTRB(R.sp(context, 20), R.sp(context, 20), R.sp(context, 20), 0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: studentSearchController,
-                  decoration: InputDecoration(
-                    labelText: StoreConfig.instance.entityName,
-                    hintText: 'Escribí el nombre...',
-                    border: const OutlineInputBorder(),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    prefixIcon: const Icon(LucideIcons.search),
-                    suffixIcon: selectedStudent != null
-                        ? IconButton(
-                            icon: const Icon(LucideIcons.x),
-                            onPressed: () {
-                              setState(() {
-                                selectedStudent = null;
-                                selectedStudentId = null;
-                                studentSearchController.clear();
-                              });
-                            },
-                          )
-                        : null,
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      if (selectedStudent != null) {
-                        selectedStudent = null;
-                        selectedStudentId = null;
-                      }
-                    });
-                  },
-                ),
-                if (selectedStudent != null)
-                  Padding(
-                    padding: EdgeInsets.only(top: R.sp(context, 6)),
-                    child: Row(
-                      children: [
-                        Icon(LucideIcons.checkCircle, size: R.fs(context, 18), color: Colors.green),
-                        SizedBox(width: R.sp(context, 6)),
-                        Text(
-                          selectedStudent!,
-                          style: TextStyle(
-                            fontSize: R.fs(context, 18),
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                        if (students.any((s) => s['name'] == selectedStudent && (s['grade'] ?? s['grado']) != null))
-                          Text(
-                            ' (${students.firstWhere((s) => s['name'] == selectedStudent)['grade'] ?? students.firstWhere((s) => s['name'] == selectedStudent)['grado']})',
-                            style: TextStyle(
-                              fontSize: R.fs(context, 16),
-                              color: Colors.grey,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                if (selectedStudent == null && _filteredStudents.isNotEmpty)
-                  Container(
-                    constraints: BoxConstraints(maxHeight: R.sp(context, 220)),
-                    margin: EdgeInsets.only(top: R.sp(context, 6)),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ListView.builder(
-                      padding: EdgeInsets.symmetric(vertical: R.sp(context, 6)),
-                      itemCount: _filteredStudents.length,
-                      itemBuilder: (context, index) {
-                        final s = _filteredStudents[index];
-                        return ListTile(
-                          dense: true,
-                          title: Text(
-                            s['name'],
-                            style: TextStyle(
-                              fontSize: R.fs(context, 18),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          subtitle: (s['grade'] ?? s['grado']) != null
-                              ? Text(
-                                  (s['grade'] ?? s['grado']),
-                                  style: TextStyle(
-                                    fontSize: R.fs(context, 14),
-                                    color: Colors.grey,
-                                  ),
-                                )
-                              : null,
-                          onTap: () {
-                                setState(() {
-                                  selectedStudent = s['name'];
-                                  selectedStudentId = s['id'];
-                                  studentSearchController.clear();
-                                });
-                              },
-                        );
-                      },
-                    ),
-                  ),
-                SizedBox(height: R.sp(context, 12)),
-                DropdownButtonFormField<String>(
-                  initialValue: paymentMethod,
-                  decoration: const InputDecoration(
-                    labelText: 'Método de pago',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'Efectivo', child: Text('Efectivo')),
-                    DropdownMenuItem(value: 'Yappy', child: Text('Yappy')),
-                    DropdownMenuItem(value: 'Pendiente', child: Text('Pendiente')),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      paymentMethod = value!;
-                    });
-                  },
-                ),
-              ],
-            ),
-          );
+          final selectedRecord = _selectedStudentRecord;
 
           return Column(
             children: [
-              if (!isWide) headerWidget,
-              SizedBox(height: R.sp(context, 8)),
-              SizedBox(
-                height: 40,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.symmetric(horizontal: R.sp(context, isWide ? 20 : 16)),
+              Padding(
+                padding: EdgeInsets.fromLTRB(_s(16), _s(14), _s(16), 0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _filterChip('Todas', selectedCategory == null, () => setState(() => selectedCategory = null)),
+                    // ---- Buscador + QR ----
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: studentSearchController,
+                            decoration: InputDecoration(
+                              hintText:
+                                  'Buscar ${StoreConfig.instance.entityLC()}...',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(_s(14)),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: _s(16),
+                                vertical: _s(14),
+                              ),
+                              prefixIcon: const Icon(LucideIcons.search),
+                              suffixIcon: selectedStudent != null
+                                  ? IconButton(
+                                      icon: const Icon(LucideIcons.x),
+                                      onPressed: _clearStudent,
+                                    )
+                                  : null,
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                if (selectedStudent != null) {
+                                  selectedStudent = null;
+                                  selectedStudentId = null;
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        SizedBox(width: _s(10)),
+                        SizedBox(
+                          width: _s(52),
+                          height: _s(52),
+                          child: OutlinedButton(
+                            onPressed: _openQrScanner,
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              side: BorderSide(
+                                color: cs.primary.withValues(alpha: 0.4),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(_s(14)),
+                              ),
+                            ),
+                            child: Icon(
+                              LucideIcons.qrCode,
+                              color: cs.primary,
+                              size: _f(22),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
+                    // ---- Alumno seleccionado ----
+                    if (selectedStudent != null)
+                      Padding(
+                        padding: EdgeInsets.only(top: _s(10)),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: _s(12),
+                            vertical: _s(10),
+                          ),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: isDark ? 0.18 : 0.08),
+                            borderRadius: BorderRadius.circular(_s(16)),
+                            border: Border.all(
+                              color: cs.primary.withValues(alpha: 0.28),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: _s(21),
+                                backgroundColor:
+                                    cs.primary.withValues(alpha: 0.16),
+                                child: Text(
+                                  _initialsOf(selectedStudent),
+                                  style: TextStyle(
+                                    fontSize: _f(15),
+                                    fontWeight: FontWeight.w700,
+                                    color: cs.primary,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: _s(12)),
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      selectedStudent!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: _f(16),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    if (_studentSubtitle(selectedRecord).isNotEmpty)
+                                      Text(
+                                        _studentSubtitle(selectedRecord),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: _f(12),
+                                          color: isDark
+                                              ? Colors.white60
+                                              : Colors.black54,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(LucideIcons.x, size: _f(18)),
+                                color: isDark ? Colors.white54 : Colors.black45,
+                                onPressed: _clearStudent,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    // ---- Sugerencias de busqueda ----
+                    if (selectedStudent == null && _filteredStudents.isNotEmpty)
+                      Container(
+                        constraints: BoxConstraints(maxHeight: _s(220)),
+                        margin: EdgeInsets.only(top: _s(6)),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(_s(16)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ListView.builder(
+                          padding: EdgeInsets.symmetric(vertical: _s(6)),
+                          itemCount: _filteredStudents.length,
+                          itemBuilder: (context, index) {
+                            final s = _filteredStudents[index];
+                            final subtitle = _studentSubtitle(s);
+                            return ListTile(
+                              dense: true,
+                              title: Text(
+                                s['name'] as String? ?? '',
+                                style: TextStyle(
+                                  fontSize: _f(16),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              subtitle: subtitle.isEmpty
+                                  ? null
+                                  : Text(
+                                      subtitle,
+                                      style: TextStyle(
+                                        fontSize: _f(13),
+                                        color: isDark
+                                            ? Colors.white60
+                                            : Colors.black54,
+                                      ),
+                                    ),
+                              onTap: () => _selectStudent(s),
+                            );
+                          },
+                        ),
+                      ),
+
+                    SizedBox(height: _s(10)),
+
+                    // ---- Metodo de pago ----
+                    DropdownButtonFormField<String>(
+                      initialValue: paymentMethod,
+                      decoration: InputDecoration(
+                        labelText: 'Método de pago',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(_s(14)),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: _s(14),
+                          vertical: _s(12),
+                        ),
+                      ),
+                      items: [
+                        _paymentOption('Efectivo', LucideIcons.banknote,
+                            isDark ? Colors.green.shade300 : Colors.green.shade700),
+                        _paymentOption('Yappy', LucideIcons.smartphone,
+                            isDark ? Colors.blue.shade200 : Colors.blue.shade700),
+                        _paymentOption('Pendiente', LucideIcons.clock,
+                            isDark ? Colors.orange.shade300 : Colors.orange.shade800),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => paymentMethod = value);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // ---- Categorias ----
+              SizedBox(height: _s(10)),
+              SizedBox(
+                height: _s(38),
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: _s(16)),
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(right: _s(8)),
+                      child: _filterChip(
+                        'Todas',
+                        selectedCategory == null,
+                        () => setState(() => selectedCategory = null),
+                      ),
+                    ),
                     ...products
                         .map((p) => p['category'] as String? ?? 'General')
                         .toSet()
                         .map((cat) => Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: _filterChip(cat, selectedCategory == cat, () => setState(() => selectedCategory = cat)),
+                              padding: EdgeInsets.only(right: _s(8)),
+                              child: _filterChip(
+                                cat,
+                                selectedCategory == cat,
+                                () => setState(() => selectedCategory = cat),
+                              ),
                             )),
                   ],
                 ),
               ),
-              SizedBox(height: R.sp(context, 4)),
+
+              SizedBox(height: _s(8)),
+
+              // ---- Grilla de productos ----
               Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {},
-                  child: ListView.builder(
-                    padding: EdgeInsets.all(R.sp(context, isWide ? 20 : 16)),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final product = filtered[index];
-                      final stock = (product['stock'] as num?)?.toInt() ?? 0;
-                      final outOfStock = stock <= 0;
-                      final lowStock = stock > 0 && stock <= 5;
-                      final isDark = Theme.of(context).brightness == Brightness.dark;
-                      final imageUrl = product['image_url'] as String?;
-                      final hasImage = imageUrl != null && imageUrl.isNotEmpty;
-                      return GestureDetector(
-                        onTap: () => addToCart(product),
-                        child: Stack(
-                          children: [
-                            Container(
-                              margin: EdgeInsets.only(bottom: R.sp(context, 10)),
-                              padding: EdgeInsets.all(R.sp(context, 12)),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: outOfStock
-                                      ? (isDark
-                                          ? const [Color(0xFF3A3A3A), Color(0xFF2E2E2E)]
-                                          : const [Color(0xFFE9E9E9), Color(0xFFDDDDDD)])
-                                      : [
-                                          Theme.of(context).cardColor,
-                                          isDark ? Theme.of(context).cardColor : const Color(0xFFF8FBFF),
-                                        ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(R.sp(context, 20)),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                                border: Border.all(
-                                  color: outOfStock ? Colors.grey.shade400 : Colors.white,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: R.sp(context, 64),
-                                    height: R.sp(context, 64),
-                                    decoration: BoxDecoration(
-                                      color: outOfStock
-                                          ? Colors.grey.withValues(alpha: 0.15)
-                                          : Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(R.sp(context, 16)),
-                                    ),
-                                    child: hasImage
-                                        ? ClipRRect(
-                                            borderRadius: BorderRadius.circular(R.sp(context, 16)),
-                                            child: Image.network(
-                                              imageUrl,
-                                              width: R.sp(context, 64),
-                                              height: R.sp(context, 64),
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, _, _) => Icon(
-                                                _productIcon(product),
-                                                size: R.sp(context, 30),
-                                                color: outOfStock ? Colors.grey : Colors.blue,
-                                              ),
-                                            ),
-                                          )
-                                        : Icon(
-                                            _productIcon(product),
-                                            size: R.sp(context, 30),
-                                            color: outOfStock ? Colors.grey : Colors.blue,
-                                          ),
-                                  ),
-                                  SizedBox(width: R.sp(context, 14)),
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          product['name'],
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: R.fs(context, 17),
-                                            fontWeight: FontWeight.bold,
-                                            color: outOfStock
-                                                ? Colors.grey
-                                                : isDark
-                                                    ? Colors.white
-                                                    : Colors.black87,
-                                          ),
-                                        ),
-                                        SizedBox(height: R.sp(context, 4)),
-                                        Text(
-                                          '\$${(product['price'] as num).toDouble().toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontSize: R.fs(context, 16),
-                                            fontWeight: FontWeight.bold,
-                                            color: outOfStock ? Colors.grey : Colors.green.shade600,
-                                          ),
-                                        ),
-                                        SizedBox(height: R.sp(context, 8)),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: R.sp(context, 12),
-                                            vertical: R.sp(context, 5),
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: outOfStock
-                                                ? Colors.grey.withValues(alpha: 0.15)
-                                                : lowStock
-                                                    ? Colors.orange.withValues(alpha: 0.18)
-                                                    : Theme.of(context).dividerColor.withValues(alpha: 0.08),
-                                            borderRadius: BorderRadius.circular(R.sp(context, 12)),
-                                          ),
-                                          child: Text(
-                                            outOfStock
-                                                ? 'Agotado'
-                                                : lowStock
-                                                    ? 'Quedan $stock'
-                                                    : 'Stock: $stock',
-                                            style: TextStyle(
-                                              fontSize: R.fs(context, 12),
-                                              color: outOfStock
-                                                  ? Colors.grey.shade600
-                                                  : lowStock
-                                                      ? Colors.orange.shade800
-                                                      : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (!outOfStock)
-                              Positioned(
-                                top: R.sp(context, 8),
-                                right: R.sp(context, 8),
-                                child: IgnorePointer(
-                                  child: AnimatedScale(
-                                    scale: _plusOneId == product['id'] ? 1 : 0.5,
-                                    duration: const Duration(milliseconds: 150),
-                                    child: AnimatedOpacity(
-                                      opacity: _plusOneId == product['id'] ? 1 : 0,
-                                      duration: const Duration(milliseconds: 250),
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: R.sp(context, 10),
-                                          vertical: R.sp(context, 5),
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.green,
-                                          borderRadius: BorderRadius.circular(R.sp(context, 14)),
-                                        ),
-                                        child: AnimatedSwitcher(
-                                          duration: const Duration(milliseconds: 150),
-                                          transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-                                          child: Text(
-                                            _plusOneCheck ? '✓' : '+1',
-                                            key: ValueKey(_plusOneCheck),
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: R.fs(context, 15),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
+                child: filtered.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No hay productos en esta categoría',
+                          style: TextStyle(
+                            fontSize: _f(14),
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              if (isWide) Padding(
-                padding: EdgeInsets.all(R.sp(context, 20)),
-                child: headerWidget,
+                      )
+                    : GridView.builder(
+                        padding: EdgeInsets.fromLTRB(_s(16), 0, _s(16), _s(16)),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          crossAxisSpacing: _s(10),
+                          mainAxisSpacing: _s(10),
+                          mainAxisExtent: _s(226),
+                        ),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) =>
+                            _productTile(context, filtered[index]),
+                      ),
               ),
             ],
           );
         },
       ),
-      bottomNavigationBar: Container(
-        height: 80 + MediaQuery.of(context).padding.bottom,
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: R.sp(context, 20)),
-          child: Row(
-            children: [
-              Badge(
-                isLabelVisible: cart.isNotEmpty,
-                label: Text('${cart.length}'),
-                backgroundColor: Colors.blue,
-                textColor: Colors.white,
-                child: IconButton(
-                  icon: Icon(
-                    LucideIcons.shoppingCart,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 28,
-                  ),
-                  onPressed: _showCartSheet,
-                  tooltip: 'Ver carrito',
-                ),
+      bottomNavigationBar: _cartBar(context),
+    );
+  }
+
+  DropdownMenuItem<String> _paymentOption(
+      String value, IconData icon, Color color) {
+    return DropdownMenuItem<String>(
+      value: value,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: _f(18), color: color),
+          SizedBox(width: _s(10)),
+          Text(value),
+        ],
+      ),
+    );
+  }
+
+  // =====================================================
+  // TILE DE PRODUCTO
+  // =====================================================
+
+  Widget _productTile(BuildContext context, Map<String, dynamic> product) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final stock = (product['stock'] as num?)?.toInt() ?? 0;
+    final outOfStock = stock <= 0;
+    final lowStock = stock > 0 && stock <= 5;
+    final imageUrl = product['image_url'] as String?;
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
+    final stockColor = _stockColor(stock, isDark);
+    final stockLabel = outOfStock
+        ? 'Agotado'
+        : lowStock
+            ? 'Quedan $stock'
+            : '$stock disp.';
+
+    return GestureDetector(
+      onTap: outOfStock ? null : () => addToCart(product),
+      child: Stack(
+        children: [
+          Container(
+            padding: EdgeInsets.all(_s(10)),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: outOfStock
+                    ? (isDark
+                        ? const [Color(0xFF3A3A3A), Color(0xFF2E2E2E)]
+                        : const [Color(0xFFE9E9E9), Color(0xFFDDDDDD)])
+                    : [
+                        Theme.of(context).cardColor,
+                        isDark
+                            ? Theme.of(context).cardColor
+                            : const Color(0xFFF8FBFF),
+                      ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              borderRadius: BorderRadius.circular(_s(18)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border.all(
+                color: outOfStock
+                    ? Colors.grey.shade400
+                    : (isDark ? Colors.white24 : Colors.white),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Imagen / icono del producto
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(_s(12)),
+                    child: Container(
+                      width: double.infinity,
+                      color: outOfStock
+                          ? Colors.grey.withValues(alpha: 0.15)
+                          : cs.primary.withValues(alpha: 0.08),
+                      child: hasImage
+                          ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (_, _, _) => Icon(
+                                _productIcon(product),
+                                size: _f(38),
+                                color: outOfStock ? Colors.grey : cs.primary,
+                              ),
+                            )
+                          : Icon(
+                              _productIcon(product),
+                              size: _f(38),
+                              color: outOfStock ? Colors.grey : cs.primary,
+                            ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: _s(8)),
+                Text(
+                  product['name'] as String? ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: _f(14),
+                    fontWeight: FontWeight.w700,
+                    color: outOfStock
+                        ? Colors.grey
+                        : (isDark ? Colors.white : Colors.black87),
+                  ),
+                ),
+                SizedBox(height: _s(2)),
+                // Precio: color primario (marca), nunca verde.
+                Text(
+                  '\$${(product['price'] as num).toDouble().toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: _f(15),
+                    fontWeight: FontWeight.w700,
+                    color: outOfStock ? Colors.grey : cs.primary,
+                  ),
+                ),
+                SizedBox(height: _s(5)),
+                // Stock: el verde queda reservado para disponibilidad.
+                Row(
                   children: [
-                    Text(
-                      '${cart.length} ${cart.length == 1 ? 'producto' : 'productos'} · \$${total.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: R.fs(context, 18),
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      width: _s(7),
+                      height: _s(7),
+                      decoration: BoxDecoration(
+                        color: stockColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: _s(5)),
+                    Flexible(
+                      child: Text(
+                        stockLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: _f(11),
+                          fontWeight: FontWeight.w600,
+                          color: stockColor,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              SizedBox(
-                width: 130,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: cart.isEmpty
-                      ? null
-                      : () {
-                          if (selectedStudent == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Seleccioná ${StoreConfig.instance.entityLC()} y productos')),
-                            );
-                            return;
-                          }
-                          _showCartSheet();
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    disabledBackgroundColor: Colors.grey.shade400,
-                    disabledForegroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'Pagar',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              ],
+            ),
+          ),
+          if (!outOfStock)
+            Positioned(
+              top: _s(8),
+              right: _s(8),
+              child: IgnorePointer(
+                child: AnimatedScale(
+                  scale: _plusOneId == product['id'] ? 1 : 0.5,
+                  duration: const Duration(milliseconds: 150),
+                  child: AnimatedOpacity(
+                    opacity: _plusOneId == product['id'] ? 1 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: _s(10),
+                        vertical: _s(5),
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(_s(14)),
+                      ),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 150),
+                        transitionBuilder: (child, anim) =>
+                            ScaleTransition(scale: anim, child: child),
+                        child: Text(
+                          _plusOneCheck ? '✓' : '+1',
+                          key: ValueKey(_plusOneCheck),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: _f(14),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  // =====================================================
+  // BARRA DE CARRITO
+  // =====================================================
+
+  Widget _cartBar(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      height: _s(78) + MediaQuery.of(context).padding.bottom,
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
           ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: _s(16)),
+        child: Row(
+          children: [
+            Badge(
+              isLabelVisible: cart.isNotEmpty,
+              label: Text('${cart.length}'),
+              backgroundColor: cs.primary,
+              textColor: cs.onPrimary,
+              child: IconButton(
+                icon: Icon(
+                  LucideIcons.shoppingCart,
+                  color: cs.primary,
+                  size: _f(26),
+                ),
+                onPressed: _showCartSheet,
+                tooltip: 'Ver carrito',
+              ),
+            ),
+            SizedBox(width: _s(6)),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${cart.length} ${cart.length == 1 ? 'producto' : 'productos'}',
+                    style: TextStyle(
+                      fontSize: _f(12),
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
+                  Text(
+                    'Total: \$${total.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: _f(18),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: _s(10)),
+            SizedBox(
+              height: _s(46),
+              child: ElevatedButton(
+                onPressed: cart.isEmpty
+                    ? null
+                    : () {
+                        if (selectedStudent == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Seleccioná ${StoreConfig.instance.entityLC()} y productos',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        _showCartSheet();
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
+                  disabledBackgroundColor: Colors.grey.shade400,
+                  disabledForegroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: _s(18)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(_s(14)),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      cart.isEmpty
+                          ? 'Pagar'
+                          : 'Pagar \$${total.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: _f(15),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(width: _s(6)),
+                    Icon(LucideIcons.chevronRight, size: _f(18)),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

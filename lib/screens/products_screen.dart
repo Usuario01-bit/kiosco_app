@@ -1,11 +1,11 @@
 ﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../services/supabase_service.dart';
 import '../services/product_icons.dart' show productIcons, resolveProductIcon;
+import '../services/product_image_picker.dart';
 import '../services/local_cache_service.dart';
 import '../services/responsive.dart';
 
@@ -97,7 +97,7 @@ class _ProductsScreenState
           content: Column(
 
             mainAxisSize: MainAxisSize.min, children: [ TextField( controller: nameController, decoration: InputDecoration( labelText: 'Nombre', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: priceController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Precio', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), TextField( controller: stockController, keyboardType: TextInputType.number, decoration: InputDecoration( labelText: 'Stock', border: OutlineInputBorder( borderRadius: BorderRadius.circular( 12, ), ), ), ), const SizedBox(height: 15), Align( alignment: Alignment.centerLeft, child: Text( 'Categoría', style: TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context) .textTheme .bodyMedium?.color, ), ), ), const SizedBox(height: 8), DropdownButtonFormField<String>( value: selectedCategory, decoration: InputDecoration( border: OutlineInputBorder( borderRadius: BorderRadius.circular(12), ), contentPadding: const EdgeInsets.symmetric( horizontal: 12, vertical: 10, ), ), items: ['Emparedados', 'Empanadas', 'Especiales', 'Café', 'Bebidas', 'Duros', 'General'].map((c) => DropdownMenuItem( value: c, child: Text(c, style: const TextStyle(fontSize: 14)), )).toList(), onChanged: (v) { if (v != null) { setDialogState(() { selectedCategory = v; }); } }, ), const SizedBox(height: 20), Align( alignment: Alignment.centerLeft, child: Text( 'Icono', style: TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context) .textTheme .bodyMedium?.color, ), ), ),             const SizedBox(height: 10), SizedBox( height: 120, child: SingleChildScrollView( child: Wrap( spacing: 8, runSpacing: 8, children: productIcons.entries .map((entry) { final isSelected = selectedIcon == entry.key; return GestureDetector( onTap: () { setDialogState(() { selectedIcon = entry.key; }); }, child: Container( width: 48, height: 48, decoration: BoxDecoration( color: isSelected ? const Color(0xFF2563EB) .withValues(alpha:  0.15) : Colors.grey .withValues(alpha: 0.08), borderRadius: BorderRadius.circular( 12), border: isSelected ? Border.all( color: const Color( 0xFF2563EB), width: 2) : null, ), child: Icon( entry.value, color: isSelected ? const Color( 0xFF2563EB) : Colors.grey[600], size: 24, ), ), ); }).toList(), ), ), ),
-const SizedBox(height: 20), Align( alignment: Alignment.centerLeft, child: Text( 'Imagen del producto', style: TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyMedium?.color, ), ), ), const SizedBox(height: 10), Row( children: [ Container( width: 64, height: 64, decoration: BoxDecoration( color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12), ), child: selectedImage != null ? ClipRRect( borderRadius: BorderRadius.circular(12), child: Image.memory(selectedImage!, width: 64, height: 64, fit: BoxFit.cover), ) : Icon(LucideIcons.image, color: Theme.of(context).colorScheme.primary), ), const SizedBox(width: 12), Expanded( child: OutlinedButton.icon( icon: const Icon(LucideIcons.upload, size: 18), label: Text(selectedImage == null ? 'Subir imagen' : 'Cambiar imagen'), onPressed: () async { final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true); if (result == null || result.files.isEmpty) return; setDialogState(() { selectedImage = result.files.first.bytes; selectedImageName = result.files.first.name; }); }, ), ), ], ), ], ),
+const SizedBox(height: 20), Align( alignment: Alignment.centerLeft, child: Text( 'Imagen del producto', style: TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyMedium?.color, ), ), ), const SizedBox(height: 10), Row( children: [ Container( width: 64, height: 64, decoration: BoxDecoration( color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12), ), child: selectedImage != null ? ClipRRect( borderRadius: BorderRadius.circular(12), child: Image.memory(selectedImage!, width: 64, height: 64, fit: BoxFit.cover), ) : Icon(LucideIcons.image, color: Theme.of(context).colorScheme.primary), ), const SizedBox(width: 12), Expanded( child: OutlinedButton.icon( icon: const Icon(LucideIcons.upload, size: 18), label: Text(selectedImage == null ? 'Subir imagen' : 'Cambiar imagen'), onPressed: () async { final picked = await pickCompressedProductImage(context); if (picked == null) return; setDialogState(() { selectedImage = picked.bytes; selectedImageName = picked.name; }); }, ), ), ], ), ], ),
 
           actions: [
 
@@ -514,11 +514,11 @@ const SizedBox(height: 20), Align( alignment: Alignment.centerLeft, child: Text(
                       icon: const Icon(LucideIcons.upload, size: 18),
                       label: Text(selectedImage == null ? 'Subir imagen' : 'Cambiar imagen'),
                       onPressed: () async {
-                        final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
-                        if (result == null || result.files.isEmpty) return;
+                        final picked = await pickCompressedProductImage(context);
+                        if (picked == null) return;
                         setDialogState(() {
-                          selectedImage = result.files.first.bytes;
-                          selectedImageName = result.files.first.name;
+                          selectedImage = picked.bytes;
+                          selectedImageName = picked.name;
                         });
                       },
                     ),

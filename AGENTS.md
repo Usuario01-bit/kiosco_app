@@ -29,18 +29,20 @@ Proyecto Flutter: gestión de kiosco escolar. Sin state management, sin router, 
 ## Comandos
 
 ```sh
-# Correr en Windows
-flutter run -d windows
+# Compilar el APK release (target real: se instala a mano en el celular)
+flutter build apk --release
 
-# Correr en Chrome
+# Correr en Chrome (solo para chequear UI rápido)
 flutter run -d chrome
 
 # Análisis estático
 flutter analyze
 
-# Tests existentes (son stale — ver abajo)
+# Tests
 flutter test
 ```
+
+No usar `flutter build windows`: no hay toolchain de Visual Studio en la máquina y el target real es Android.
 
 ## Database
 
@@ -51,7 +53,7 @@ flutter test
 
 ## Gotchas
 
-- **Tests stale**: `widget_test.dart` es el default counter test de Flutter, no testea nada del proyecto real.
+- **Tests**: `test/` tiene tests reales de lógica (`recreo_schedule_test.dart`, `date_utils_test.dart`, `product_image_picker_test.dart`). No hay tests de widgets de pantallas.
 - **`print(bestProduct)`**: leftover de debug en `reports_screen.dart:123`. Sacar si se toca ese archivo.
 - **Login lockout**: 3 intentos → 30 seg, 5+ → 2 min. Persiste en SharedPreferences.
 - **Recreo**: hora 10 → Recreo 1, hora 12:20+ → Recreo 2.
